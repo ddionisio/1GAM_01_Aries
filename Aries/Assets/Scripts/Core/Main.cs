@@ -3,11 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class Main : MonoBehaviour {
-	//only use these after awake
-	public static int layerIgnoreRaycast;
-	
-	//public static int layerMask;
-	
 	[System.NonSerialized] public UserSettings userSettings;
 	[System.NonSerialized] public UserData userData;
 	[System.NonSerialized] public SceneManager sceneManager;
@@ -26,7 +21,7 @@ public class Main : MonoBehaviour {
 		}
 	}
 	
-	void OnApplicationQuit() {
+	void OnDestroy() {
 		mInstance = null;
 	}
 	
@@ -35,11 +30,7 @@ public class Main : MonoBehaviour {
 			
 	void Awake() {
 		mInstance = this;
-		
-		layerIgnoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
-			
-		//layerMask = 1<<something;
-		
+						
 		DontDestroyOnLoad(gameObject);
 		
 		userData = GetComponentInChildren<UserData>();

@@ -1,16 +1,10 @@
 using UnityEngine;
 using System.Collections;
 
-public class Entity : MonoBehaviour {
-	public enum State {
-		spawning,
-		
-		NumState
-	}
-	
-	public delegate void OnSetState(Entity ent, State state);
-	public delegate void OnSetBool(Entity ent, bool b);
-	public delegate void OnFinish(Entity ent);
+public class EntityBase : MonoBehaviour {
+	public delegate void OnSetState(EntityBase ent, EntityState state);
+	public delegate void OnSetBool(EntityBase ent, bool b);
+	public delegate void OnFinish(EntityBase ent);
 	
 	public float spawnDelay = 0.1f;
 	
@@ -19,14 +13,14 @@ public class Entity : MonoBehaviour {
 	public event OnFinish spawnFinishCallback = null;
 	public event OnFinish releaseCallback = null;
 	
-	private State mState = State.NumState;
-	private State mPrevState = State.NumState;
+	private EntityState mState = EntityState.NumState;
+	private EntityState mPrevState = EntityState.NumState;
 	
 	private float mEntCurTime = 0;
 	private float mBlinkCurTime = 0;
 	private float mBlinkDelay = 0;
 	
-	public State state {
+	public EntityState state {
 		get { return mState; }
 		
 		set {
@@ -43,7 +37,7 @@ public class Entity : MonoBehaviour {
 		}
 	}
 	
-	public State prevState {
+	public EntityState prevState {
 		get { return mPrevState; }
 	}
 	
@@ -69,7 +63,7 @@ public class Entity : MonoBehaviour {
 	/// NOTE: calls after an update to ensure Awake and Start is called.
 	/// </summary>
 	public void Spawn() {
-		mState = mPrevState = State.NumState; //avoid invalid updates
+		mState = mPrevState = EntityState.NumState; //avoid invalid updates
 		//ensure start is called before spawning if we are freshly allocated from entity manager
 		StartCoroutine(DoSpawn());
 	}
@@ -103,10 +97,10 @@ public class Entity : MonoBehaviour {
 	// Update is called once per frame
 	private void Update () {
 		switch(mState) {
-		case State.spawning:
+		case EntityState.spawning:
 			mEntCurTime += Time.deltaTime;
 			if(mEntCurTime >= spawnDelay) {
-				mState = State.NumState; //need to be set by something
+				mState = EntityState.NumState; //need to be set by something
 				
 				if(spawnFinishCallback != null) {
 					spawnFinishCallback(this);
@@ -139,7 +133,7 @@ public class Entity : MonoBehaviour {
 		
 		mEntCurTime = 0;
 		
-		state = State.spawning;
+		state = EntityState.spawning;
 		
 		yield break;
 	}

@@ -128,7 +128,7 @@ public class EntityManager : MonoBehaviour {
 				
 				ret.gameObject.SetActive(true);
 				
-				Entity entity = ret.GetComponentInChildren<Entity>();
+				EntityBase entity = ret.GetComponentInChildren<EntityBase>();
 				if(entity != null) {
 					entity.Spawn();
 				}
