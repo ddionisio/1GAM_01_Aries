@@ -9,24 +9,24 @@ public class FlockGroup : MonoBehaviour {
 	
 	public Transform target;
 		
-	private List<Flock> mFlocks;
+	private List<FlockUnit> mUnits;
 	
 	private float mDistanceSq;
 	
-	public void AddFlock(Flock flock) {
+	public void AddUnit(FlockUnit unit) {
 	}
 	
 	void Awake() {
 		//set initial flocks from scene
-		mFlocks = new List<Flock>(transform.childCount);
+		mUnits = new List<FlockUnit>(transform.childCount);
 		
 		foreach(Transform t in transform) {
-			Flock flock = t.GetComponentInChildren<Flock>();
-			if(flock != null) {
-				mFlocks.Add(flock);
+			FlockUnit unit = t.GetComponentInChildren<FlockUnit>();
+			if(unit != null) {
+				mUnits.Add(unit);
 				
 				if(target != null) {
-					flock.moveTarget = target;
+					unit.moveTarget = target;
 				}
 			}
 		}
@@ -43,7 +43,7 @@ public class FlockGroup : MonoBehaviour {
 		Gizmos.color = Color.yellow;
 		
 		if(target != null) {
-			Gizmos.DrawWireSphere(transform.position, radius);
+			Gizmos.DrawWireSphere(target.position, radius);
 		}
 		else {
 			Gizmos.DrawWireSphere(transform.position, radius);

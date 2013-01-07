@@ -15,6 +15,10 @@ namespace M8 {
 			return v;
 		}
 		
+		public static Vector2 Reflect(Vector2 v, Vector2 n) {
+			return v - (2.0f*Vector2.Dot(v, n))*n;
+		}
+		
 		public static void Limit(ref Vector3 v, float limit) {
 			float d = v.magnitude;
 			if(d > limit) {
@@ -27,5 +31,7 @@ namespace M8 {
 			Limit(ref v, limit);
 			return v;
 		}
+		
+		
 	}
 }

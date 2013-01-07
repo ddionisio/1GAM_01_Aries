@@ -5,19 +5,19 @@ using System.Collections.Generic;
 public class FlockSensor : MonoBehaviour {
 	[System.NonSerialized] public FlockType typeFilter;
 	
-	public HashSet<Flock> flocks = new HashSet<Flock>();
+	public HashSet<FlockUnit> units = new HashSet<FlockUnit>();
 
 	void OnTriggerEnter(Collider other) {
-		Flock flock = other.GetComponent<Flock>();
-		if(flock != null && typeFilter == flock.type) {
-			flocks.Add(flock);
+		FlockUnit unit = other.GetComponent<FlockUnit>();
+		if(unit != null && typeFilter == unit.type) {
+			units.Add(unit);
 		}
 	}
 	
 	void OnTriggerExit(Collider other) {
-		Flock flock = other.GetComponent<Flock>();
+		FlockUnit flock = other.GetComponent<FlockUnit>();
 		if(flock != null && typeFilter == flock.type) {
-			flocks.Remove(flock);
+			units.Remove(flock);
 		}
 	}
 }

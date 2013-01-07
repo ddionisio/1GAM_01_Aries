@@ -2,8 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-//rename
-public class Flock : MonoBehaviour {
+public class FlockUnit : MonoBehaviour {
 	public FlockType type;
 	
 	public FlockSensor sensor;
@@ -17,12 +16,22 @@ public class Flock : MonoBehaviour {
 	public float alignFactor = 1.0f;
 	public float cohesionFactor = 1.0f;
 	public float moveToFactor = 1.0f;
+	public float wallFactor = 1.0f;
+	
+	public float updateDelay = 1.0f;
+	
+	public float wallCheckRadius = 5.0f;
 	
 	[System.NonSerialized] public Transform moveTarget = null;
 	
-	private Vector2 mDir = Vector2.zero;
+	private float mCurUpdateDelay = 0;
+	
+	private Vector2 mDir = Vector2.right;
 	private Rigidbody mBody;
 	private Transform mTrans;
+	
+	private List<ContactPoint> mWallHits = new List<ContactPoint>();
+	
 	
 	public Vector2 dir {
 		get { return mDir; }
@@ -48,26 +57,90 @@ public class Flock : MonoBehaviour {
 	
 	// Update is called once per frame
 	void FixedUpdate () {
-		Vector2 sep, align, coh;
-		
-		ComputeMovement(out sep, out align, out coh);
-		
-		mBody.AddForce(sep.x, sep.y, 0.0f);
-		mBody.AddForce(align.x, align.y, 0.0f);
-		mBody.AddForce(coh.x, coh.y, 0.0f);
-		
-		if(moveTarget != null && (sensor == null || sensor.flocks.Count > 3)) {
-			Vector2 targetPos = moveTarget.position;
+		mCurUpdateDelay += Time.fixedDeltaTime;
+		if(mCurUpdateDelay >= updateDelay) {
+			mCurUpdateDelay = 0;
 			
-			Vector2 seek = Seek(targetPos);
-			seek *= moveToFactor;
+			Vector2 sumForce = Vector2.zero;
 			
-			mBody.AddForce(seek.x, seek.y, 0.0f);
+			Vector2 sep, align, coh;
+			
+			ComputeMovement(out sep, out align, out coh);
+									
+			sumForce += sep + align + coh;
+			
+			if(moveToFactor != 0.0f && moveTarget != null) {
+				Vector2 targetPos = moveTarget.position;
+				
+				Vector2 seek = Seek(targetPos);
+				seek *= moveToFactor;
+				
+				sumForce += seek;
+			}
+			
+			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
 		
-		mBody.velocity = M8.Math.Limit(mBody.velocity, maxSpeed);
+		Vector2 wall = Wall();
+		mBody.AddForce(wall.x, wall.y, 0.0f);
+		
+		//get direction and limit speed
+		Vector2 vel = mBody.velocity;
+		float velD = vel.magnitude;
+		
+		if(velD > 0) {
+			mDir = vel/velD;
+			
+			if(velD > maxSpeed) {
+				mBody.velocity = mDir*maxSpeed;
+			}
+		}
 	}
 	
+	void OnCollisionEnter(Collision col) {
+		if(col.gameObject.layer == Layers.layerWall) {
+			foreach(ContactPoint contact in col.contacts) {
+				mWallHits.Add(contact);
+			}
+		}
+	}
+	
+	void OnTriggerEnter(Collider t) {
+	}
+	
+	void OnTriggerExit(Collider t) {
+	}
+	
+	private Vector2 Wall() {
+		Vector2 vel = Vector2.zero;
+		
+		if(mWallHits.Count > 0) {
+			Vector2 v = mBody.velocity;
+			
+			foreach(ContactPoint contact in mWallHits) {
+				Vector2 r = contact.normal;
+				
+				vel += r;
+			}
+			
+			vel /= (float)mWallHits.Count;
+			
+			float dist = vel.magnitude;
+			if(dist > 0) {
+				vel /= dist;
+				vel *= maxSpeed;
+				vel -= v;
+				M8.Math.Limit(ref vel, maxForce);
+				
+				vel *= wallFactor;
+			}
+			
+			mWallHits.Clear();
+		}
+		
+		return vel;
+	}
+		
 	private Vector2 Seek(Vector2 target) {
 		Vector2 pos = mTrans.localPosition;
 		Vector2 vel = mBody.velocity;
@@ -84,7 +157,7 @@ public class Flock : MonoBehaviour {
 		align = Vector2.zero;
 		cohesion = Vector2.zero;
 		
-		if(sensor != null && sensor.flocks.Count > 0) {
+		if(sensor != null && sensor.units.Count > 0) {
 			Vector2 pos = mTrans.localPosition;
 			Vector2 vel = mBody.velocity;
 			
@@ -93,9 +166,9 @@ public class Flock : MonoBehaviour {
 			
 			int numSeparate = 0;
 			
-			foreach(Flock flock in sensor.flocks) {
-				Vector2 otherPos = flock.transform.localPosition;
-				Vector2 otherVel = flock.body.velocity;
+			foreach(FlockUnit unit in sensor.units) {
+				Vector2 otherPos = unit.transform.localPosition;
+				Vector2 otherVel = unit.body.velocity;
 				
 				//separate
 				dPos = pos - otherPos;
@@ -118,7 +191,7 @@ public class Flock : MonoBehaviour {
 				dist = separate.magnitude;
 				if(dist > 0) {
 					separate /= dist;
-					separate *= maxForce;
+					separate *= maxSpeed;
 					separate -= vel;
 					M8.Math.Limit(ref separate, maxForce);
 					
@@ -126,7 +199,7 @@ public class Flock : MonoBehaviour {
 				}
 			}
 			
-			float fCount = (float)sensor.flocks.Count;
+			float fCount = (float)sensor.units.Count;
 			
 			//calculate align
 			align /= fCount;

@@ -5,28 +5,14 @@ using System.Collections;
 public class Layers : MonoBehaviour {
 	//only use these after awake
 	public static int layerIgnoreRaycast;
-	public static int layerFlockPlayer;
+	public static int layerWall;
 	
-	public static int layerMaskFlockPlayer;
-	
-	private static Layers mInstance = null;
-	
-	public static Layers instance {
-		get {
-			return mInstance;
-		}
-	}
-	
-	void OnDestroy() {
-		mInstance = null;
-	}
+	public static int layerMaskWall;
 	
 	void Awake() {
-		mInstance = this;
-		
 		layerIgnoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
-		layerFlockPlayer = LayerMask.NameToLayer("FlockPlayer");
+		layerWall = LayerMask.NameToLayer("Wall");
 			
-		layerMaskFlockPlayer = 1<<layerFlockPlayer;
+		layerMaskWall = 1<<layerWall;
 	}
 }
