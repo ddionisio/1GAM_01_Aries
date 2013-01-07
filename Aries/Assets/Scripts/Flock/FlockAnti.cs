@@ -2,14 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class FlockAnti : MonoBehaviour {
-
-	// Use this for initialization
-	void Start () {
+	public FlockType typeFilter;
 	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+	public float factor = 1.0f;
 }

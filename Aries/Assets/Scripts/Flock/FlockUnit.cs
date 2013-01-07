@@ -30,8 +30,10 @@ public class FlockUnit : MonoBehaviour {
 	private Rigidbody mBody;
 	private Transform mTrans;
 	
-	private List<ContactPoint> mWallHits = new List<ContactPoint>();
+	private RaycastHit mWallCheckHit;
+	private bool mWallCheck;
 	
+	private HashSet<FlockAnti> mAntis = new HashSet<FlockAnti>();
 	
 	public Vector2 dir {
 		get { return mDir; }
@@ -53,6 +55,10 @@ public class FlockUnit : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 	
+	}
+	
+	void Update() {
+		mWallCheck = Physics.SphereCast(transform.position, wallCheckRadius, mDir, out mWallCheckHit, 0.1f, Layers.layerMaskWall);
 	}
 	
 	// Update is called once per frame
@@ -78,12 +84,21 @@ public class FlockUnit : MonoBehaviour {
 				sumForce += seek;
 			}
 			
+			if(mAntis.Count > 0) {
+				Vector2 away = Anti();
+				
+				sumForce += away;
+			}
+			
 			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
 		
-		Vector2 wall = Wall();
-		mBody.AddForce(wall.x, wall.y, 0.0f);
-		
+		//wall check
+		if(mWallCheck && wallFactor != 0.0f) {
+			Vector2 wallOff = Wall();
+			mBody.AddForce(wallOff.x, wallOff.y, 0.0f);
+		}
+						
 		//get direction and limit speed
 		Vector2 vel = mBody.velocity;
 		float velD = vel.magnitude;
@@ -96,49 +111,78 @@ public class FlockUnit : MonoBehaviour {
 			}
 		}
 	}
-	
-	void OnCollisionEnter(Collision col) {
-		if(col.gameObject.layer == Layers.layerWall) {
-			foreach(ContactPoint contact in col.contacts) {
-				mWallHits.Add(contact);
+		
+	void OnTriggerEnter(Collider t) {
+		if(t.gameObject.layer == Layers.layerFlockAnti) {
+			FlockAnti anti = t.GetComponent<FlockAnti>();
+			if(anti.typeFilter == FlockType.All || anti.typeFilter == type) {
+				mAntis.Add(anti);
 			}
 		}
-	}
-	
-	void OnTriggerEnter(Collider t) {
 	}
 	
 	void OnTriggerExit(Collider t) {
+		if(t.gameObject.layer == Layers.layerFlockAnti) {
+			FlockAnti anti = t.GetComponent<FlockAnti>();
+			if(anti.typeFilter == FlockType.All || anti.typeFilter == type) {
+				mAntis.Remove(anti);
+			}
+		}
 	}
 	
-	private Vector2 Wall() {
-		Vector2 vel = Vector2.zero;
+	void OnDrawGizmosSelected() {
+		Gizmos.color = Color.gray;
 		
-		if(mWallHits.Count > 0) {
-			Vector2 v = mBody.velocity;
+		Gizmos.DrawWireSphere(transform.position, wallCheckRadius);
+	}
+	
+	//use if mWallCheck is true
+	private Vector2 Wall() {
+		Vector2 vel = mWallCheckHit.normal;
+		
+		Vector2 v = mBody.velocity;
+		
+		vel *= maxSpeed;
+		vel -= v;
 			
-			foreach(ContactPoint contact in mWallHits) {
-				Vector2 r = contact.normal;
-				
-				vel += r;
-			}
+		M8.Math.Limit(ref vel, maxForce);
 			
-			vel /= (float)mWallHits.Count;
-			
-			float dist = vel.magnitude;
-			if(dist > 0) {
-				vel /= dist;
-				vel *= maxSpeed;
-				vel -= v;
-				M8.Math.Limit(ref vel, maxForce);
-				
-				vel *= wallFactor;
-			}
-			
-			mWallHits.Clear();
-		}
+		vel *= wallFactor;
 		
 		return vel;
+	}
+	
+	//use if mAntis.Count > 0
+	private Vector2 Anti() {
+		Vector2 pos = mTrans.localPosition;
+		Vector2 vel = mBody.velocity;
+		
+		Vector2 away = Vector2.zero;
+		float awayFactor = 0.0f;
+		
+		foreach(FlockAnti anti in mAntis) {
+			Vector2 antiPos = anti.transform.position;
+			
+			away += pos - antiPos;
+			awayFactor += anti.factor;
+		}
+		
+		float fCount = (float)mAntis.Count;
+		
+		away /= fCount;
+		awayFactor /= fCount;
+		
+		float dist = away.magnitude;
+		if(dist > 0) {
+			away /= dist;
+			away *= maxSpeed;
+			away -= vel;
+			M8.Math.Limit(ref away, maxForce);
+			
+			away *= awayFactor;
+		}
+		
+		return away;
 	}
 		
 	private Vector2 Seek(Vector2 target) {
