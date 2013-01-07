@@ -78,8 +78,7 @@ public class FlockUnit : MonoBehaviour {
 			if(moveToFactor != 0.0f && moveTarget != null) {
 				Vector2 targetPos = moveTarget.position;
 				
-				Vector2 seek = Seek(targetPos);
-				seek *= moveToFactor;
+				Vector2 seek = Seek(targetPos, moveToFactor);
 				
 				sumForce += seek;
 			}
@@ -136,64 +135,80 @@ public class FlockUnit : MonoBehaviour {
 		Gizmos.DrawWireSphere(transform.position, wallCheckRadius);
 	}
 	
+	private Vector2 CalculateSteerForce(Vector2 dir, float factor) {
+		Vector2 velocity = mBody.velocity;
+		
+		Vector2 steer = dir*maxSpeed - velocity;
+		
+		return M8.Math.Limit(steer, maxForce)*factor;
+	}
+	
 	//use if mWallCheck is true
 	private Vector2 Wall() {
-		Vector2 vel = mWallCheckHit.normal;
-		
-		Vector2 v = mBody.velocity;
-		
-		vel *= maxSpeed;
-		vel -= v;
-			
-		M8.Math.Limit(ref vel, maxForce);
-			
-		vel *= wallFactor;
-		
-		return vel;
+		return CalculateSteerForce(mWallCheckHit.normal, wallFactor);
 	}
 	
 	//use if mAntis.Count > 0
 	private Vector2 Anti() {
 		Vector2 pos = mTrans.localPosition;
-		Vector2 vel = mBody.velocity;
+		
+		Vector2 forces = Vector2.zero;
 		
 		Vector2 away = Vector2.zero;
+		
 		float awayFactor = 0.0f;
 		
+		int numAway = 0;
+				
 		foreach(FlockAnti anti in mAntis) {
 			Vector2 antiPos = anti.transform.position;
 			
-			away += pos - antiPos;
-			awayFactor += anti.factor;
+			switch(anti.type) {
+			case FlockAnti.Type.Away:
+				away += (pos - antiPos).normalized;
+				awayFactor += anti.factor;
+				numAway++;
+				break;
+				
+			case FlockAnti.Type.Force:
+				forces += (pos - antiPos).normalized*anti.force;
+				break;
+				
+			case FlockAnti.Type.Dir:
+				away += anti.dir;
+				awayFactor += anti.factor;
+				numAway++;
+				break;
+				
+			case FlockAnti.Type.DirForce:
+				forces += anti.dir*anti.force;
+				break;
+			}
 		}
 		
-		float fCount = (float)mAntis.Count;
-		
-		away /= fCount;
-		awayFactor /= fCount;
-		
-		float dist = away.magnitude;
-		if(dist > 0) {
-			away /= dist;
-			away *= maxSpeed;
-			away -= vel;
-			M8.Math.Limit(ref away, maxForce);
+		if(numAway > 0) {
+			float fCount = (float)numAway;
 			
-			away *= awayFactor;
+			away /= fCount;
+			awayFactor /= fCount;
+			
+			float dist = away.magnitude;
+			if(dist > 0) {
+				away /= dist;
+				away = CalculateSteerForce(away, awayFactor);
+			}
 		}
 		
-		return away;
+		return away + forces;
 	}
 		
-	private Vector2 Seek(Vector2 target) {
+	private Vector2 Seek(Vector2 target, float factor) {
 		Vector2 pos = mTrans.localPosition;
-		Vector2 vel = mBody.velocity;
 		
 		Vector2 desired = target - pos;
 		desired.Normalize();
-		desired *= maxSpeed;
 		
-		return M8.Math.Limit(desired - vel, maxForce);
+		return CalculateSteerForce(desired, factor);
 	}
 	
 	private void ComputeMovement(out Vector2 separate, out Vector2 align, out Vector2 cohesion) {
@@ -203,7 +218,6 @@ public class FlockUnit : MonoBehaviour {
 		
 		if(sensor != null && sensor.units.Count > 0) {
 			Vector2 pos = mTrans.localPosition;
-			Vector2 vel = mBody.velocity;
 			
 			Vector2 dPos;
 			float dist;
@@ -216,7 +230,9 @@ public class FlockUnit : MonoBehaviour {
 				
 				//separate
 				dPos = pos - otherPos;
-				if(dPos.magnitude < separateDistance) {
+				dist = dPos.magnitude;
+				if(dist < separateDistance) {
+					dPos /= dist;
 					separate += dPos;
 					numSeparate++;
 				}
@@ -235,11 +251,7 @@ public class FlockUnit : MonoBehaviour {
 				dist = separate.magnitude;
 				if(dist > 0) {
 					separate /= dist;
-					separate *= maxSpeed;
-					separate -= vel;
-					M8.Math.Limit(ref separate, maxForce);
-					
-					separate *= separateFactor;
+					separate = CalculateSteerForce(separate, separateFactor);
 				}
 			}
 			
@@ -248,16 +260,11 @@ public class FlockUnit : MonoBehaviour {
 			//calculate align
 			align /= fCount;
 			align.Normalize();
-			align *= maxSpeed;
-			align -= vel; //steer
-			M8.Math.Limit(ref align, maxForce);
-			
-			align *= alignFactor;
+			align = CalculateSteerForce(align.normalized, alignFactor);
 			
 			//calculate cohesion
 			cohesion /= fCount;
-			cohesion = Seek(cohesion);
-			cohesion *= cohesionFactor;
+			cohesion = Seek(cohesion, cohesionFactor);
 		}
 	}
 }
