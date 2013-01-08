@@ -61,9 +61,9 @@ public class CameraController : MonoBehaviour {
 					transform.position = dest;
 				}
 			}
-		}
-		else if(transform.position != mAttachTo.position) {
-			StartMove();
+			else if(transform.position != mAttachTo.position) {
+				StartMove();
+			}
 		}
 	}
 	
