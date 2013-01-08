@@ -75,10 +75,16 @@ public class FlockUnit : MonoBehaviour {
 									
 			sumForce += sep + align + coh;
 			
-			if(moveToFactor != 0.0f && moveTarget != null) {
+			//move to destination
+			if(!mWallCheck && moveToFactor != 0.0f && moveTarget != null) {
 				Vector2 targetPos = moveTarget.position;
 				
-				Vector2 seek = Seek(targetPos, moveToFactor);
+				float factor = moveToFactor;
+				if(sensor == null || sensor.units.Count == 0) {
+					factor *= 2.0f; //catch up
+				}
+				
+				Vector2 seek = Seek(targetPos, factor);
 				
 				sumForce += seek;
 			}
@@ -92,7 +98,7 @@ public class FlockUnit : MonoBehaviour {
 			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
 		
-		//wall check
+		//wall check (TODO: just use some cheap pathfinding)
 		if(mWallCheck && wallFactor != 0.0f) {
 			Vector2 wallOff = Wall();
 			mBody.AddForce(wallOff.x, wallOff.y, 0.0f);
@@ -145,7 +151,9 @@ public class FlockUnit : MonoBehaviour {
 	
 	//use if mWallCheck is true
 	private Vector2 Wall() {
-		return CalculateSteerForce(mWallCheckHit.normal, wallFactor);
+		Vector2 dir = M8.Math.Reflect(mDir, mWallCheckHit.normal);
+				
+		return dir*(maxForce*wallFactor);
 	}
 	
 	//use if mAntis.Count > 0

@@ -1,0 +1,23 @@
+[
+	{
+		"action":"MoveX",
+		"control":"Axis",
+		"keys" : [
+			{ "input":"Horizontal" }
+		]
+	},
+	{
+		"action":"MoveY",
+		"control":"Axis",
+		"keys" : [
+			{ "input":"Vertical" }
+		]
+	},
+	{
+		"action":"Act",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Fire1" }
+		]
+	}
+]

@@ -26,6 +26,10 @@ namespace M8 {
 		public static Vector2 Reflect(Vector2 v, Vector2 n) {
 			return v - (2.0f*Vector2.Dot(v, n))*n;
 		}
+		
+		public static Vector2 Slide(Vector2 v, Vector2 n) {
+			return v - Vector2.Dot(v, n)*n;
+		}
 										
 		public static float CheckSideSign(Vector2 up1, Vector2 up2) {
 			return Cross(up1, up2) < 0 ? -1 : 1;

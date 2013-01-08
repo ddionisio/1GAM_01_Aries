@@ -1,5 +1,3 @@
-#define SILVERLIGHT
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,11 +9,8 @@ namespace fastJSON
     /// <summary>
     /// This class encodes and decodes JSON strings.
     /// Spec. details, see http://www.json.org/
-    /// 
-    /// JSON uses Arrays and Objects. These correspond here to the datatypes ArrayList and Hashtable.
-    /// All numbers are parsed to doubles.
     /// </summary>
-    internal class JsonParser
+    internal sealed class JsonParser
     {
         enum Token
         {
@@ -37,10 +32,13 @@ namespace fastJSON
         readonly StringBuilder s = new StringBuilder();
         Token lookAheadToken = Token.None;
         int index;
+        bool _ignorecase = false;
 
-        internal JsonParser(string json)
+
+        internal JsonParser(string json, bool ignorecase)
         {
             this.json = json.ToCharArray();
+            _ignorecase = ignorecase;
         }
 
         public object Decode()
@@ -72,6 +70,8 @@ namespace fastJSON
 
                             // name
                             string name = ParseString();
+                            if (_ignorecase)
+                                name = name.ToLower();
 
                             // :
                             if (NextToken() != Token.Colon)
@@ -89,15 +89,9 @@ namespace fastJSON
             }
         }
 
-#if SILVERLIGHT
         private List<object> ParseArray()
         {
             List<object> array = new List<object>();
-#else
-        private ArrayList ParseArray()
-        {
-            ArrayList array = new ArrayList();
-#endif
             ConsumeToken(); // [
 
             while (true)
@@ -114,9 +108,7 @@ namespace fastJSON
                         return array;
 
                     default:
-                        {
-                            array.Add(ParseValue());
-                        }
+                        array.Add(ParseValue());
                         break;
                 }
             }
@@ -269,27 +261,54 @@ namespace fastJSON
             return p1 + p2 + p3 + p4;
         }
 
-        private string ParseNumber()
+        private long CreateLong(string s)
+        {
+            long num = 0;
+            bool neg = false;
+            foreach (char cc in s)
+            {
+                if (cc == '-')
+                    neg = true;
+                else if (cc == '+')
+                    neg = false;
+                else
+                {
+                    num *= 10;
+                    num += (int)(cc - '0');
+                }
+            }
+
+            return neg ? -num : num;
+        }
+
+        private object ParseNumber()
         {
             ConsumeToken();
 
             // Need to start back one place because the first digit is also a token and would have been consumed
             var startIndex = index - 1;
-
+            bool dec = false;
             do
             {
+                if (index == json.Length)
+                    break;
                 var c = json[index];
 
                 if ((c >= '0' && c <= '9') || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E')
                 {
-                    if (++index == json.Length) throw new Exception("Unexpected end of string whilst parsing number");
+                    if (c == '.' || c == 'e' || c == 'E')
+                        dec = true;
+                    if (++index == json.Length)
+                        break;                        //throw new Exception("Unexpected end of string whilst parsing number");
                     continue;
                 }
-
                 break;
             } while (true);
 
-            return new string(json, startIndex, index - startIndex);
+            string s = new string(json, startIndex, index - startIndex);
+            if (dec)
+                return double.Parse(s,NumberFormatInfo.InvariantInfo);
+            return CreateLong(s);
         }
 
         private Token LookAhead()
@@ -359,9 +378,19 @@ namespace fastJSON
                 case '"':
                     return Token.String;
 
-				case '0': case '1': case '2': case '3': case '4':
-				case '5': case '6': case '7': case '8': case '9':
-                case '-': case '+': case '.':
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '-':
+                case '+':
+                case '.':
                     return Token.Number;
 
                 case ':':

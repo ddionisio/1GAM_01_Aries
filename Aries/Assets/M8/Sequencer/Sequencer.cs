@@ -24,7 +24,7 @@ public class Sequencer {
 	public List<SequencerAction> actions = null;
 			
 	public static Dictionary<string, Sequencer> Load(StateData[] sequences) {
-		fastJSON.JSON.Instance.UseSerializerExtension = true;
+		fastJSON.JSON.Instance.Parameters.UseExtensions = true;
 		
 		Dictionary<string, Sequencer> ret = new Dictionary<string, Sequencer>(sequences.Length);
 		
