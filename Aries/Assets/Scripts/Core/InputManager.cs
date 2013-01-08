@@ -85,6 +85,8 @@ public class InputManager : MonoBehaviour {
 	}
 	
 	private BindData[] mBinds = new BindData[(int)InputAction.NumAction];
+	
+	//interfaces (available after awake)
 			
 	public float GetAxis(InputAction action) {
 		return mBinds[(int)action].info.axis;

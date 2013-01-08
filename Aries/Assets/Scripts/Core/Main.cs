@@ -6,6 +6,7 @@ public class Main : MonoBehaviour {
 	[System.NonSerialized] public UserSettings userSettings;
 	[System.NonSerialized] public UserData userData;
 	[System.NonSerialized] public SceneManager sceneManager;
+	[System.NonSerialized] public InputManager input;
 	
 	private static Main mInstance = null;
 	
@@ -37,6 +38,8 @@ public class Main : MonoBehaviour {
 		userSettings = GetComponentInChildren<UserSettings>();
 		
 		sceneManager = GetComponentInChildren<SceneManager>();
+		
+		input = GetComponentInChildren<InputManager>();
 	}
 	
 	void Start() {
