@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Pathfinding;
 
 public class FlockUnit : MonoBehaviour {
 	public FlockType type;
@@ -10,28 +11,35 @@ public class FlockUnit : MonoBehaviour {
 	public float maxForce = 120.0f; //N
 	public float maxSpeed = 20.0f; //meters/sec
 	
+	public float pathRadius;
+	
 	public float separateDistance = 2.0f;
 	
 	public float separateFactor = 1.5f;
 	public float alignFactor = 1.0f;
 	public float cohesionFactor = 1.0f;
 	public float moveToFactor = 1.0f;
-	public float wallFactor = 1.0f;
+	public float pathFactor = 1.0f;
 	
 	public float updateDelay = 1.0f;
 	
-	public float wallCheckRadius = 5.0f;
+	public float seekDelay = 1.0f;
 	
 	[System.NonSerialized] public Transform moveTarget = null;
 	
 	private float mCurUpdateDelay = 0;
+	private float mCurSeekDelay = 0;
 	
 	private Vector2 mDir = Vector2.right;
 	private Rigidbody mBody;
 	private Transform mTrans;
 	
-	private RaycastHit mWallCheckHit;
-	private bool mWallCheck;
+	private Seeker mSeek; //use for when our target is blocked
+	private Path mSeekPath = null;
+	private int mSeekCurPath = -1;
+	private bool mSeekStarted = false;
+	
+	private float mRadius;
 	
 	private HashSet<FlockAnti> mAntis = new HashSet<FlockAnti>();
 	
@@ -42,6 +50,10 @@ public class FlockUnit : MonoBehaviour {
 	public Rigidbody body {
 		get { return mBody; }
 	}
+	
+	void OnDestroy() {
+		mSeek.pathCallback -= OnSeekPathComplete;
+	}
 		
 	void Awake() {
 		if(sensor != null) {
@@ -50,6 +62,12 @@ public class FlockUnit : MonoBehaviour {
 		
 		mBody = rigidbody;
 		mTrans = transform;
+		
+		mSeek = GetComponent<Seeker>();
+		mSeek.pathCallback += OnSeekPathComplete;
+		
+		SphereCollider sc = GetComponent<SphereCollider>();
+		mRadius = sc != null ? sc.radius : 0.0f;
 	}
 	
 	// Use this for initialization
@@ -58,7 +76,54 @@ public class FlockUnit : MonoBehaviour {
 	}
 	
 	void Update() {
-		mWallCheck = Physics.SphereCast(transform.position, wallCheckRadius, mDir, out mWallCheckHit, 0.1f, Layers.layerMaskWall);
+		//check current pathing
+		if(moveTarget != null) {
+			if(mSeekStarted) {
+				if(mSeekPath != null) {
+					Vector3 pos = transform.position;
+					
+					mCurSeekDelay += Time.deltaTime;
+					if(mCurSeekDelay >= seekDelay) {
+						if(moveTarget.position != mSeekPath.vectorPath[mSeekPath.vectorPath.Count-1] 
+							|| !CheckTargetBlock(pos, moveTarget.position, mRadius)) {
+							SeekPathStop();
+						}
+						else {
+							mCurSeekDelay = 0.0f;
+						}
+					}
+					else {
+						//check if we need to move to next waypoint
+						Vector3 wp = mSeekPath.vectorPath[mSeekCurPath];
+						
+						if(Vector3.Distance(pos, wp) < pathRadius) {
+							//no longer need to follow path
+							int nextPath = mSeekCurPath+1;
+							if(nextPath == mSeekPath.vectorPath.Count) {
+								SeekPathStop();
+							}
+							else {
+								mSeekCurPath = nextPath;
+							}
+						}
+					}
+				}
+			}
+			else {
+				mCurSeekDelay += Time.deltaTime;
+				if(mCurSeekDelay >= seekDelay) {
+					//check if target is blocked
+					Vector3 pos = transform.position;
+					Vector3 dest = moveTarget.position;
+					if(CheckTargetBlock(pos, dest, mRadius)) {
+						SeekPathStart(pos, dest);
+					}
+					else {
+						mCurSeekDelay = 0.0f;
+					}
+				}
+			}
+		}
 	}
 	
 	// Update is called once per frame
@@ -68,25 +133,44 @@ public class FlockUnit : MonoBehaviour {
 			mCurUpdateDelay = 0;
 			
 			Vector2 sumForce = Vector2.zero;
+															
+			//seek path
+			if(mSeekStarted) {
+				Vector2 sep, align, coh;
 			
-			Vector2 sep, align, coh;
-			
-			ComputeMovement(out sep, out align, out coh);
-									
-			sumForce += sep + align + coh;
-			
-			//move to destination
-			if(!mWallCheck && moveToFactor != 0.0f && moveTarget != null) {
-				Vector2 targetPos = moveTarget.position;
+				ComputeMovement(out sep, out align, out coh);
+										
+				sumForce += sep;
 				
-				float factor = moveToFactor;
-				if(sensor == null || sensor.units.Count == 0) {
-					factor *= 2.0f; //catch up
+				if(mSeekPath != null) {
+					Vector2 target = mSeekPath.vectorPath[mSeekCurPath];
+					Vector2 pos = transform.position;
+					Vector2 desired = target - pos;
+					desired.Normalize();
+					sumForce += desired*(maxForce*pathFactor);
+					//sumForce += Seek(target, pathFactor);
 				}
+			}
+			else {
+				Vector2 sep, align, coh;
+			
+				ComputeMovement(out sep, out align, out coh);
+										
+				sumForce += sep + align + coh;
 				
-				Vector2 seek = Seek(targetPos, factor);
-				
-				sumForce += seek;
+				if(moveToFactor != 0.0f && moveTarget != null) {
+					//move to destination
+					Vector2 targetPos = moveTarget.position;
+					
+					float factor = moveToFactor;
+					if(sensor == null || sensor.units.Count == 0) {
+						factor *= 2.0f; //catch up
+					}
+					
+					Vector2 seek = Seek(targetPos, factor);
+					
+					sumForce += seek;
+				}
 			}
 			
 			if(mAntis.Count > 0) {
@@ -97,13 +181,7 @@ public class FlockUnit : MonoBehaviour {
 			
 			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
-		
-		//wall check (TODO: just use some cheap pathfinding)
-		if(mWallCheck && wallFactor != 0.0f) {
-			Vector2 wallOff = Wall();
-			mBody.AddForce(wallOff.x, wallOff.y, 0.0f);
-		}
-						
+								
 		//get direction and limit speed
 		Vector2 vel = mBody.velocity;
 		float velD = vel.magnitude;
@@ -138,7 +216,37 @@ public class FlockUnit : MonoBehaviour {
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.gray;
 		
-		Gizmos.DrawWireSphere(transform.position, wallCheckRadius);
+		Gizmos.DrawWireSphere(transform.position, pathRadius);
+	}
+	
+	void OnSeekPathComplete(Path p) {
+		mSeekPath = p;
+		mSeekCurPath = 0;
+	}
+	
+	private bool CheckTargetBlock(Vector3 pos, Vector3 dest, float radius) {
+		Vector3 dir = dest - pos;
+		float dist = dir.magnitude;
+		if(dist > 0.0f) {
+			Ray ray = new Ray(pos, dir/dist);
+			return Physics.SphereCast(ray, pathRadius, dist, Layers.layerMaskWall);
+		}
+		else {
+			return false;
+		}
+	}
+	
+	private void SeekPathStart(Vector3 start, Vector3 dest) {
+		mSeek.StartPath(start, dest);
+		mSeekStarted = true;
+		mCurSeekDelay = 0.0f;
+	}
+	
+	private void SeekPathStop() {
+		mSeekPath = null;
+		mCurSeekDelay = 0.0f;
+		mSeekStarted = false;
+		mSeekCurPath = -1;
 	}
 	
 	private Vector2 CalculateSteerForce(Vector2 dir, float factor) {
@@ -147,13 +255,6 @@ public class FlockUnit : MonoBehaviour {
 		Vector2 steer = dir*maxSpeed - velocity;
 		
 		return M8.Math.Limit(steer, maxForce)*factor;
-	}
-	
-	//use if mWallCheck is true
-	private Vector2 Wall() {
-		Vector2 dir = M8.Math.Reflect(mDir, mWallCheckHit.normal);
-				
-		return dir*(maxForce*wallFactor);
 	}
 	
 	//use if mAntis.Count > 0
