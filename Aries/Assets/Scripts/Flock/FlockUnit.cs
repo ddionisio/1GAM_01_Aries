@@ -12,6 +12,7 @@ public class FlockUnit : MonoBehaviour {
 	public float maxSpeed = 20.0f; //meters/sec
 	
 	public float pathRadius;
+	public float wallRadius;
 	
 	public float separateDistance = 2.0f;
 	
@@ -19,13 +20,15 @@ public class FlockUnit : MonoBehaviour {
 	public float alignFactor = 1.0f;
 	public float cohesionFactor = 1.0f;
 	public float moveToFactor = 1.0f;
+	public float catchUpFactor = 2.0f; //when we have a move target and there are no other flocks around
 	public float pathFactor = 1.0f;
+	public float wallFactor = 1.0f;
 	
 	public float updateDelay = 1.0f;
 	
 	public float seekDelay = 1.0f;
 	
-	[System.NonSerialized] public Transform moveTarget = null;
+	private Transform mMoveTarget = null;
 	
 	private float mCurUpdateDelay = 0;
 	private float mCurSeekDelay = 0;
@@ -39,9 +42,23 @@ public class FlockUnit : MonoBehaviour {
 	private int mSeekCurPath = -1;
 	private bool mSeekStarted = false;
 	
+	private bool mWallCheck = false;
+	private RaycastHit mWallHit;
+	
 	private float mRadius;
 	
 	private HashSet<FlockAnti> mAntis = new HashSet<FlockAnti>();
+	
+	public Transform moveTarget {
+		get { return mMoveTarget; }
+		
+		set {
+			mMoveTarget = value;
+			if(mMoveTarget == null) {
+				SeekPathStop();
+			}
+		}
+	}
 	
 	public Vector2 dir {
 		get { return mDir; }
@@ -76,16 +93,18 @@ public class FlockUnit : MonoBehaviour {
 	}
 	
 	void Update() {
+		Vector3 pos = transform.position;
+		
 		//check current pathing
 		if(moveTarget != null) {
 			if(mSeekStarted) {
 				if(mSeekPath != null) {
-					Vector3 pos = transform.position;
-					
 					mCurSeekDelay += Time.deltaTime;
 					if(mCurSeekDelay >= seekDelay) {
-						if(moveTarget.position != mSeekPath.vectorPath[mSeekPath.vectorPath.Count-1] 
-							|| !CheckTargetBlock(pos, moveTarget.position, mRadius)) {
+						Vector3 dest = moveTarget.position;
+						
+						if(dest != mSeekPath.vectorPath[mSeekPath.vectorPath.Count-1]
+							|| !CheckTargetBlock(pos, dest, mRadius)) {
 							SeekPathStop();
 						}
 						else {
@@ -113,7 +132,6 @@ public class FlockUnit : MonoBehaviour {
 				mCurSeekDelay += Time.deltaTime;
 				if(mCurSeekDelay >= seekDelay) {
 					//check if target is blocked
-					Vector3 pos = transform.position;
 					Vector3 dest = moveTarget.position;
 					if(CheckTargetBlock(pos, dest, mRadius)) {
 						SeekPathStart(pos, dest);
@@ -124,6 +142,9 @@ public class FlockUnit : MonoBehaviour {
 				}
 			}
 		}
+		
+		//check wall
+		mWallCheck = Physics.SphereCast(pos, wallRadius, mDir, out mWallHit, 0.1f, Layers.layerMaskWall);
 	}
 	
 	// Update is called once per frame
@@ -133,13 +154,12 @@ public class FlockUnit : MonoBehaviour {
 			mCurUpdateDelay = 0;
 			
 			Vector2 sumForce = Vector2.zero;
-															
+				
+			Vector2 sep, align, coh;
+			ComputeMovement(out sep, out align, out coh);
+			
 			//seek path
 			if(mSeekStarted) {
-				Vector2 sep, align, coh;
-			
-				ComputeMovement(out sep, out align, out coh);
-										
 				sumForce += sep;
 				
 				if(mSeekPath != null) {
@@ -152,20 +172,14 @@ public class FlockUnit : MonoBehaviour {
 				}
 			}
 			else {
-				Vector2 sep, align, coh;
-			
-				ComputeMovement(out sep, out align, out coh);
-										
 				sumForce += sep + align + coh;
 				
 				if(moveToFactor != 0.0f && moveTarget != null) {
 					//move to destination
 					Vector2 targetPos = moveTarget.position;
 					
-					float factor = moveToFactor;
-					if(sensor == null || sensor.units.Count == 0) {
-						factor *= 2.0f; //catch up
-					}
+					//catch up?
+					float factor = sensor == null || sensor.units.Count == 0 ? catchUpFactor : moveToFactor;
 					
 					Vector2 seek = Seek(targetPos, factor);
 					
@@ -180,6 +194,11 @@ public class FlockUnit : MonoBehaviour {
 			}
 			
 			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
+		}
+		
+		if(mWallCheck) {
+			Vector2 wall = Wall();
+			mBody.AddForce(wall.x, wall.y, 0.0f);
 		}
 								
 		//get direction and limit speed
@@ -215,8 +234,10 @@ public class FlockUnit : MonoBehaviour {
 	
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.gray;
-		
 		Gizmos.DrawWireSphere(transform.position, pathRadius);
+		
+		Gizmos.color *= 1.25f;
+		Gizmos.DrawWireSphere(transform.position, wallRadius);
 	}
 	
 	void OnSeekPathComplete(Path p) {
@@ -238,8 +259,9 @@ public class FlockUnit : MonoBehaviour {
 	
 	private void SeekPathStart(Vector3 start, Vector3 dest) {
 		mSeek.StartPath(start, dest);
-		mSeekStarted = true;
+		mSeekPath = null;
 		mCurSeekDelay = 0.0f;
+		mSeekStarted = true;
 	}
 	
 	private void SeekPathStop() {
@@ -255,6 +277,11 @@ public class FlockUnit : MonoBehaviour {
 		Vector2 steer = dir*maxSpeed - velocity;
 		
 		return M8.Math.Limit(steer, maxForce)*factor;
+	}
+	
+	//use if mWallCheck is true
+	private Vector2 Wall() {
+		return CalculateSteerForce(mWallHit.normal, wallFactor);
 	}
 	
 	//use if mAntis.Count > 0
