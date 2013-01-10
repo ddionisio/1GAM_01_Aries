@@ -147,7 +147,7 @@ public class UIModalManager : MonoBehaviour {
 		}
 	}
 	
-	void SceneShutdown() {
+	void SceneChange() {
 		ModalCloseAll();
 	}
 	

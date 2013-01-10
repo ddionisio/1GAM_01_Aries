@@ -7,7 +7,7 @@ public class FlockUnit : MonoBehaviour {
 	public FlockType type;
 	
 	public FlockSensor sensor;
-			
+	
 	public float maxForce = 120.0f; //N
 	public float maxSpeed = 20.0f; //meters/sec
 	
@@ -46,8 +46,6 @@ public class FlockUnit : MonoBehaviour {
 	private RaycastHit mWallHit;
 	
 	private float mRadius;
-	
-	private HashSet<FlockAnti> mAntis = new HashSet<FlockAnti>();
 	
 	public Transform moveTarget {
 		get { return mMoveTarget; }
@@ -187,12 +185,6 @@ public class FlockUnit : MonoBehaviour {
 				}
 			}
 			
-			if(mAntis.Count > 0) {
-				Vector2 away = Anti();
-				
-				sumForce += away;
-			}
-			
 			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
 		
@@ -210,24 +202,6 @@ public class FlockUnit : MonoBehaviour {
 			
 			if(velD > maxSpeed) {
 				mBody.velocity = mDir*maxSpeed;
-			}
-		}
-	}
-		
-	void OnTriggerEnter(Collider t) {
-		if(t.gameObject.layer == Layers.layerFlockAnti) {
-			FlockAnti anti = t.GetComponent<FlockAnti>();
-			if(anti.typeFilter == FlockType.All || anti.typeFilter == type) {
-				mAntis.Add(anti);
-			}
-		}
-	}
-	
-	void OnTriggerExit(Collider t) {
-		if(t.gameObject.layer == Layers.layerFlockAnti) {
-			FlockAnti anti = t.GetComponent<FlockAnti>();
-			if(anti.typeFilter == FlockType.All || anti.typeFilter == type) {
-				mAntis.Remove(anti);
 			}
 		}
 	}
@@ -270,81 +244,19 @@ public class FlockUnit : MonoBehaviour {
 		mSeekStarted = false;
 		mSeekCurPath = -1;
 	}
-	
-	private Vector2 CalculateSteerForce(Vector2 dir, float factor) {
-		Vector2 velocity = mBody.velocity;
 		
-		Vector2 steer = dir*maxSpeed - velocity;
-		
-		return M8.Math.Limit(steer, maxForce)*factor;
-	}
-	
 	//use if mWallCheck is true
 	private Vector2 Wall() {
-		return CalculateSteerForce(mWallHit.normal, wallFactor);
+		return M8.Math.Steer(mBody.velocity, mWallHit.normal*maxSpeed, maxForce, wallFactor);
 	}
 	
-	//use if mAntis.Count > 0
-	private Vector2 Anti() {
-		Vector2 pos = mTrans.localPosition;
-		
-		Vector2 forces = Vector2.zero;
-		
-		Vector2 away = Vector2.zero;
-		
-		float awayFactor = 0.0f;
-		
-		int numAway = 0;
-				
-		foreach(FlockAnti anti in mAntis) {
-			Vector2 antiPos = anti.transform.position;
-			
-			switch(anti.type) {
-			case FlockAnti.Type.Away:
-				away += (pos - antiPos).normalized;
-				awayFactor += anti.factor;
-				numAway++;
-				break;
-				
-			case FlockAnti.Type.Force:
-				forces += (pos - antiPos).normalized*anti.force;
-				break;
-				
-			case FlockAnti.Type.Dir:
-				away += anti.dir;
-				awayFactor += anti.factor;
-				numAway++;
-				break;
-				
-			case FlockAnti.Type.DirForce:
-				forces += anti.dir*anti.force;
-				break;
-			}
-		}
-		
-		if(numAway > 0) {
-			float fCount = (float)numAway;
-			
-			away /= fCount;
-			awayFactor /= fCount;
-			
-			float dist = away.magnitude;
-			if(dist > 0) {
-				away /= dist;
-				away = CalculateSteerForce(away, awayFactor);
-			}
-		}
-		
-		return away + forces;
-	}
-		
 	private Vector2 Seek(Vector2 target, float factor) {
 		Vector2 pos = mTrans.localPosition;
 		
 		Vector2 desired = target - pos;
 		desired.Normalize();
 		
-		return CalculateSteerForce(desired, factor);
+		return M8.Math.Steer(mBody.velocity, desired*maxSpeed, maxForce, factor);
 	}
 	
 	private void ComputeMovement(out Vector2 separate, out Vector2 align, out Vector2 cohesion) {
@@ -387,7 +299,7 @@ public class FlockUnit : MonoBehaviour {
 				dist = separate.magnitude;
 				if(dist > 0) {
 					separate /= dist;
-					separate = CalculateSteerForce(separate, separateFactor);
+					separate = M8.Math.Steer(mBody.velocity, separate*maxSpeed, maxForce, separateFactor);
 				}
 			}
 			
@@ -396,7 +308,7 @@ public class FlockUnit : MonoBehaviour {
 			//calculate align
 			align /= fCount;
 			align.Normalize();
-			align = CalculateSteerForce(align.normalized, alignFactor);
+			align = M8.Math.Steer(mBody.velocity, align*maxSpeed, maxForce, alignFactor);
 			
 			//calculate cohesion
 			cohesion /= fCount;

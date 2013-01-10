@@ -2,12 +2,15 @@ using UnityEngine;
 using System.Collections;
 
 public class PlayerController : MonoBehaviour {
+	public float force;
 	public float speed;
 	
 	private Rigidbody mBody;
 	
 	void OnDestroy() {
-		Main.instance.input.RemoveButtonCall(InputAction.Act, OnAction);
+		if(Main.instance != null) {
+			Main.instance.input.RemoveButtonCall(InputAction.Act, OnAction);
+		}
 	}
 	
 	void Awake() {
@@ -20,7 +23,7 @@ public class PlayerController : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
 		InputManager input = Main.instance.input;
 		
 		float moveX = input.GetAxis(InputAction.MoveX);

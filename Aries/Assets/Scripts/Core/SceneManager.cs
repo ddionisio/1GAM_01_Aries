@@ -8,7 +8,7 @@ public class SceneManager : MonoBehaviour {
 		start,
 		test
 	}
-	
+			
 	public const string levelString = "level";
 	
 	public ScreenTransition screenTransition;
@@ -138,12 +138,7 @@ public class SceneManager : MonoBehaviour {
 	}
 	
 	void DoLoad() {
-		Main.instance.BroadcastMessage("SceneShutdown", null, SendMessageOptions.DontRequireReceiver);
-		
-		if(mSceneController != null) {
-			mSceneController.BroadcastMessage("SceneShutdown", null, SendMessageOptions.DontRequireReceiver);
-			mSceneController = null;
-		}
+		Main.instance.BroadcastMessage("SceneChange", null, SendMessageOptions.DontRequireReceiver);
 		
 		mCurSceneStr = mSceneToLoad;
 		

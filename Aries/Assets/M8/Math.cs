@@ -75,6 +75,10 @@ namespace M8 {
 			return side;
 		}
 		
+		public static Vector2 Steer(Vector2 velocity, Vector2 desired, float speedCap, float factor) {
+			return Limit(desired - velocity, speedCap)*factor;
+		}
+		
 		//-------------- 3D --------------
 		
 		public static void Limit(ref Vector3 v, float limit) {

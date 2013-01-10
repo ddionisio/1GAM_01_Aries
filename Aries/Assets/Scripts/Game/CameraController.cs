@@ -11,11 +11,9 @@ public class CameraController : MonoBehaviour {
 	
 	private Transform mAttachTo;
 	
-	private Vector2 mMoveStart;
-	
-	private float mCurMoveTime;
-	
-	public CameraController instance { get { return mInstance; } }
+	private Hashtable mMoveParam;
+		
+	public static CameraController instance { get { return mInstance; } }
 	
 	public Transform attachTo {
 		get { return mAttachTo; }
@@ -24,7 +22,10 @@ public class CameraController : MonoBehaviour {
 			mAttachTo = value;
 			
 			if(mAttachTo != null) {
-				StartMove();
+				mMoveParam.Add(iT.MoveUpdate.position, mAttachTo);
+			}
+			else {
+				mMoveParam.Remove(iT.MoveUpdate.position);
 			}
 		}
 	}
@@ -36,7 +37,8 @@ public class CameraController : MonoBehaviour {
 	void Awake() {
 		mInstance = this;
 		
-		mCurMoveTime = moveDelay;
+		mMoveParam = new Hashtable(2);
+		mMoveParam.Add(iT.MoveUpdate.time, moveDelay);
 	}
 
 	// Use this for initialization
@@ -47,28 +49,7 @@ public class CameraController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if(mAttachTo != null) {
-			if(mCurMoveTime < moveDelay) {
-				mCurMoveTime += Time.deltaTime;
-										
-				Vector2 dest = mAttachTo.position;
-							
-				if(mCurMoveTime < moveDelay) {			
-					transform.position = new Vector2(
-						M8.Ease.Out(mCurMoveTime, moveDelay, mMoveStart.x, dest.x - mMoveStart.x),
-						M8.Ease.Out(mCurMoveTime, moveDelay, mMoveStart.y, dest.y - mMoveStart.y));
-				}
-				else {
-					transform.position = dest;
-				}
-			}
-			else if(transform.position != mAttachTo.position) {
-				StartMove();
-			}
+			iTween.MoveUpdate(gameObject, mMoveParam);
 		}
-	}
-	
-	private void StartMove() {
-		mMoveStart = transform.position;
-		mCurMoveTime = 0.0f;
 	}
 }
