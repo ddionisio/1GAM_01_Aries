@@ -23,6 +23,8 @@ public class FlockUnit : MotionBase {
 	public float pathFactor = 1.0f;
 	public float wallFactor = 1.0f;
 	
+	public bool restrictMoveOnStart = false; 
+	
 	public float updateDelay = 1.0f;
 	
 	public float seekDelay = 1.0f;
@@ -43,6 +45,13 @@ public class FlockUnit : MotionBase {
 	private RaycastHit mWallHit;
 	
 	private float mRadius;
+	
+	private bool mRestrictMove = false; //turns off cohesion/align
+	
+	public bool restrictMove {
+		get { return mRestrictMove; }
+		set { mRestrictMove = value; }
+	}
 	
 	public Transform moveTarget {
 		get { return mMoveTarget; }
@@ -77,7 +86,9 @@ public class FlockUnit : MotionBase {
 	
 	// Use this for initialization
 	void Start () {
-	
+		if(restrictMoveOnStart) {
+			mRestrictMove = true;
+		}
 	}
 	
 	void Update() {
@@ -141,14 +152,11 @@ public class FlockUnit : MotionBase {
 		if(mCurUpdateDelay >= updateDelay) {
 			mCurUpdateDelay = 0;
 			
-			Vector2 sumForce = Vector2.zero;
-				
-			Vector2 sep, align, coh;
-			ComputeMovement(out sep, out align, out coh);
-			
+			Vector2 sumForce;
+									
 			//seek path
 			if(mSeekStarted) {
-				sumForce += sep;
+				sumForce = ComputeSeparate();
 				
 				if(mSeekPath != null) {
 					Vector2 target = mSeekPath.vectorPath[mSeekCurPath];
@@ -160,7 +168,7 @@ public class FlockUnit : MotionBase {
 				}
 			}
 			else {
-				sumForce += sep + align + coh;
+				sumForce = mRestrictMove ? ComputeSeparate() : ComputeMovement();
 				
 				if(moveToFactor != 0.0f && moveTarget != null) {
 					//move to destination
@@ -239,12 +247,54 @@ public class FlockUnit : MotionBase {
 		return M8.Math.Steer(body.velocity, desired*maxSpeed, maxForce, factor);
 	}
 	
-	private void ComputeMovement(out Vector2 separate, out Vector2 align, out Vector2 cohesion) {
-		separate = Vector2.zero;
-		align = Vector2.zero;
-		cohesion = Vector2.zero;
+	//use when restrict move is true or we are seeking
+	private Vector2 ComputeSeparate() {
+		Vector2 separate = Vector2.zero;
 		
 		if(sensor != null && sensor.units.Count > 0) {
+			Vector2 pos = mTrans.localPosition;
+			
+			Vector2 dPos;
+			float dist;
+			
+			int numSeparate = 0;
+			
+			foreach(FlockUnit unit in sensor.units) {
+				Vector2 otherPos = unit.transform.localPosition;
+				
+				//separate
+				dPos = pos - otherPos;
+				dist = dPos.magnitude;
+				if(dist < separateDistance) {
+					dPos /= dist;
+					separate += dPos;
+					numSeparate++;
+				}
+			}
+			
+			//calculate separate
+			if(numSeparate > 0) {
+				separate /= (float)numSeparate;
+				
+				dist = separate.magnitude;
+				if(dist > 0) {
+					separate /= dist;
+					separate = M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
+				}
+			}
+		}
+		
+		return separate;
+	}
+	
+	private Vector2 ComputeMovement() {
+		Vector2 forceRet;
+		
+		if(sensor != null && sensor.units.Count > 0) {
+			Vector2 separate = Vector2.zero;
+			Vector2 align = Vector2.zero;
+			Vector2 cohesion = Vector2.zero;
+			
 			Vector2 pos = mTrans.localPosition;
 			
 			Vector2 dPos;
@@ -293,6 +343,13 @@ public class FlockUnit : MotionBase {
 			//calculate cohesion
 			cohesion /= fCount;
 			cohesion = Seek(cohesion, cohesionFactor);
+			
+			forceRet = separate + align + cohesion;
 		}
+		else {
+			forceRet = Vector2.zero;
+		}
+		
+		return forceRet;
 	}
 }

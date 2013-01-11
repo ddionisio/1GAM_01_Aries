@@ -2,25 +2,27 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class FlockGroup : MonoBehaviour {					
+public class FlockGroup : MonoBehaviour {	
 	public int startNumSpawn;
 	
 	public float radius;
 	
-	public Transform target;
-		
 	private List<FlockUnit> mUnits;
-	
-	private float mDistanceSq;
 	
 	public List<FlockUnit> units {
 		get { return mUnits; }
 	}
 	
 	public void AddUnit(FlockUnit unit) {
+		//reparent?
+		mUnits.Add(unit);
+		OnAddUnit(unit);
 	}
 	
-	void Awake() {
+	protected virtual void OnAddUnit(FlockUnit unit) {
+	}
+	
+	protected virtual void Awake() {
 		//set initial flocks from scene
 		mUnits = new List<FlockUnit>(transform.childCount);
 		
@@ -28,17 +30,14 @@ public class FlockGroup : MonoBehaviour {
 			FlockUnit unit = t.GetComponentInChildren<FlockUnit>();
 			if(unit != null) {
 				mUnits.Add(unit);
-				
-				if(target != null) {
-					unit.moveTarget = target;
-				}
+				OnAddUnit(unit);
 			}
 		}
 	}
 	
-	void Start() {
+	protected virtual void Start() {
 		if(startNumSpawn > 0) {
-			//spawn stuff
+			//spawn stuff 
 		}
 	}
 	
@@ -46,11 +45,6 @@ public class FlockGroup : MonoBehaviour {
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.yellow;
 		
-		if(target != null) {
-			Gizmos.DrawWireSphere(target.position, radius);
-		}
-		else {
-			Gizmos.DrawWireSphere(transform.position, radius);
-		}
+		Gizmos.DrawWireSphere(transform.position, radius);
 	}
 }

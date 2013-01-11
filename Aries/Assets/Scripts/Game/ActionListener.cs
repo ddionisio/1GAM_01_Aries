@@ -5,40 +5,46 @@ using System.Collections;
 public class ActionListener : MonoBehaviour {
 	public const string FuncActionEnter = "OnActionEnter"; //void OnActionEnter(ActionTarget target)
 	public const string FuncActionExit = "OnActionExit"; //void OnActionExit(ActionTarget target)
+	public const string FuncActionFinish = "OnActionFinish"; //void OnActionFinish(ActionTarget target)
 	
 	private ActionTarget mCurActionTarget = null;
 	
-	public void StopAction() {
-		if(mCurActionTarget != null) {
+	public ActionTarget currentTarget {
+		get { return mCurActionTarget; }
+	}
+	
+	//true if stopped or there was no action target
+	public bool StopAction(ActionTarget.Priority priority) {
+		if(mCurActionTarget == null) {
+			return true;
+		}
+		else if(mCurActionTarget.priority <= priority) {
 			mCurActionTarget.RemoveListener(this);
 			
-			BroadcastMessage(FuncActionExit, mCurActionTarget, SendMessageOptions.DontRequireReceiver);
+			BroadcastMessage(FuncActionFinish, this, SendMessageOptions.DontRequireReceiver);
 									
 			mCurActionTarget = null;
+			
+			return true;
 		}
+		
+		return false;
+	}
+	
+	void OnDestroy() {
+		StopAction(ActionTarget.Priority.Highest);
 	}
 	
 	void OnTriggerEnter(Collider other) {
 		ActionTarget target = other.GetComponent<ActionTarget>();
-		if(target != null && target.vacancy) {
-			bool doIt = true;
-			
+		if(target != null && target.vacancy) {			
 			//check if we currently have a target, then determine priority
-			if(mCurActionTarget != null) {
-				if(mCurActionTarget.action.priority <= target.action.priority) {
-					StopAction();
-				}
-				else {
-					doIt = false;
-				}
-			}
-			
-			if(doIt) {
+			if(StopAction(target.priority)) {
 				target.AddListener(this);
 				
 				mCurActionTarget = target;
 				
-				BroadcastMessage(FuncActionEnter, target, SendMessageOptions.DontRequireReceiver);
+				BroadcastMessage(FuncActionEnter, this, SendMessageOptions.DontRequireReceiver);
 			}
 		}
 	}
@@ -46,7 +52,12 @@ public class ActionListener : MonoBehaviour {
 	void OnTriggerExit(Collider other) {
 		ActionTarget target = other.GetComponent<ActionTarget>();
 		if(target != null && target == mCurActionTarget) {
-			StopAction();
+			if(target.stopOnExit) {
+				StopAction(ActionTarget.Priority.Highest);
+			}
+			else {
+				BroadcastMessage(FuncActionExit, this, SendMessageOptions.DontRequireReceiver);
+			}
 		}
 	}
 }

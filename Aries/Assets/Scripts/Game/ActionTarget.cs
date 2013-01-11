@@ -3,9 +3,31 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class ActionTarget : MonoBehaviour {
-	public ActionInfo action;
+	public enum Type {
+		Follow, //normally attach the action's target to a unit
+		Move,
+		Disperse,
+		Attack, //normally attach the action's target to a unit (or maybe not)
+		
+		NumType
+	}
+	
+	public enum Priority {
+		Highest,
+		High,
+		Normal,
+		Low
+	}
+	
+	public const int Unlimited = -1;
+	
+	public Type type;
+	public Priority priority = Priority.Normal;
+	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	
 	public Transform target;
+	
+	public bool stopOnExit = false;
 	
 	public bool startSensorOff = false; //turn off sensor at start
 	
@@ -21,16 +43,8 @@ public class ActionTarget : MonoBehaviour {
 				mSensor.enabled = value;
 				
 				//remove listeners
-				if(!value && mListeners.Count > 0) {
-					//call exit for each
-					ActionListener[] listeners = new ActionListener[mListeners.Count]; 
-					mListeners.CopyTo(listeners);
-					
-					for(int i = 0; i < listeners.Length; i++) {
-						listeners[i].StopAction();
-					}
-					
-					mListeners.Clear();
+				if(!value) {
+					StopAction();
 				}
 			}
 		}
@@ -38,7 +52,7 @@ public class ActionTarget : MonoBehaviour {
 	
 	public bool vacancy {
 		get {
-			return action.limit == ActionInfo.Unlimited || mListeners.Count < action.limit;
+			return limit == Unlimited || mListeners.Count < limit;
 		}
 	}
 	
@@ -46,12 +60,28 @@ public class ActionTarget : MonoBehaviour {
 		get { return mListeners.Count; }
 	}
 	
+	//when we want to finish action
+	public void StopAction() {
+		//remove listeners
+		if(mListeners.Count > 0) {
+			//call exit for each
+			ActionListener[] listeners = new ActionListener[mListeners.Count]; 
+			mListeners.CopyTo(listeners);
+			
+			for(int i = 0; i < listeners.Length; i++) {
+				listeners[i].StopAction(Priority.Highest);
+			}
+			
+			mListeners.Clear();
+		}
+	}
+	
 	//called by ActionListener during OnTriggerEnter if we are valide
 	public void AddListener(ActionListener listener) {
 		mListeners.Add(listener);
 	}
 	
-	//called by ActionListener during OnTriggerExit
+	//called by ActionListener when we stop action
 	public void RemoveListener(ActionListener listener) {
 		mListeners.Remove(listener);
 	}
