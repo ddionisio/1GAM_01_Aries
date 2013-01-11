@@ -19,5 +19,12 @@
 		"keys" : [
 			{ "input":"Fire1" }
 		]
+	},
+	{
+		"action":"Recall",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Fire2" }
+		]
 	}
 ]

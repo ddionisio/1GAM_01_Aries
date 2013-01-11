@@ -1,17 +1,21 @@
 using UnityEngine;
 using System.Collections;
 
-public class Player : MonoBehaviour {
+public class Player : EntityBase {
+	
+	protected override void Awake() {
+		base.Awake();
+	}
 
 	// Use this for initialization
-	void Start () {
-		CameraController camCtrl = CameraController.instance;
+	protected override void Start () {
+		base.Start();
 		
+		CameraController camCtrl = CameraController.instance;
 		camCtrl.attachTo = transform;
 	}
 	
-	// Update is called once per frame
-	void Update () {
+	void LateUpdate () {
 	
 	}
 }

@@ -13,6 +13,10 @@ public class FlockGroup : MonoBehaviour {
 	
 	private float mDistanceSq;
 	
+	public List<FlockUnit> units {
+		get { return mUnits; }
+	}
+	
 	public void AddUnit(FlockUnit unit) {
 	}
 	

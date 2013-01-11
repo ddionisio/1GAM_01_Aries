@@ -3,13 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Pathfinding;
 
-public class FlockUnit : MonoBehaviour {
+public class FlockUnit : MotionBase {
 	public FlockType type;
 	
 	public FlockSensor sensor;
 	
 	public float maxForce = 120.0f; //N
-	public float maxSpeed = 20.0f; //meters/sec
 	
 	public float pathRadius;
 	public float wallRadius;
@@ -33,8 +32,6 @@ public class FlockUnit : MonoBehaviour {
 	private float mCurUpdateDelay = 0;
 	private float mCurSeekDelay = 0;
 	
-	private Vector2 mDir = Vector2.right;
-	private Rigidbody mBody;
 	private Transform mTrans;
 	
 	private Seeker mSeek; //use for when our target is blocked
@@ -57,26 +54,19 @@ public class FlockUnit : MonoBehaviour {
 			}
 		}
 	}
-	
-	public Vector2 dir {
-		get { return mDir; }
-	}
-	
-	public Rigidbody body {
-		get { return mBody; }
-	}
-	
+			
 	void OnDestroy() {
 		mSeek.pathCallback -= OnSeekPathComplete;
 	}
 		
-	void Awake() {
+	protected override void Awake() {
+		base.Awake();
+		
+		mTrans = transform;
+		
 		if(sensor != null) {
 			sensor.typeFilter = type;
 		}
-		
-		mBody = rigidbody;
-		mTrans = transform;
 		
 		mSeek = GetComponent<Seeker>();
 		mSeek.pathCallback += OnSeekPathComplete;
@@ -142,11 +132,11 @@ public class FlockUnit : MonoBehaviour {
 		}
 		
 		//check wall
-		mWallCheck = Physics.SphereCast(pos, wallRadius, mDir, out mWallHit, 0.1f, Layers.layerMaskWall);
+		mWallCheck = Physics.SphereCast(pos, wallRadius, dir, out mWallHit, 0.1f, Layers.layerMaskWall);
 	}
 	
 	// Update is called once per frame
-	void FixedUpdate () {
+	protected override void FixedUpdate () {
 		mCurUpdateDelay += Time.fixedDeltaTime;
 		if(mCurUpdateDelay >= updateDelay) {
 			mCurUpdateDelay = 0;
@@ -185,25 +175,15 @@ public class FlockUnit : MonoBehaviour {
 				}
 			}
 			
-			mBody.AddForce(sumForce.x, sumForce.y, 0.0f);
+			body.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
 		
 		if(mWallCheck) {
 			Vector2 wall = Wall();
-			mBody.AddForce(wall.x, wall.y, 0.0f);
+			body.AddForce(wall.x, wall.y, 0.0f);
 		}
-								
-		//get direction and limit speed
-		Vector2 vel = mBody.velocity;
-		float velD = vel.magnitude;
 		
-		if(velD > 0) {
-			mDir = vel/velD;
-			
-			if(velD > maxSpeed) {
-				mBody.velocity = mDir*maxSpeed;
-			}
-		}
+		base.FixedUpdate();
 	}
 	
 	void OnDrawGizmosSelected() {
@@ -247,7 +227,7 @@ public class FlockUnit : MonoBehaviour {
 		
 	//use if mWallCheck is true
 	private Vector2 Wall() {
-		return M8.Math.Steer(mBody.velocity, mWallHit.normal*maxSpeed, maxForce, wallFactor);
+		return M8.Math.Steer(body.velocity, mWallHit.normal*maxSpeed, maxForce, wallFactor);
 	}
 	
 	private Vector2 Seek(Vector2 target, float factor) {
@@ -256,7 +236,7 @@ public class FlockUnit : MonoBehaviour {
 		Vector2 desired = target - pos;
 		desired.Normalize();
 		
-		return M8.Math.Steer(mBody.velocity, desired*maxSpeed, maxForce, factor);
+		return M8.Math.Steer(body.velocity, desired*maxSpeed, maxForce, factor);
 	}
 	
 	private void ComputeMovement(out Vector2 separate, out Vector2 align, out Vector2 cohesion) {
@@ -299,7 +279,7 @@ public class FlockUnit : MonoBehaviour {
 				dist = separate.magnitude;
 				if(dist > 0) {
 					separate /= dist;
-					separate = M8.Math.Steer(mBody.velocity, separate*maxSpeed, maxForce, separateFactor);
+					separate = M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
 				}
 			}
 			
@@ -308,7 +288,7 @@ public class FlockUnit : MonoBehaviour {
 			//calculate align
 			align /= fCount;
 			align.Normalize();
-			align = M8.Math.Steer(mBody.velocity, align*maxSpeed, maxForce, alignFactor);
+			align = M8.Math.Steer(body.velocity, align*maxSpeed, maxForce, alignFactor);
 			
 			//calculate cohesion
 			cohesion /= fCount;

@@ -7,6 +7,7 @@ public enum InputAction {
 	MoveY,
 	
 	Act,
+	Recall,
 	
 	NumAction
 }
