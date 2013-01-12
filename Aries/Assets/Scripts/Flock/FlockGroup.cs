@@ -22,7 +22,7 @@ public class FlockGroup : MonoBehaviour {
 	protected virtual void OnAddUnit(FlockUnit unit) {
 	}
 	
-	protected virtual void Awake() {
+	protected virtual void Start() {
 		//set initial flocks from scene
 		mUnits = new List<FlockUnit>(transform.childCount);
 		
@@ -33,9 +33,7 @@ public class FlockGroup : MonoBehaviour {
 				OnAddUnit(unit);
 			}
 		}
-	}
-	
-	protected virtual void Start() {
+		
 		if(startNumSpawn > 0) {
 			//spawn stuff 
 		}

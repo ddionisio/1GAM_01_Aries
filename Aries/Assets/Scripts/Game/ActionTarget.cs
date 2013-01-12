@@ -25,22 +25,20 @@ public class ActionTarget : MonoBehaviour {
 	public Priority priority = Priority.Normal;
 	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	
+	public Collider sensor;
 	public Transform target;
 	
 	public bool stopOnExit = false;
-	
 	public bool startSensorOff = false; //turn off sensor at start
-	
+			
 	private HashSet<ActionListener> mListeners = new HashSet<ActionListener>();
-	
-	private Collider mSensor;
-	
+			
 	public bool sensorOn {
-		get { return mSensor == null ? false : mSensor.enabled; }
+		get { return sensor == null ? false : sensor.enabled; }
 		
 		set {
-			if(mSensor != null) {
-				mSensor.enabled = value;
+			if(sensor != null) {
+				sensor.enabled = value;
 				
 				//remove listeners
 				if(!value) {
@@ -69,7 +67,12 @@ public class ActionTarget : MonoBehaviour {
 			mListeners.CopyTo(listeners);
 			
 			for(int i = 0; i < listeners.Length; i++) {
-				listeners[i].StopAction(Priority.Highest);
+				if(listeners[i].defaultTarget == this) {
+					listeners[i].defaultTarget = null;
+				}
+				else if(listeners[i].currentTarget == this) {
+					listeners[i].currentTarget = null;
+				}
 			}
 			
 			mListeners.Clear();
@@ -86,13 +89,19 @@ public class ActionTarget : MonoBehaviour {
 		mListeners.Remove(listener);
 	}
 	
+	void OnDestroy() {
+		StopAction();
+	}
+	
 	void Awake() {
-		mSensor = collider;
+		if(sensor == null) {
+			sensor = collider;
+		}
 	}
 	
 	void Start() {
-		if(startSensorOff && mSensor != null) {
-			mSensor.enabled = false;
+		if(startSensorOff && sensor != null) {
+			sensor.enabled = false;
 		}
 	}
 }

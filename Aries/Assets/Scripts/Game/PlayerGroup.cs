@@ -7,19 +7,9 @@ public class PlayerGroup : FlockGroup {
 	
 	protected override void OnAddUnit(FlockUnit unit) {
 		//setup default sheep follow target
-		FlockActionController actionControl = unit.GetComponent<FlockActionController>();
-		if(actionControl != null) {
-			actionControl.noActionFollow = playerController.transform;
-			
-			//if for some reason there's an action listener, then just stop it
-			//follow player right away
-			if(actionControl.curListener != null) {
-				actionControl.curListener.StopAction(ActionTarget.Priority.High);
-			}
-			else {
-				unit.restrictMove = false;
-				unit.moveTarget = playerController.transform;
-			}
+		ActionListener actionListen = unit.GetComponent<ActionListener>();
+		if(actionListen != null) {
+			actionListen.defaultTarget = playerController.followAction;
 		}
 	}
 }

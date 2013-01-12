@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerController : MotionBase {
 	public float force;
 	
-	public FlockSensor followSensor;
+	public ActionTarget followAction;
 	public float followActiveDelay = 1.0f;
 	
 	private float mCurFollowActiveTime = 0.0f;
@@ -18,9 +18,6 @@ public class PlayerController : MotionBase {
 	
 	protected override void Awake() {
 		base.Awake();
-		
-		followSensor.collider.enabled = false;
-		followSensor.typeFilter = FlockType.PlayerUnits;
 	}
 	
 	// Use this for initialization
@@ -31,19 +28,10 @@ public class PlayerController : MotionBase {
 	
 	void Update() {
 		//cancel actions of units within while recall is active
-		if(followSensor.collider.enabled) {
+		if(followAction.sensorOn) {
 			mCurFollowActiveTime += Time.deltaTime;
 			if(mCurFollowActiveTime >= followActiveDelay) {
-				followSensor.collider.enabled = false;
-			}
-			else {
-				//check flock in sensor
-				foreach(FlockUnit unit in followSensor.units) {
-					FlockActionController ctrl = unit.GetComponent<FlockActionController>();
-					if(ctrl != null && ctrl.curListener != null) {
-						ctrl.curListener.StopAction(ActionTarget.Priority.High);
-					}
-				}
+				followAction.sensorOn = false;
 			}
 		}
 	}
@@ -59,6 +47,8 @@ public class PlayerController : MotionBase {
 			body.AddForce(moveX*force, moveY*force, 0.0f);
 		}
 		
+		followAction.transform.up = dir;
+		
 		base.FixedUpdate();
 	}
 	
@@ -70,7 +60,7 @@ public class PlayerController : MotionBase {
 	
 	void OnRecall(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
-			followSensor.collider.enabled = true;
+			followAction.sensorOn = true;
 			mCurFollowActiveTime = 0.0f;
 		}
 	}
