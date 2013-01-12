@@ -102,6 +102,7 @@ public class FlockUnit : MotionBase {
 					if(mCurSeekDelay >= seekDelay) {
 						Vector3 dest = moveTarget.position;
 						
+						//check to see if destination has changed or no longer blocked
 						if(dest != mSeekPath.vectorPath[mSeekPath.vectorPath.Count-1]
 							|| !CheckTargetBlock(pos, dest, mRadius)) {
 							SeekPathStop();
@@ -111,19 +112,7 @@ public class FlockUnit : MotionBase {
 						}
 					}
 					else {
-						//check if we need to move to next waypoint
-						Vector3 wp = mSeekPath.vectorPath[mSeekCurPath];
 						
-						if(Vector3.Distance(pos, wp) < pathRadius) {
-							//no longer need to follow path
-							int nextPath = mSeekCurPath+1;
-							if(nextPath == mSeekPath.vectorPath.Count) {
-								SeekPathStop();
-							}
-							else {
-								mSeekCurPath = nextPath;
-							}
-						}
 					}
 				}
 			}
@@ -161,10 +150,27 @@ public class FlockUnit : MotionBase {
 				if(mSeekPath != null) {
 					Vector2 target = mSeekPath.vectorPath[mSeekCurPath];
 					Vector2 pos = transform.position;
+					
 					Vector2 desired = target - pos;
-					desired.Normalize();
-					sumForce += desired*(maxForce*pathFactor);
-					//sumForce += Seek(target, pathFactor);
+					float distance = desired.magnitude;
+					
+					//check if we need to move to next waypoint
+					if(distance < pathRadius) {
+						//path complete?
+						int nextPath = mSeekCurPath+1;
+						if(nextPath == mSeekPath.vectorPath.Count) {
+							SeekPathStop();
+						}
+						else {
+							mSeekCurPath = nextPath;
+						}
+					}
+					else {
+						//continue moving to wp
+						desired /= distance;
+						
+						sumForce += desired*(maxForce*pathFactor);
+					}
 				}
 			}
 			else {
@@ -203,8 +209,13 @@ public class FlockUnit : MotionBase {
 	}
 	
 	void OnSeekPathComplete(Path p) {
-		mSeekPath = p;
-		mSeekCurPath = 0;
+		if(p == null || p.vectorPath.Count == 0) {
+			SeekPathStop();
+		}
+		else {
+			mSeekPath = p;
+			mSeekCurPath = 0;
+		}
 	}
 	
 	private bool CheckTargetBlock(Vector3 pos, Vector3 dest, float radius) {

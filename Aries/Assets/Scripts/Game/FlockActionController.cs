@@ -56,7 +56,7 @@ public class FlockActionController : MonoBehaviour {
 	}
 	
 	void ResumeFollow(Transform targetCheck, bool stopActive) {
-		if(mCurListener != null && mCurListener.currentTarget.type == ActionTarget.Type.Follow) {
+		if(mCurListener != null && mCurListener.transform == targetCheck && mCurListener.currentTarget.type == ActionTarget.Type.Follow) {
 			if(targetCheck == null || targetCheck == mCurListener.currentTarget.target) {
 				flockUnit.restrictMove = false;
 				flockUnit.moveTarget = mCurListener.currentTarget.target;
@@ -78,7 +78,7 @@ public class FlockActionController : MonoBehaviour {
 	void OnTriggerEnter(Collider other) {
 		if(!mStopActive) {
 			mStopActive =
-				((mCurListener != null && mCurListener.currentTarget.type == ActionTarget.Type.Follow)
+				((mCurListener != null && mCurListener.collider == other && mCurListener.currentTarget.type == ActionTarget.Type.Follow)
 					|| mNoActionFollow != null) && other.transform == flockUnit.moveTarget;
 		}
 	}

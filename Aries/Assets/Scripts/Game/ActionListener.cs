@@ -11,6 +11,15 @@ public class ActionListener : MonoBehaviour {
 	
 	public ActionTarget currentTarget {
 		get { return mCurActionTarget; }
+		
+		set {
+			if(value != null) {
+				SetTarget(value);
+			}
+			else {
+				StopAction(ActionTarget.Priority.Highest);
+			}
+		}
 	}
 	
 	//true if stopped or there was no action target
@@ -32,21 +41,11 @@ public class ActionListener : MonoBehaviour {
 	}
 	
 	void OnDestroy() {
-		StopAction(ActionTarget.Priority.Highest);
+		currentTarget = null;
 	}
 	
 	void OnTriggerEnter(Collider other) {
-		ActionTarget target = other.GetComponent<ActionTarget>();
-		if(target != null && target.vacancy) {			
-			//check if we currently have a target, then determine priority
-			if(StopAction(target.priority)) {
-				target.AddListener(this);
-				
-				mCurActionTarget = target;
-				
-				BroadcastMessage(FuncActionEnter, this, SendMessageOptions.DontRequireReceiver);
-			}
-		}
+		SetTarget(other.GetComponent<ActionTarget>());
 	}
 	
 	void OnTriggerExit(Collider other) {
@@ -57,6 +56,19 @@ public class ActionListener : MonoBehaviour {
 			}
 			else {
 				BroadcastMessage(FuncActionExit, this, SendMessageOptions.DontRequireReceiver);
+			}
+		}
+	}
+	
+	private void SetTarget(ActionTarget target) {
+		if(target != null && target.vacancy) {			
+			//check if we currently have a target, then determine priority
+			if(StopAction(target.priority)) {
+				target.AddListener(this);
+				
+				mCurActionTarget = target;
+				
+				BroadcastMessage(FuncActionEnter, this, SendMessageOptions.DontRequireReceiver);
 			}
 		}
 	}
