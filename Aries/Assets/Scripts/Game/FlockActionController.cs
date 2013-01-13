@@ -10,6 +10,8 @@ public class FlockActionController : ActionListener {
 	
 	public float resumeDistance = 2.0f;
 	
+	public UnitSpriteController spriteControl;
+	
 	private bool mStopActive = false;
 	private float mCurStopDelay = 0.0f;
 	private Vector3 mLastFollowPos = Vector3.zero;
