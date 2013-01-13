@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 //collider is used for following, assume it's trigger
-public class FlockActionController : MonoBehaviour {
+public class FlockActionController : ActionListener {
 	
 	public FlockUnit flockUnit;
 	
@@ -10,15 +10,42 @@ public class FlockActionController : MonoBehaviour {
 	
 	public float resumeDistance = 2.0f;
 	
-	private ActionListener mCurListener = null;
-	
 	private bool mStopActive = false;
 	private float mCurStopDelay = 0.0f;
 	private Vector3 mLastFollowPos = Vector3.zero;
 	private float mResumeDistanceSqr;
 	
-	public ActionListener curListener {
-		get { return mCurListener; }
+	protected override void OnActionEnter() {
+		mStopActive = false;
+		mCurStopDelay = 0.0f;
+		
+		switch(currentTarget.type) {
+		case ActionTarget.Type.Disperse:
+			break;
+			
+		case ActionTarget.Type.Follow:
+			flockUnit.restrictMove = false;
+			flockUnit.moveTarget = currentTarget.target;
+			
+			mLastFollowPos = flockUnit.moveTarget.position;
+			break;
+			
+		default:
+			flockUnit.restrictMove = false;
+			flockUnit.moveTarget = currentTarget.target;
+			break;
+		}
+	}
+	
+	protected override void OnActionExit() {
+	}
+	
+	protected override void OnActionFinish() {
+		//do something
+		mStopActive = false;
+		mCurStopDelay = 0.0f;
+		
+		flockUnit.restrictMove = true;
 	}
 	
 	void Awake() {
@@ -36,8 +63,8 @@ public class FlockActionController : MonoBehaviour {
 					flockUnit.restrictMove = true;
 					flockUnit.moveTarget = null;
 				}
-				else if(mCurListener != null && mCurListener.currentTarget.type == ActionTarget.Type.Follow) {
-					if((mCurListener.currentTarget.target.position - mLastFollowPos).sqrMagnitude >= mResumeDistanceSqr) {
+				else if(currentTarget.type == ActionTarget.Type.Follow) {
+					if((currentTarget.target.position - mLastFollowPos).sqrMagnitude >= mResumeDistanceSqr) {
 						ResumeFollow(null, true);
 					}
 				}
@@ -46,9 +73,9 @@ public class FlockActionController : MonoBehaviour {
 	}
 	
 	void ResumeFollow(Collider targetCheck, bool stopActive) {
-		if(targetCheck == null || targetCheck == mCurListener.currentTarget.collider) {
+		if(targetCheck == null || targetCheck == currentTarget.collider) {
 			flockUnit.restrictMove = false;
-			flockUnit.moveTarget = mCurListener.currentTarget.target;
+			flockUnit.moveTarget = currentTarget.target;
 			mLastFollowPos = flockUnit.moveTarget.position;
 			mStopActive = stopActive;
 		}
@@ -57,9 +84,9 @@ public class FlockActionController : MonoBehaviour {
 	//using flock's sensor to determine when to stop moving while following
 	void OnTriggerEnter(Collider other) {
 		if(!mStopActive) {
-			mStopActive = mCurListener != null 
-				&& mCurListener.currentTarget.type == ActionTarget.Type.Follow
-				&& mCurListener.currentTarget.collider == other;
+			mStopActive = 
+				currentTarget.type == ActionTarget.Type.Follow
+				&& currentTarget.collider == other;
 		}
 	}
 	
@@ -68,42 +95,5 @@ public class FlockActionController : MonoBehaviour {
 			//go back to following
 			ResumeFollow(other, false);
 		}
-	}
-	
-	void OnActionEnter(ActionListener listener) {
-		mStopActive = false;
-		mCurStopDelay = 0.0f;
-		
-		mCurListener = listener;
-		
-		switch(mCurListener.currentTarget.type) {
-		case ActionTarget.Type.Disperse:
-			break;
-			
-		case ActionTarget.Type.Follow:
-			flockUnit.restrictMove = false;
-			flockUnit.moveTarget = mCurListener.currentTarget.target;
-			
-			mLastFollowPos = flockUnit.moveTarget.position;
-			break;
-			
-		default:
-			flockUnit.restrictMove = false;
-			flockUnit.moveTarget = mCurListener.currentTarget.target;
-			break;
-		}
-	}
-	
-	void OnActionExit(ActionListener listener) {
-	}
-	
-	void OnActionFinish(ActionListener listener) {
-		//do something
-		mStopActive = false;
-		mCurStopDelay = 0.0f;
-		
-		flockUnit.restrictMove = true;
-		
-		mCurListener = null;
 	}
 }

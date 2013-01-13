@@ -70,10 +70,4 @@ public class UnitSpriteController : MonoBehaviour {
 	void Update () {
 		
 	}
-	
-	void OnActionEnter(ActionTarget target) {
-	}
-	
-	void OnActionFinish(ActionTarget target) {
-	}
 }

@@ -1,12 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
-//attach with a rigid body, broadcasts action
+//attach with a rigid body
 public class ActionListener : MonoBehaviour {
-	public const string FuncActionEnter = "OnActionEnter"; //void OnActionEnter(ActionTarget target)
-	public const string FuncActionExit = "OnActionExit"; //void OnActionExit(ActionTarget target)
-	public const string FuncActionFinish = "OnActionFinish"; //void OnActionFinish(ActionTarget target)
-	
 	private ActionTarget mCurActionTarget = null;
 	private ActionTarget mDefaultActionTarget = null;
 	
@@ -65,7 +61,7 @@ public class ActionListener : MonoBehaviour {
 		else if(mCurActionTarget.priority <= priority) {
 			mCurActionTarget.RemoveListener(this);
 			
-			BroadcastMessage(FuncActionFinish, this, SendMessageOptions.DontRequireReceiver);
+			OnActionFinish();
 			
 			mCurActionTarget = null;
 			
@@ -77,6 +73,15 @@ public class ActionListener : MonoBehaviour {
 		}
 		
 		return false;
+	}
+	
+	protected virtual void OnActionEnter() {
+	}
+	
+	protected virtual void OnActionExit() {
+	}
+	
+	protected virtual void OnActionFinish() {
 	}
 	
 	void OnDestroy() {
@@ -95,14 +100,14 @@ public class ActionListener : MonoBehaviour {
 				StopAction(ActionTarget.Priority.Highest, true);
 			}
 			else {
-				BroadcastMessage(FuncActionExit, this, SendMessageOptions.DontRequireReceiver);
+				OnActionExit();
 			}
 		}
 	}
 	
 	private void SetTarget(ActionTarget target) {
 		if(target != null) {
-			if(target.vacancy) {
+			if(target != mCurActionTarget && target.vacancy) {
 				//check if we currently have a target, then determine priority
 				if(StopAction(target.priority, false)) {
 					ApplyToCurTarget(target);
@@ -119,6 +124,6 @@ public class ActionListener : MonoBehaviour {
 		
 		mCurActionTarget = target;
 		
-		BroadcastMessage(FuncActionEnter, this, SendMessageOptions.DontRequireReceiver);
+		OnActionEnter();
 	}
 }
