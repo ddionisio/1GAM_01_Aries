@@ -8,6 +8,8 @@ namespace M8 {
 			Right
 		}
 		
+		public const float TwoPI = 2.0f*Mathf.PI;
+		
 		//-------------- 2D --------------
 		
 		public static void Limit(ref Vector2 v, float limit) {

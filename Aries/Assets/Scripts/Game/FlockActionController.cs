@@ -20,18 +20,16 @@ public class FlockActionController : ActionListener {
 		mCurStopDelay = 0.0f;
 		
 		switch(currentTarget.type) {
-		case ActionTarget.Type.Disperse:
+		case ActionType.Disperse:
 			break;
 			
-		case ActionTarget.Type.Follow:
-			flockUnit.restrictMove = false;
+		case ActionType.Follow:
 			flockUnit.moveTarget = currentTarget.target;
 			
 			mLastFollowPos = flockUnit.moveTarget.position;
 			break;
 			
 		default:
-			flockUnit.restrictMove = false;
 			flockUnit.moveTarget = currentTarget.target;
 			break;
 		}
@@ -45,7 +43,7 @@ public class FlockActionController : ActionListener {
 		mStopActive = false;
 		mCurStopDelay = 0.0f;
 		
-		flockUnit.restrictMove = true;
+		flockUnit.moveTarget = null;
 	}
 	
 	void Awake() {
@@ -60,10 +58,9 @@ public class FlockActionController : ActionListener {
 				
 				//stop after some delay while following
 				if(flockUnit.moveTarget != null) {
-					flockUnit.restrictMove = true;
 					flockUnit.moveTarget = null;
 				}
-				else if(currentTarget.type == ActionTarget.Type.Follow) {
+				else if(currentTarget.type == ActionType.Follow) {
 					if((currentTarget.target.position - mLastFollowPos).sqrMagnitude >= mResumeDistanceSqr) {
 						ResumeFollow(null, true);
 					}
@@ -74,7 +71,6 @@ public class FlockActionController : ActionListener {
 	
 	void ResumeFollow(Collider targetCheck, bool stopActive) {
 		if(targetCheck == null || targetCheck == currentTarget.collider) {
-			flockUnit.restrictMove = false;
 			flockUnit.moveTarget = currentTarget.target;
 			mLastFollowPos = flockUnit.moveTarget.position;
 			mStopActive = stopActive;
@@ -85,7 +81,7 @@ public class FlockActionController : ActionListener {
 	void OnTriggerEnter(Collider other) {
 		if(!mStopActive) {
 			mStopActive = 
-				currentTarget.type == ActionTarget.Type.Follow
+				currentTarget.type == ActionType.Follow
 				&& currentTarget.collider == other;
 		}
 	}

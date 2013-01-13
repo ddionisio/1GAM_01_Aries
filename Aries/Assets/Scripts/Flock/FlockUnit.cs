@@ -4,6 +4,14 @@ using System.Collections.Generic;
 using Pathfinding;
 
 public class FlockUnit : MotionBase {
+	public enum State {
+		Idle, //no cohesion, move, alignment
+		Move, //move toward moveTarget, will use seek if blocked
+		Waypoint, //go through generated waypoint
+		//Wander, //cohesion and alignment
+		//Disperse //anti-cohesion and no alignment
+	}
+	
 	public FlockType type;
 	
 	public FlockSensor sensor;
@@ -22,8 +30,6 @@ public class FlockUnit : MotionBase {
 	public float catchUpFactor = 2.0f; //when we have a move target and there are no other flocks around
 	public float pathFactor = 1.0f;
 	public float wallFactor = 1.0f;
-	
-	public bool restrictMoveOnStart = false; 
 	
 	public float updateDelay = 1.0f;
 	
@@ -46,19 +52,15 @@ public class FlockUnit : MotionBase {
 	
 	private float mRadius;
 	
-	private bool mRestrictMove = false; //turns off cohesion/align
-	
-	public bool restrictMove {
-		get { return mRestrictMove; }
-		set { mRestrictMove = value; }
-	}
+	private State mState = State.Move;
 	
 	public Transform moveTarget {
 		get { return mMoveTarget; }
 		
 		set {
-			mMoveTarget = value;
-			if(mMoveTarget == null) {
+			if(mMoveTarget != value) {
+				mMoveTarget = value;
+				
 				SeekPathStop();
 			}
 		}
@@ -82,13 +84,6 @@ public class FlockUnit : MotionBase {
 		
 		SphereCollider sc = GetComponent<SphereCollider>();
 		mRadius = sc != null ? sc.radius : 0.0f;
-	}
-	
-	// Use this for initialization
-	void Start () {
-		if(restrictMoveOnStart) {
-			mRestrictMove = true;
-		}
 	}
 	
 	void Update() {
@@ -121,6 +116,7 @@ public class FlockUnit : MotionBase {
 				if(mCurSeekDelay >= seekDelay) {
 					//check if target is blocked
 					Vector3 dest = moveTarget.position;
+					
 					if(CheckTargetBlock(pos, dest, mRadius)) {
 						SeekPathStart(pos, dest);
 					}
@@ -141,52 +137,49 @@ public class FlockUnit : MotionBase {
 		if(mCurUpdateDelay >= updateDelay) {
 			mCurUpdateDelay = 0;
 			
-			Vector2 sumForce;
-									
-			//seek path
-			if(mSeekStarted) {
-				sumForce = ComputeSeparate();
+			Vector2 sumForce = Vector2.zero;
+			
+			switch(mState) {
+			case State.Waypoint:
+				Vector2 desired = mSeekPath.vectorPath[mSeekCurPath] - transform.position;
+				float distance = desired.magnitude;
 				
-				if(mSeekPath != null) {
-					Vector2 target = mSeekPath.vectorPath[mSeekCurPath];
-					Vector2 pos = transform.position;
-					
-					Vector2 desired = target - pos;
-					float distance = desired.magnitude;
-					
-					//check if we need to move to next waypoint
-					if(distance < pathRadius) {
-						//path complete?
-						int nextPath = mSeekCurPath+1;
-						if(nextPath == mSeekPath.vectorPath.Count) {
-							SeekPathStop();
-						}
-						else {
-							mSeekCurPath = nextPath;
-						}
+				//check if we need to move to next waypoint
+				if(distance < pathRadius) {
+					//path complete?
+					int nextPath = mSeekCurPath+1;
+					if(nextPath == mSeekPath.vectorPath.Count) {
+						SeekPathStop();
 					}
 					else {
-						//continue moving to wp
-						desired /= distance;
-						
-						sumForce += desired*(maxForce*pathFactor);
+						mSeekCurPath = nextPath;
 					}
 				}
-			}
-			else {
-				sumForce = mRestrictMove ? ComputeSeparate() : ComputeMovement();
+				else {
+					//continue moving to wp
+					desired /= distance;
+					
+					sumForce = ComputeSeparate() + desired*(maxForce*pathFactor);
+				}
+				break;
 				
-				if(moveToFactor != 0.0f && moveTarget != null) {
+			case State.Move:
+				if(moveTarget == null) {
+					mState = State.Idle;
+				}
+				else {
 					//move to destination
-					Vector2 targetPos = moveTarget.position;
 					
 					//catch up?
 					float factor = sensor == null || sensor.units.Count == 0 ? catchUpFactor : moveToFactor;
 					
-					Vector2 seek = Seek(targetPos, factor);
-					
-					sumForce += seek;
+					sumForce = ComputeMovement() + Seek(moveTarget.position, factor);
 				}
+				break;
+				
+			default:
+				sumForce = ComputeSeparate();
+				break;
 			}
 			
 			body.AddForce(sumForce.x, sumForce.y, 0.0f);
@@ -215,6 +208,8 @@ public class FlockUnit : MotionBase {
 		else {
 			mSeekPath = p;
 			mSeekCurPath = 0;
+			
+			mState = State.Waypoint;
 		}
 	}
 	
@@ -235,6 +230,8 @@ public class FlockUnit : MotionBase {
 		mSeekPath = null;
 		mCurSeekDelay = 0.0f;
 		mSeekStarted = true;
+		
+		mState = State.Idle;
 	}
 	
 	private void SeekPathStop() {
@@ -242,6 +239,8 @@ public class FlockUnit : MotionBase {
 		mCurSeekDelay = 0.0f;
 		mSeekStarted = false;
 		mSeekCurPath = -1;
+		
+		mState = mMoveTarget == null ? State.Idle : State.Move;
 	}
 		
 	//use if mWallCheck is true

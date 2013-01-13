@@ -3,15 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class ActionTarget : MonoBehaviour {
-	public enum Type {
-		Follow, //normally attach the action's target to a unit
-		Move,
-		Disperse,
-		Attack, //normally attach the action's target to a unit (or maybe not)
-		
-		NumType
-	}
-	
 	public enum Priority {
 		Highest,
 		High,
@@ -21,7 +12,7 @@ public class ActionTarget : MonoBehaviour {
 	
 	public const int Unlimited = -1;
 	
-	public Type type;
+	public ActionType type;
 	public Priority priority = Priority.Normal;
 	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	

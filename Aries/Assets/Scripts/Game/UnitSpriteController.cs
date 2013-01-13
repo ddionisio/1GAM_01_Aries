@@ -19,55 +19,145 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	[System.Serializable]
 	public class StateData {
-		public State state;
+		public State moveState;
+		public State stopState;
 		public StateDir[] dirs; //size = 0: omni-dir, size = 8: state per dir
 	}
 	
+	public const float RadToDir = ((float)Dir.NumDir)/(2.0f*Mathf.PI);
+	
 	public tk2dAnimatedSprite sprite;
-	public Motion motion;
-	public float speedIdleThreshold;
+	public MotionBase mover;
+	public float stopThreshold;
 	public float speedTurnThreshold;
 	
 	//format example:
-	// move: state: Idle, dirs: [(E, false), (NE, false), (N, false), (NE, true), (E, true), (SE, true), (S, false), (SE, false)]
+	// stopState: Idle, dirs: [(E, false), (NE, false), (N, false), (NE, true), (E, true), (SE, true), (S, false), (SE, false)]
 	// in sprite, there should be states: "IdleE", "IdleNE", "IdleN", "IdleS", "IdleSE"
 	public StateData[] states;
 	
 	public string defaultState; //state to change to if state is not found in states
 	
-	private struct AnimData {
-		public int id;
+	private class AnimData {
+		public int moveId;
+		public int stopId;
 		public bool flipped;
+		
+		public AnimData(tk2dAnimatedSprite spr, string moveName, string stopName, Dir dir, bool aFlipped) {
+			//omni dir
+			if(dir == Dir.NumDir) {
+				moveId = spr.GetClipIdByName(moveName);
+				stopId = spr.GetClipIdByName(stopName);
+			}
+			else {
+				string nameDir = dir.ToString();
+				
+				moveId = spr.GetClipIdByName(moveName + nameDir);
+				stopId = spr.GetClipIdByName(stopName + nameDir);
+			}
+			
+			flipped = aFlipped;
+		}
 	}
 					
-	private AnimData[,] mAnim = new AnimData[(int)State.NumStates, (int)Dir.NumDir];
-	private State mCurState = State.Idle;
-	private Dir mCurDir = Dir.E;
+	private AnimData[][] mAnim;
+	private int mCurState = 0;
+	
+	private int mCurDir = (int)Dir.E;
+	private int mDefaultId = 0;
+	private Vector2 mCurMoveDir = Vector2.zero;
+	
+	public int state {
+		get { return mCurState; }
+		set {
+			if(mCurState != value) {
+				mCurState = value;
+				ApplyCurState();
+			}
+		}
+	}
 	
 	void Awake() {
 	}
 	
 	void Start () {
-		int defaultId = !string.IsNullOrEmpty(defaultState) ? sprite.GetClipIdByName(defaultState) : 0;
+		mDefaultId = !string.IsNullOrEmpty(defaultState) ? sprite.GetClipIdByName(defaultState) : 0;
 		
-		foreach(StateData state in states) {
-			string name = state.state.ToString();
+		mAnim = new AnimData[states.Length][];
+		
+		for(int stateInd = 0; stateInd < states.Length; stateInd++) {
+			StateData state = states[stateInd];
 			
-			for(int i = 0; i < state.dirs.Length; i++) {
-				StateDir stateDir = state.dirs[i];
+			string moveName = state.moveState.ToString();
+			string stopName = state.stopState.ToString();
+			
+			//omni dir
+			if(state.dirs.Length == 0) {
+				mAnim[stateInd] = new AnimData[1];
+				mAnim[stateInd][0] = new AnimData(sprite, moveName, stopName, Dir.NumDir, false);
+			}
+			else {
+				mAnim[stateInd] = new AnimData[(int)Dir.NumDir];
 				
-				string nameDir = name + stateDir.dir.ToString();
-				
-				int id = sprite.GetClipIdByName(nameDir);
-				int stateInd = (int)state.state;
-				
-				mAnim[stateInd, i].id = id >= 0 ? id : defaultId;
-				mAnim[stateInd, i].flipped = stateDir.isFlipped;
+				for(int i = 0; i < state.dirs.Length; i++) {
+					StateDir stateDir = state.dirs[i];
+					
+					mAnim[stateInd][i] = new AnimData(sprite, moveName, stopName, (Dir)i, stateDir.isFlipped);
+				}
 			}
 		}
 	}
 	
 	void Update () {
+		//set dir
+		if(mover.curSpeed >= speedTurnThreshold) {
+			Vector2 moveDir = mover.dir;
+			if(moveDir != mCurMoveDir) {
+				mCurMoveDir = moveDir;
+				
+				//get dir index
+				float theta = Mathf.Atan2(moveDir.y, moveDir.x);
+				if(theta < 0) {
+					theta += M8.Math.TwoPI;
+				}
+				
+				int newDir = Mathf.RoundToInt(theta*RadToDir);
+				if(mCurDir != newDir) {
+					mCurDir = newDir;
+					ApplyCurState();
+				}
+			}
+		}
+	}
+	
+	private void ApplyCurState() {
+		AnimData[] animDirs = mAnim[mCurState];
 		
+		int id = mDefaultId;
+		bool flipped = false;
+		
+		//determine id
+		if(animDirs != null) {
+			if(animDirs.Length == 1) {
+				AnimData dat = animDirs[0];
+				id = mover.curSpeed <= stopThreshold ? dat.stopId : dat.moveId;
+			}
+			else {
+				AnimData dat = animDirs[mCurDir];
+				id = mover.curSpeed <= stopThreshold ? dat.stopId : dat.moveId;
+				flipped = dat.flipped;
+			}
+		}
+		
+		sprite.Play(id);
+		
+		//flip
+		Vector3 s = sprite.scale;
+		s.x = Mathf.Abs(s.x);
+		if(flipped) {
+			s.x *= -1.0f;
+		}
+		
+		sprite.scale = s;
 	}
 }
