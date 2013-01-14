@@ -17,13 +17,28 @@ public class ActionTarget : MonoBehaviour {
 	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	
 	public Collider sensor;
-	public Transform target;
-	
+		
 	public bool stopOnExit = false;
 	public bool startSensorOff = false; //turn off sensor at start
 			
 	private HashSet<ActionListener> mListeners = new HashSet<ActionListener>();
-			
+	
+	[SerializeField] GameObject indicator; //starts as turned off
+	[SerializeField] Transform targetTo;
+	
+	public Transform target {
+		get { return targetTo == null ? transform : targetTo; }
+	}
+	
+	public bool indicatorOn {
+		get { return indicator != null ? indicator.activeSelf : false; }
+		set {
+			if(indicator != null) {
+				indicator.SetActive(value);
+			}
+		}
+	}
+	
 	public bool sensorOn {
 		get { return sensor == null ? false : sensor.enabled; }
 		
@@ -87,6 +102,10 @@ public class ActionTarget : MonoBehaviour {
 	void Awake() {
 		if(sensor == null) {
 			sensor = collider;
+		}
+		
+		if(indicator != null) {
+			indicator.SetActive(false);
 		}
 	}
 	

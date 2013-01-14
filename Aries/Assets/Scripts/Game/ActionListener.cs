@@ -6,6 +6,7 @@ public class ActionListener : MonoBehaviour {
 	private ActionTarget mCurActionTarget = null;
 	private ActionTarget mDefaultActionTarget = null;
 	
+	//use this to manually set target (e.g. attacking with specific units)
 	public ActionTarget currentTarget {
 		get { return mCurActionTarget; }
 		

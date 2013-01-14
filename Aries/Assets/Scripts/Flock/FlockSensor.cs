@@ -2,22 +2,16 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class FlockSensor : MonoBehaviour {
+public class FlockSensor : Sensor<FlockUnit> {
 	[System.NonSerialized] public FlockType typeFilter;
 	
-	public HashSet<FlockUnit> units = new HashSet<FlockUnit>();
-
-	void OnTriggerEnter(Collider other) {
-		FlockUnit unit = other.GetComponent<FlockUnit>();
-		if(unit != null && typeFilter == unit.type) {
-			units.Add(unit);
-		}
+	protected override bool UnitVerify(FlockUnit unit) {
+		return unit.type == typeFilter;
 	}
 	
-	void OnTriggerExit(Collider other) {
-		FlockUnit flock = other.GetComponent<FlockUnit>();
-		if(flock != null && typeFilter == flock.type) {
-			units.Remove(flock);
-		}
+	protected override void UnitAdded(FlockUnit unit) {
+	}
+	
+	protected override void UnitRemoved(FlockUnit unit) {
 	}
 }

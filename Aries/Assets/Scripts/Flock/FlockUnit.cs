@@ -257,7 +257,7 @@ public class FlockUnit : MotionBase {
 		return M8.Math.Steer(body.velocity, desired*maxSpeed, maxForce, factor);
 	}
 	
-	//use when restrict move is true or we are seeking
+	//use for idle, waypoint, etc.
 	private Vector2 ComputeSeparate() {
 		Vector2 separate = Vector2.zero;
 		

@@ -7,7 +7,15 @@ public class PlayerController : MotionBase {
 	public ActionTarget followAction;
 	public float followActiveDelay = 1.0f;
 	
+	public PlayerCursor cursor;
+	
 	private float mCurFollowActiveTime = 0.0f;
+	
+	private Vector2 mInputDir = Vector2.zero;
+	
+	public Vector2 inputDir {
+		get { return mInputDir; }
+	}
 	
 	void OnDestroy() {
 		if(Main.instance != null) {
@@ -44,6 +52,11 @@ public class PlayerController : MotionBase {
 		float moveY = input.GetAxis(InputAction.MoveY);
 		
 		if(moveX != 0.0f || moveY != 0.0f) {
+			mInputDir.Set(moveX, moveY);
+			mInputDir.Normalize();
+			
+			cursor.dir = mInputDir;
+			
 			body.AddForce(moveX*force, moveY*force, 0.0f);
 		}
 		
