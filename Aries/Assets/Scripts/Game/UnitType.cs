@@ -1,9 +1,9 @@
 
 public enum UnitType {
-	SheepMelee,
-	SheepRange,
-	SheepCarrier,
-	SheepHexer,
+	sheepMelee,
+	sheepRange,
+	sheepCarrier,
+	sheepHexer,
 	
 	NumTypes
 }

@@ -36,7 +36,7 @@
 		]
 	},
 	{
-		"action":"Item",
+		"action":"Menu",
 		"control":"Button",
 		"keys" : [
 			{ "input":"Fire4" }

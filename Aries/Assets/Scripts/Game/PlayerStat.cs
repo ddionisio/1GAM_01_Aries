@@ -4,26 +4,29 @@ using System.Collections;
 public class PlayerStat : StatBase {
 	
 	public float maxResource;
-	public float initResource;
+	public float minResource;
+	
+	public int maxSummon;
 	
 	public event OnStatChange resourceChangeCallback;
 	
-	private float mCurResource;
-	
 	public float curResource {
-		get { return mCurResource; }
+		get { return Main.instance != null ? Main.instance.userData.resources : 0.0f; }
 		
 		set {
-			if(mCurResource != value) {
-				float prevResource = mCurResource;
-				mCurResource = value;
+			if(Main.instance != null) {
+				float resource = Main.instance.userData.resources;
 				
-				if(hud != null) {
-					hud.StatsRefresh(this, true);
-				}
-				
-				if(resourceChangeCallback != null) {
-					resourceChangeCallback(this, value - prevResource);
+				if(resource != value) {
+					Main.instance.userData.resources = value;
+					
+					if(hud != null) {
+						hud.StatsRefresh(this, true);
+					}
+					
+					if(resourceChangeCallback != null) {
+						resourceChangeCallback(this, value - resource);
+					}
 				}
 			}
 		}
@@ -39,8 +42,6 @@ public class PlayerStat : StatBase {
 	
 	public override void ResetStats() {
 		base.ResetStats();
-		
-		mCurResource = initResource;
 	}
 	
 	protected override void Awake() {

@@ -28,14 +28,20 @@ public class Main : MonoBehaviour {
 	
 	void OnEnable() {
 	}
+	
+	void OnDisable() {
+		if(userData != null) {
+			userData.Save();
+		}
+	}
 			
 	void Awake() {
 		mInstance = this;
 						
 		DontDestroyOnLoad(gameObject);
 		
-		userData = GetComponentInChildren<UserData>();
-		userSettings = GetComponentInChildren<UserSettings>();
+		userData = new UserData();
+		userSettings = new UserSettings();
 		
 		sceneManager = GetComponentInChildren<SceneManager>();
 		

@@ -6,11 +6,10 @@ public class PlayerController : MotionBase {
 	
 	public ActionTarget followAction;
 	public float followActiveDelay = 1.0f;
-	
-	public PlayerCursor cursor;
-	
+	public float summonDelay = 1.0f;
+			
 	private enum ActMode {
-		None,
+		Normal,
 		Summon,
 		UnSummon
 	}
@@ -18,7 +17,13 @@ public class PlayerController : MotionBase {
 	private float mCurFollowActiveTime = 0.0f;
 	
 	private UnitType[] mTypeSummons = {
-		UnitType.SheepMelee, UnitType.SheepRange, UnitType.SheepCarrier, UnitType.SheepHexer };
+		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepCarrier, UnitType.sheepHexer };
+	
+	private ActMode mCurActMode = ActMode.Normal;
+	private int mCurSummonInd = -1;
+	private float mCurSummonTime = 0.0f;
+	
+	private PlayerCursor mCursor;
 	
 	private Vector2 mInputDir = Vector2.zero;
 	
@@ -26,12 +31,27 @@ public class PlayerController : MotionBase {
 		get { return mInputDir; }
 	}
 	
+	public PlayerCursor cursor {
+		get { return mCursor; }
+		set {
+			if(mCursor != null) {
+				mCursor.origin = null;
+			}
+			
+			mCursor = value;
+			
+			if(mCursor != null) {
+				mCursor.origin = transform;
+			}
+		}
+	}
+	
 	void OnDestroy() {
 		if(Main.instance != null) {
 			Main.instance.input.RemoveButtonCall(InputAction.Act, InputAct);
 			Main.instance.input.RemoveButtonCall(InputAction.Recall, InputRecall);
 			Main.instance.input.RemoveButtonCall(InputAction.Fire, InputFire);
-			Main.instance.input.RemoveButtonCall(InputAction.Item, InputItem);
+			Main.instance.input.RemoveButtonCall(InputAction.Menu, InputMenu);
 			Main.instance.input.RemoveButtonCall(InputAction.Summon, InputSummon);
 			Main.instance.input.RemoveButtonCall(InputAction.UnSummon, InputUnSummon);
 		}
@@ -41,6 +61,8 @@ public class PlayerController : MotionBase {
 			playerGroup.addCallback -= OnGroupUnitAdd;
 			playerGroup.removeCallback -= OnGroupUnitRemove;
 		}
+		
+		cursor = null;
 	}
 	
 	protected override void Awake() {
@@ -52,7 +74,7 @@ public class PlayerController : MotionBase {
 		Main.instance.input.AddButtonCall(InputAction.Act, InputAct);
 		Main.instance.input.AddButtonCall(InputAction.Recall, InputRecall);
 		Main.instance.input.AddButtonCall(InputAction.Fire, InputFire);
-		Main.instance.input.AddButtonCall(InputAction.Item, InputItem);
+		Main.instance.input.AddButtonCall(InputAction.Menu, InputMenu);
 		Main.instance.input.AddButtonCall(InputAction.Summon, InputSummon);
 		Main.instance.input.AddButtonCall(InputAction.UnSummon, InputUnSummon);
 		
@@ -71,6 +93,22 @@ public class PlayerController : MotionBase {
 				followAction.sensorOn = false;
 			}
 		}
+		
+		if(mCurSummonInd != -1) {
+			mCurSummonTime += Time.deltaTime;
+			if(mCurSummonTime >= summonDelay) {
+				switch(mCurActMode) {
+				case ActMode.Summon:
+					break;
+					
+				case ActMode.UnSummon:
+					break;
+				}
+				
+				//continue summoning
+				mCurSummonTime = 0.0f;
+			}
+		}
 	}
 	
 	// Update is called once per frame
@@ -84,7 +122,9 @@ public class PlayerController : MotionBase {
 			mInputDir.Set(moveX, moveY);
 			mInputDir.Normalize();
 			
-			cursor.dir = mInputDir;
+			if(mCursor != null) {
+				mCursor.dir = mInputDir;
+			}
 			
 			body.AddForce(moveX*force, moveY*force, 0.0f);
 		}
@@ -95,40 +135,70 @@ public class PlayerController : MotionBase {
 	}
 	
 	void InputAct(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed && GetActMode() == ActMode.None) {
+		UpdateActMode();
+		
+		if(data.state == InputManager.State.Pressed && mCurActMode == ActMode.Normal) {
 			//do something amazing
 			Debug.Log("act");
 		}
 	}
 	
 	void InputRecall(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed && GetActMode() == ActMode.None) {
+		UpdateActMode();
+		
+		if(data.state == InputManager.State.Pressed && mCurActMode == ActMode.Normal) {
 			followAction.sensorOn = true;
 			mCurFollowActiveTime = 0.0f;
 		}
 	}
 	
 	void InputFire(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed && GetActMode() == ActMode.None) {
+		UpdateActMode();
+		
+		if(data.state == InputManager.State.Pressed && mCurActMode == ActMode.Normal) {
 			Debug.Log("fire");
 		}
 	}
 	
-	void InputItem(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed && GetActMode() == ActMode.None) {
+	void InputMenu(InputManager.Info data) {
+		UpdateActMode();
+		
+		if(data.state == InputManager.State.Pressed && mCurActMode == ActMode.Normal) {
 			Debug.Log("item");
 		}
 	}
 	
 	void InputSummon(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed && GetActMode() == ActMode.Summon) {
-			Debug.Log("summon: "+data.index);
+		UpdateActMode();
+		
+		if(mCurActMode == ActMode.Summon) {
+			if(data.state == InputManager.State.Pressed) {
+				Debug.Log("summon: "+data.index);
+				
+				ApplySummonIndex(data.index);
+			}
+			else if(data.index == mCurSummonInd) {
+				Debug.Log("summon cancel: "+data.index);
+				
+				ApplySummonIndex(-1);
+			}
 		}
 	}
 	
 	void InputUnSummon(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed && GetActMode() == ActMode.UnSummon) {
-			Debug.Log("unsummon: "+data.index);
+		UpdateActMode();
+		
+		if(mCurActMode == ActMode.UnSummon) {
+			if(data.state == InputManager.State.Pressed) {
+				Debug.Log("unsummon: "+data.index);
+				
+				ApplySummonIndex(data.index);
+			}
+			else if(data.index == mCurSummonInd) {
+				Debug.Log("unsummon cancel: "+data.index);
+				
+				ApplySummonIndex(-1);
+			}
 		}
 	}
 		
@@ -146,21 +216,84 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
-	private ActMode GetActMode() {
+	private void UpdateActMode() {
 		InputManager input = Main.instance.input;
 		
-		ActMode ret;
-		
 		if(input.IsDown(InputAction.SummonMode)) {
-			ret = ActMode.Summon;
+			ApplySummon(ActMode.Summon);
 		}
 		else if(input.IsDown(InputAction.UnSummonMode)) {
-			ret = ActMode.UnSummon;
+			ApplySummon(ActMode.UnSummon);
 		}
 		else {
-			ret = ActMode.None;
+			ApplySummon(ActMode.Normal);
 		}
+	}
+	
+	//for both summon/unsummon
+	private void ApplySummon(ActMode toMode) {
+		if(mCurActMode != toMode) {
+			StopSummonAuraFX();
+			StopSummonFX();
+			
+			mCurActMode = toMode;
+			mCurSummonInd = -1;
+			
+			StartSummonAuraFX();
+		}
+	}
+	
+	private void ApplySummonIndex(int ind) {
+		if(mCurSummonInd != ind) {
+			StopSummonFX();
+			
+			mCurSummonInd = ind;
+			
+			StartSummonFX();
+		}
+	}
+	
+	private void StartSummonAuraFX() {
+		switch(mCurActMode) {
+		case ActMode.Summon:
+			break;
+			
+		case ActMode.UnSummon:
+			break;
+		}
+	}
+	
+	private void StopSummonAuraFX() {
+		switch(mCurActMode) {
+		case ActMode.Summon:
+			break;
+			
+		case ActMode.UnSummon:
+			break;
+		}
+	}
+	
+	private void StartSummonFX() {
+		mCurSummonTime = 0.0f;
 		
-		return ret;
+		if(mCurSummonInd != -1) {
+			switch(mCurActMode) {
+			case ActMode.Summon:
+				break;
+				
+			case ActMode.UnSummon:
+				break;
+			}
+		}
+	}
+	
+	private void StopSummonFX() {
+		switch(mCurActMode) {
+		case ActMode.Summon:
+			break;
+			
+		case ActMode.UnSummon:
+			break;
+		}
 	}
 }

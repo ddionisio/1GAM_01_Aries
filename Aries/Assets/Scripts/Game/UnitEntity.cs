@@ -2,10 +2,19 @@ using UnityEngine;
 using System.Collections;
 
 public class UnitEntity : EntityBase {
-	public UnitStat stats;
-	public FlockUnit flockUnit;
+	
+	private UnitStat mStats;
+	private FlockUnit mFlockUnit;
+	private ActionListener mListener;
+	
+	public UnitStat stats { get { return mStats; } }
+	public FlockUnit flockUnit { get { return mFlockUnit; } }
+	public ActionListener listener { get { return mListener; } }
 			
 	protected override void Awake() {
+		mStats = GetComponentInChildren<UnitStat>();
+		mFlockUnit = GetComponentInChildren<FlockUnit>();
+		mListener = GetComponentInChildren<ActionListener>();
 	}
 	
 	// Use this for initialization
@@ -16,6 +25,10 @@ public class UnitEntity : EntityBase {
 	}
 	
 	public override void Release() {
+		listener.currentTarget = null;
+		
+		flockUnit.moveTarget = null;
+		
 		stats.ResetStats();
 		
 		FlockUnitRelease();

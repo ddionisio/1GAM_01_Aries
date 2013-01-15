@@ -2,8 +2,6 @@ using UnityEngine;
 using System.Collections;
 
 public class PlayerCursor : MonoBehaviour {
-	public Transform origin;
-	
 	public float radius;
 	
 	public float distance = 5.0f;
@@ -13,7 +11,16 @@ public class PlayerCursor : MonoBehaviour {
 	
 	private int mLayerMask;
 	
+	private Transform mOrigin;
+	
 	private Vector2 mDir = Vector2.up;
+	
+	public Transform origin {
+		get { return mOrigin != null ? mOrigin : transform; }
+		set {
+			mOrigin = value;
+		}
+	}
 	
 	public Vector2 dir {
 		get { return mDir; }
@@ -47,7 +54,7 @@ public class PlayerCursor : MonoBehaviour {
 	}
 		
 	void OnDrawGizmosSelected() {
-		Vector3 s = origin == null ? transform.position : origin.position, e = transform.position;
+		Vector3 s = origin.position, e = transform.position;
 		
 		Gizmos.color = Color.blue;
 		Gizmos.DrawLine(s, e);

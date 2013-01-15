@@ -5,13 +5,33 @@ using System.Collections;
 public class ActionListener : MonoBehaviour {
 	private ActionTarget mCurActionTarget = null;
 	private ActionTarget mDefaultActionTarget = null;
+	private bool mLockAction = false;
+	
+	//lock action, preventing action being set, returns to defaultTarget
+	public bool lockAction {
+		get { return mLockAction; }
+		
+		set {
+			if(value) {
+				SetTarget(null);
+			}
+			
+			mLockAction = value;
+		}
+	}
+	
+	public ActionTarget.Priority currentPriority {
+		get { return mCurActionTarget != null ? mCurActionTarget.priority : ActionTarget.Priority.Low; }
+	}
 	
 	//use this to manually set target (e.g. attacking with specific units)
 	public ActionTarget currentTarget {
 		get { return mCurActionTarget; }
 		
 		set {
-			SetTarget(value);
+			if(!mLockAction) {
+				SetTarget(value);
+			}
 		}
 	}
 	
@@ -91,7 +111,9 @@ public class ActionListener : MonoBehaviour {
 	}
 	
 	void OnTriggerEnter(Collider other) {
-		SetTarget(other.GetComponent<ActionTarget>());
+		if(!mLockAction) {
+			SetTarget(other.GetComponent<ActionTarget>());
+		}
 	}
 	
 	void OnTriggerExit(Collider other) {

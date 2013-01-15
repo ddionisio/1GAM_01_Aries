@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class UserSettings : MonoBehaviour {
+public class UserSettings {
 	public const string muteKey = "m";
 	public const string volumeKey = "v";
 			
@@ -38,7 +38,7 @@ public class UserSettings : MonoBehaviour {
 	private float mVolume;
 	
 	// Use this for initialization
-	void Awake () {
+	public UserSettings() {
 		//load settings
 		mVolume = PlayerPrefs.GetFloat(volumeKey, 1.0f);
 						
@@ -47,7 +47,7 @@ public class UserSettings : MonoBehaviour {
 		ApplyAudioSettings();
 	}
 	
-	void ApplyAudioSettings() {
+	private void ApplyAudioSettings() {
 		AudioListener.volume = mMute ? 0.0f : mVolume;
 	}
 }

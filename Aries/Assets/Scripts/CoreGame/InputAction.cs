@@ -9,7 +9,7 @@ public enum InputAction {
 	Act,
 	Recall,
 	Fire,
-	Item,
+	Menu,
 	
 	SummonMode,
 	UnSummonMode,
