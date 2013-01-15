@@ -2,35 +2,79 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class FlockGroup : MonoBehaviour {	
+public class FlockGroup : MonoBehaviour {
+	public delegate void Listener(FlockUnit unit);
+	
+	public FlockType type;
+	
 	public int startNumSpawn;
 	
 	public float radius;
 	
-	private List<FlockUnit> mUnits;
+	public event Listener addCallback;
+	public event Listener removeCallback;
 	
-	public List<FlockUnit> units {
+	private static FlockGroup[] mGroups = new FlockGroup[(int)FlockType.NumType];
+	
+	private HashSet<FlockUnit> mUnits = new HashSet<FlockUnit>();
+	
+	public HashSet<FlockUnit> units {
 		get { return mUnits; }
 	}
 	
+	//only call this after awake
+	public static FlockGroup GetGroup(FlockType type) {
+		return mGroups[(int)type];
+	}
+	
 	public void AddUnit(FlockUnit unit) {
-		//reparent?
-		mUnits.Add(unit);
-		OnAddUnit(unit);
+		//put in this group
+		if(unit.transform.parent != transform) {
+			unit.transform.parent = transform;
+		}
+		
+		if(mUnits.Add(unit)) {
+			OnAddUnit(unit);
+			
+			if(addCallback != null) {
+				addCallback(unit);
+			}
+		}
+	}
+	
+	public void RemoveUnit(FlockUnit unit, Transform toParent) {
+		if(mUnits.Remove(unit)) {
+			if(toParent != null) {
+				unit.transform.parent = toParent;
+			}
+			
+			OnRemoveUnit(unit);
+			
+			if(removeCallback != null) {
+				removeCallback(unit);
+			}
+		}
 	}
 	
 	protected virtual void OnAddUnit(FlockUnit unit) {
 	}
 	
+	protected virtual void OnRemoveUnit(FlockUnit unit) {
+	}
+	
+	protected virtual void OnDestroy() {
+		mGroups[(int)type] = null;
+	}
+	
+	protected virtual void Awake() {
+		mGroups[(int)type] = this;
+	}
+	
 	protected virtual void Start() {
-		//set initial flocks from scene
-		mUnits = new List<FlockUnit>(transform.childCount);
-		
 		foreach(Transform t in transform) {
 			FlockUnit unit = t.GetComponentInChildren<FlockUnit>();
 			if(unit != null) {
-				mUnits.Add(unit);
-				OnAddUnit(unit);
+				AddUnit(unit);
 			}
 		}
 		

@@ -3,5 +3,5 @@
 public enum FlockType {
 	PlayerUnits,
 	
-	Count
+	NumType
 }

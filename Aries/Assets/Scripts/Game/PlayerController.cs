@@ -22,6 +22,12 @@ public class PlayerController : MotionBase {
 			Main.instance.input.RemoveButtonCall(InputAction.Act, OnAction);
 			Main.instance.input.RemoveButtonCall(InputAction.Recall, OnRecall);
 		}
+		
+		FlockGroup playerGroup = FlockGroup.GetGroup(FlockType.PlayerUnits);
+		if(playerGroup != null) {
+			playerGroup.addCallback -= OnGroupUnitAdd;
+			playerGroup.removeCallback -= OnGroupUnitRemove;
+		}
 	}
 	
 	protected override void Awake() {
@@ -32,6 +38,12 @@ public class PlayerController : MotionBase {
 	void Start () {
 		Main.instance.input.AddButtonCall(InputAction.Act, OnAction);
 		Main.instance.input.AddButtonCall(InputAction.Recall, OnRecall);
+		
+		FlockGroup playerGroup = FlockGroup.GetGroup(FlockType.PlayerUnits);
+		if(playerGroup != null) {
+			playerGroup.addCallback += OnGroupUnitAdd;
+			playerGroup.removeCallback += OnGroupUnitRemove;
+		}
 	}
 	
 	void Update() {
@@ -75,6 +87,20 @@ public class PlayerController : MotionBase {
 		if(data.state == InputManager.State.Pressed) {
 			followAction.sensorOn = true;
 			mCurFollowActiveTime = 0.0f;
+		}
+	}
+	
+	void OnGroupUnitAdd(FlockUnit unit) {
+		ActionListener actionListen = unit.GetComponent<ActionListener>();
+		if(actionListen != null) {
+			actionListen.defaultTarget = followAction;
+		}
+	}
+	
+	void OnGroupUnitRemove(FlockUnit unit) {
+		ActionListener actionListen = unit.GetComponent<ActionListener>();
+		if(actionListen != null) {
+			actionListen.defaultTarget = null;
 		}
 	}
 }
