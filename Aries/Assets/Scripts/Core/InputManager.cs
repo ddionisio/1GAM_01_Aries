@@ -26,6 +26,7 @@ public class InputManager : MonoBehaviour {
 	public struct Info {
 		public State state;
 		public float axis;
+		public int index;
 	}
 	
 	public class Key {
@@ -33,6 +34,7 @@ public class InputManager : MonoBehaviour {
 		public KeyCode code = KeyCode.None; //unity
 		public InputKeyMap map = InputKeyMap.None; //for external (like ouya!)
 		public ButtonAxis axis = ButtonAxis.None; //for buttons as axis
+		public int index = 0; //which index this key refers to
 		
 		public float GetAxisValue() {
 			float ret = 0.0f;
@@ -87,6 +89,10 @@ public class InputManager : MonoBehaviour {
 	private BindData[] mBinds = new BindData[(int)InputAction.NumAction];
 	
 	//interfaces (available after awake)
+	
+	public bool CheckBind(InputAction action) {
+		return mBinds[(int)action] != null;
+	}
 			
 	public float GetAxis(InputAction action) {
 		return mBinds[(int)action].info.axis;
@@ -94,6 +100,23 @@ public class InputManager : MonoBehaviour {
 	
 	public State GetState(InputAction action) {
 		return mBinds[(int)action].info.state;
+	}
+	
+	public bool IsDown(InputAction action) {
+		bool ret = false;
+		
+		foreach(Key key in mBinds[(int)action].keys) {
+			if(ProcessButtonDown(key)) {
+				ret = true;
+				break;
+			}
+		}
+		
+		return ret;
+	}
+	
+	public int GetIndex(InputAction action) {
+		return mBinds[(int)action].info.index;
 	}
 	
 	public void AddButtonCall(InputAction action, OnButton callback) {
@@ -152,6 +175,13 @@ public class InputManager : MonoBehaviour {
 		return ret;
 	}
 	
+	protected virtual bool ProcessButtonDown(Key key) {
+		return 
+			key.input.Length > 0 ? Input.GetButton(key.input) :
+			key.code != KeyCode.None ? Input.GetKey(key.code) :
+			false;
+	}
+	
 	//internal
 	
 	void Awake() {
@@ -189,6 +219,7 @@ public class InputManager : MonoBehaviour {
 						if(state != State.None) {
 							bindData.info.axis = state == State.Pressed ? key.GetAxisValue() : 0.0f;
 							bindData.info.state = state;
+							bindData.info.index = key.index;
 							
 							bindData.Call();
 							break;

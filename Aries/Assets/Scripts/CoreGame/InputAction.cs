@@ -8,6 +8,14 @@ public enum InputAction {
 	
 	Act,
 	Recall,
+	Fire,
+	Item,
+	
+	SummonMode,
+	UnSummonMode,
+	
+	Summon, //make sure to set indices (0-3)
+	UnSummon, //make sure to set indices (0-3)
 	
 	NumAction
 }

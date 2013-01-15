@@ -13,6 +13,7 @@
 			{ "input":"Vertical" }
 		]
 	},
+	
 	{
 		"action":"Act",
 		"control":"Button",
@@ -21,10 +22,61 @@
 		]
 	},
 	{
-		"action":"Recall",
+		"action":"Fire",
 		"control":"Button",
 		"keys" : [
 			{ "input":"Fire2" }
+		]
+	},
+	{
+		"action":"Recall",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Fire3" }
+		]
+	},
+	{
+		"action":"Item",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Fire4" }
+		]
+	},
+	
+	{
+		"action":"Summon",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Fire1", "index":0 },
+			{ "input":"Fire2", "index":1 },
+			{ "input":"Fire3", "index":2 },
+			{ "input":"Fire4", "index":3 }
+		]
+	},
+	
+	{
+		"action":"UnSummon",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Fire1", "index":0 },
+			{ "input":"Fire2", "index":1 },
+			{ "input":"Fire3", "index":2 },
+			{ "input":"Fire4", "index":3 }
+		]
+	},
+	
+	{
+		"action":"SummonMode",
+		"control":"Button",
+		"keys" : [
+			{ "input":"SummonToggle" }
+		]
+	},
+	{
+		"action":"UnSummonMode",
+		"control":"Button",
+		"keys" : [
+			{ "input":"UnSummonToggle" }
 		]
 	}
 ]
