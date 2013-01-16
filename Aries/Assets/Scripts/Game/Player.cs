@@ -4,6 +4,10 @@ using System.Collections;
 public class Player : EntityBase {
 	
 	public override void Release() {
+		PlayerController control = GetComponent<PlayerController>();
+		if(control != null) {
+			control.CancelActions();
+		}
 		
 		base.Release();
 	}

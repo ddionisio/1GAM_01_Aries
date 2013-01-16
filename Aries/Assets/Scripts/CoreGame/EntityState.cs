@@ -3,6 +3,7 @@ public enum EntityState {
 	normal,
 	dying,
 	unsummon,
+	seek,
 		
 	NumState
 }

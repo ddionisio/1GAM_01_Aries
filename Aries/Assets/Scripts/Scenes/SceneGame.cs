@@ -2,9 +2,27 @@ using UnityEngine;
 using System.Collections;
 
 public class SceneGame : SceneController {
-
+	public tk2dTileMap map;
+	public float orderZMin = 0.0f;
+	public float orderZMax = 0.9f;
+	
+	private static SceneGame mInstance;
+	
+	private float mOrderYOfs;
+	private float mOrderYMax;
+	
+	public static SceneGame instance {
+		get { return mInstance; }
+	}
+	
+	public float ComputeZOrder(float y) {
+		return orderZMin + ((y+mOrderYOfs)/mOrderYMax)*(orderZMax-orderZMin);
+	}
+	
 	protected override void OnDestroy() {
 		base.OnDestroy();
+		
+		mInstance = null;
 	}
 	
 	protected override void Start() {
@@ -13,5 +31,10 @@ public class SceneGame : SceneController {
 	
 	protected override void Awake() {
 		base.Awake();
+		
+		mInstance = this;
+		
+		mOrderYOfs = -map.data.tileOrigin.y;
+		mOrderYMax = map.height*map.data.tileSize.y;
 	}
 }

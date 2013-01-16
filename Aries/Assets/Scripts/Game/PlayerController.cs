@@ -7,6 +7,11 @@ public class PlayerController : MotionBase {
 	public ActionTarget followAction;
 	public float followActiveDelay = 1.0f;
 	
+	public string fireProjectile;
+	public float fireStartDistance = 0.75f;
+	public float fireStartDelay = 0.5f;
+	public float firePerSecond = 1.0f;
+	
 	public LayerMask summonLayerCheck;
 			
 	private enum ActMode {
@@ -51,6 +56,9 @@ public class PlayerController : MotionBase {
 	}
 	
 	public void CancelActions() {
+		CancelInvoke();
+		
+		ApplySummon(ActMode.Normal);
 	}
 	
 	void OnDestroy() {
@@ -132,11 +140,11 @@ public class PlayerController : MotionBase {
 		float moveY = input.GetAxis(InputAction.MoveY);
 		
 		if(moveX != 0.0f || moveY != 0.0f) {
-			mInputDir.Set(moveX, moveY);
-			mInputDir.Normalize();
-			
+			//mInputDir.Set(moveX, moveY);
+			//mInputDir.Normalize();
+			mInputDir = dir;
 			if(mCursor != null) {
-				mCursor.dir = mInputDir;
+				mCursor.dir = dir;
 			}
 			
 			body.AddForce(moveX*force, moveY*force, 0.0f);
@@ -169,6 +177,10 @@ public class PlayerController : MotionBase {
 	void InputFire(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
 			Debug.Log("fire");
+			InvokeRepeating("FireUpdate", fireStartDelay, firePerSecond);
+		}
+		else {
+			CancelInvoke("FireUpdate");
 		}
 	}
 	
@@ -229,6 +241,15 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
+	void FireUpdate() {
+		if(!string.IsNullOrEmpty(fireProjectile)) {
+			Vector2 start = transform.position;
+			start += mInputDir*fireStartDistance;
+			
+			Projectile.Create(fireProjectile, start, mInputDir);
+		}
+	}
+	
 	//at this point, unit is fully spawned
 	void OnGroupUnitAdd(FlockUnit unit) {
 		ActionListener actionListen = unit.GetComponent<ActionListener>();
@@ -282,7 +303,7 @@ public class PlayerController : MotionBase {
 			StopSummonAuraFX();
 			
 			//revert currently selected unsummon
-			if(mCurSummonUnit != null) {
+			if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
 				if(mCurSummonUnit.state == EntityState.unsummon) {
 					mCurSummonUnit.state = EntityState.normal;
 					mCurSummonUnit.listener.lockAction = false;

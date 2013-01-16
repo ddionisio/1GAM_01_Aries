@@ -35,8 +35,10 @@ public class UnitEntity : EntityBase {
 		
 		listener.currentTarget = null;
 		
+		flockUnit.body.velocity = Vector3.zero;
 		flockUnit.moveTarget = null;
 		flockUnit.sensor.collider.enabled = false;
+		flockUnit.sensor.units.Clear();
 		
 		stats.ResetStats();
 						
@@ -62,6 +64,8 @@ public class UnitEntity : EntityBase {
 		FlockUnitInit();
 		
 		flockUnit.sensor.collider.enabled = true;
+		
+		state = EntityState.normal;
 	}
 	
 	protected override void SetBlink(bool blink) {

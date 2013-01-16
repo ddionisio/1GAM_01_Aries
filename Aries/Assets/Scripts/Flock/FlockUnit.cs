@@ -35,7 +35,10 @@ public class FlockUnit : MotionBase {
 	
 	public float seekDelay = 1.0f;
 	
+	public float catchUpMinDistance; //min distance to use catchup factor
+	
 	private Transform mMoveTarget = null;
+	private float mMoveTargetDist;
 	
 	private float mCurUpdateDelay = 0;
 	private float mCurSeekDelay = 0;
@@ -169,11 +172,21 @@ public class FlockUnit : MotionBase {
 				}
 				else {
 					//move to destination
+					Vector2 pos = mTrans.localPosition;
+					Vector2 dest = moveTarget.position;
+					Vector2 _dir = dest - pos;
+					mMoveTargetDist = _dir.magnitude;
 					
 					//catch up?
-					float factor = sensor == null || sensor.units.Count == 0 ? catchUpFactor : moveToFactor;
+					float factor = (sensor == null || sensor.units.Count == 0) && mMoveTargetDist > catchUpMinDistance 
+						? catchUpFactor : moveToFactor;
 					
-					sumForce = ComputeMovement() + Seek(moveTarget.position, factor);
+					sumForce = ComputeMovement();
+					
+					if(mMoveTargetDist > 0) {
+						_dir /= mMoveTargetDist;
+						sumForce += M8.Math.Steer(body.velocity, _dir*maxSpeed, maxForce, factor);
+					}
 				}
 				break;
 				
