@@ -7,12 +7,12 @@ public enum InputAction {
 	MoveY,
 	
 	Act,
-	Recall,
 	Fire,
 	Menu,
 	
-	SummonMode,
-	UnSummonMode,
+	SummonSelect, //for pc
+	SummonSelectNext,
+	SummonSelectPrev,
 	
 	Summon, //make sure to set indices (0-3)
 	UnSummon, //make sure to set indices (0-3)

@@ -41,6 +41,19 @@ public class EntityBase : MonoBehaviour {
 		get { return mPrevState; }
 	}
 	
+	public bool isReleased {
+		get {
+			bool ret = false;
+			
+			PoolDataController poolDat = GetComponent<PoolDataController>();
+			if(poolDat != null) {
+				ret = poolDat.claimed;
+			}
+			
+			return ret;
+		}
+	}
+	
 	public bool isBlinking {
 		get { return mBlinkDelay > 0 && mBlinkCurTime < mBlinkDelay; }
 	}
@@ -74,7 +87,7 @@ public class EntityBase : MonoBehaviour {
 		}
 		
 		StopAllCoroutines();
-		EntityManager.instance.Release(transform);
+		EntityManager.instance.Release(this);
 	}
 	
 	protected virtual void Awake() {
@@ -100,13 +113,14 @@ public class EntityBase : MonoBehaviour {
 		case EntityState.spawning:
 			mEntCurTime += Time.deltaTime;
 			if(mEntCurTime >= spawnDelay) {
+				mPrevState = mState;
 				mState = EntityState.NumState; //need to be set by something
+												
+				SpawnFinish();
 				
 				if(spawnFinishCallback != null) {
 					spawnFinishCallback(this);
 				}
-				
-				SpawnFinish();
 			}
 			break;
 		}
@@ -128,8 +142,8 @@ public class EntityBase : MonoBehaviour {
 	//////////internal
 		
 	IEnumerator DoSpawn() {
+				
 		yield return new WaitForFixedUpdate();
-		
 		
 		mEntCurTime = 0;
 		

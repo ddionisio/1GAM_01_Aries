@@ -18,28 +18,47 @@
 		"action":"Act",
 		"control":"Button",
 		"keys" : [
-			{ "input":"Fire1" }
+			{ "input":"Act" }
 		]
 	},
 	{
 		"action":"Fire",
 		"control":"Button",
 		"keys" : [
-			{ "input":"Fire2" }
-		]
-	},
-	{
-		"action":"Recall",
-		"control":"Button",
-		"keys" : [
-			{ "input":"Fire3" }
+			{ "input":"Fire" }
 		]
 	},
 	{
 		"action":"Menu",
 		"control":"Button",
 		"keys" : [
-			{ "input":"Fire4" }
+			{ "input":"Menu" }
+		]
+	},
+	
+	{
+		"action":"SummonSelect",
+		"control":"Button",
+		"keys" : [
+			{ "code":"Alpha0", "index":0 },
+			{ "code":"Alpha1", "index":1 },
+			{ "code":"Alpha2", "index":2 },
+			{ "code":"Alpha3", "index":3 }
+		]
+	},
+	
+	{
+		"action":"SummonSelectNext",
+		"control":"Button",
+		"keys" : [
+			{ "input":"SummonNext" }
+		]
+	},
+	{
+		"action":"SummonSelectPrev",
+		"control":"Button",
+		"keys" : [
+			{ "input":"SummonPrev" }
 		]
 	},
 	
@@ -47,36 +66,14 @@
 		"action":"Summon",
 		"control":"Button",
 		"keys" : [
-			{ "input":"Fire1", "index":0 },
-			{ "input":"Fire2", "index":1 },
-			{ "input":"Fire3", "index":2 },
-			{ "input":"Fire4", "index":3 }
+			{ "input":"Summon" }
 		]
 	},
-	
 	{
 		"action":"UnSummon",
 		"control":"Button",
 		"keys" : [
-			{ "input":"Fire1", "index":0 },
-			{ "input":"Fire2", "index":1 },
-			{ "input":"Fire3", "index":2 },
-			{ "input":"Fire4", "index":3 }
-		]
-	},
-	
-	{
-		"action":"SummonMode",
-		"control":"Button",
-		"keys" : [
-			{ "input":"SummonToggle" }
-		]
-	},
-	{
-		"action":"UnSummonMode",
-		"control":"Button",
-		"keys" : [
-			{ "input":"UnSummonToggle" }
+			{ "input":"UnSummon" }
 		]
 	}
 ]

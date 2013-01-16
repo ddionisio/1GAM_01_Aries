@@ -22,6 +22,10 @@ public class FlockGroup : MonoBehaviour {
 		get { return mUnits; }
 	}
 	
+	public int count {
+		get { return mUnits.Count; }
+	}
+	
 	//only call this after awake
 	public static FlockGroup GetGroup(FlockType type) {
 		return mGroups[(int)type];

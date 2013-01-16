@@ -1,0 +1,18 @@
+[
+	{
+		"label":"melee",
+		"resource":10
+	},
+	{
+		"label":"range",
+		"resource":15
+	},
+	{
+		"label":"carrier",
+		"resource":20
+	},
+	{
+		"label":"hexer",
+		"resource":20
+	}
+]

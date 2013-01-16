@@ -5,6 +5,36 @@ using System.Collections.Generic;
 public class PlayerGroup : FlockGroup {
 	private Dictionary<UnitType, HashSet<UnitEntity>> mUnitsByType = new Dictionary<UnitType, HashSet<UnitEntity>>();
 	
+	public UnitEntity GrabUnit(UnitType type, ActionTarget.Priority priority) {
+		HashSet<UnitEntity> units;
+		
+		UnitEntity ret = null;
+		
+		if(mUnitsByType.TryGetValue(type, out units)) {
+			foreach(UnitEntity unit in units) {
+				switch(unit.state) {
+				case EntityState.dying:
+				case EntityState.spawning:
+				case EntityState.unsummon:
+					//don't grab these
+					break;
+					
+				default:
+					ActionListener listener = unit.listener;
+					if(listener.currentPriority <= priority) {
+						ret = unit;
+					}
+					break;
+				}
+				
+				if(ret != null)
+					break;
+			}
+		}
+		
+		return ret;
+	}
+	
 	protected override void OnAddUnit(FlockUnit unit) {
 		UnitEntity unitEntity = unit.GetComponentInChildren<UnitEntity>();
 		UnitStat stats = unitEntity.stats;

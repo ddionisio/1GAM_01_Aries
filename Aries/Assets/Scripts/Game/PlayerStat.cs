@@ -4,9 +4,13 @@ using System.Collections;
 public class PlayerStat : StatBase {
 	
 	public float maxResource;
-	public float minResource;
+	public float minResource; //regen if current resource is below this number
 	
 	public int maxSummon;
+	
+	public float resourcePerSecond = 2.0f;
+	
+	public int minSummonCriteria = 5; //regen if num summon is below this number
 	
 	public event OnStatChange resourceChangeCallback;
 	
@@ -50,11 +54,16 @@ public class PlayerStat : StatBase {
 
 	// Use this for initialization
 	void Start () {
-	
+		
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+		if(curResource < minResource) {
+			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(FlockType.PlayerUnits);
+			if(grp.count < minSummonCriteria) {
+				curResource += resourcePerSecond*Time.deltaTime;
+			}
+		}
 	}
 }

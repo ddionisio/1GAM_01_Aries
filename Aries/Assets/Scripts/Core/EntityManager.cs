@@ -35,7 +35,9 @@ public class EntityManager : MonoBehaviour {
 			for(int i = 0; i < num; i++) {
 				//PoolDataController
 				Transform t = (Transform)Object.Instantiate(template);
+				
 				t.parent = poolHolder;
+				t.localPosition = Vector3.zero;
 				
 				PoolDataController pdc = t.GetComponent<PoolDataController>();
 				if(pdc == null) {
@@ -43,22 +45,20 @@ public class EntityManager : MonoBehaviour {
 				}
 				
 				pdc.factoryKey = template.name;
-				
-				t.gameObject.SetActive(false);
-				
+												
 				available.Add(t);
 			}
 		}
 		
 		public void Release(Transform t) {
 			t.parent = poolHolder;
-			t.gameObject.SetActive(false);
-			
+			t.localPosition = Vector3.zero;
+						
 			available.Add(t);
 			allocateCounter--;
 		}
 		
-		public Transform Allocate(string name, Transform parent) {
+		public T Allocate<T>(string name, Transform parent) where T : Component {
 			if(available.Count == 0) {
 				if(allocateCounter+1 > maxCapacity) {
 					Debug.LogWarning(template.name+" is expanding beyond max capacity: "+maxCapacity);
@@ -71,18 +71,22 @@ public class EntityManager : MonoBehaviour {
 			}
 			
 			Transform t = available[available.Count-1];
-			available.RemoveAt(available.Count-1);
+			T obj = t.GetComponent<T>();
+			if(obj != null) {
+				available.RemoveAt(available.Count-1);
+				
+				t.GetComponent<PoolDataController>().claimed = false;
+				
+				t.name = string.IsNullOrEmpty(name) ? template.name + (nameCounter++) : name;
+				t.parent = parent == null ? defaultParent : parent;
+				t.localPosition = new Vector3(0.0f, 0.0f, z);
+				t.localRotation = Quaternion.identity;
+				t.localScale = Vector3.one;
+				
+				allocateCounter++;
+			}
 			
-			t.GetComponent<PoolDataController>().claimed = false;
-			
-			t.name = string.IsNullOrEmpty(name) ? template.name + (nameCounter++) : name;
-			t.parent = parent == null ? defaultParent : parent;
-			t.localPosition = new Vector3(0.0f, 0.0f, z);
-			t.localRotation = Quaternion.identity;
-			t.localScale = Vector3.one;
-			
-			allocateCounter++;
-			return t;
+			return obj;
 		}
 		
 		public void DeInit() {
@@ -111,47 +115,45 @@ public class EntityManager : MonoBehaviour {
 	}
 	
 	//if toParent is null, then set parent to us or factory's default
-	public Transform Spawn(string type, string name, Transform toParent, string waypoint) {
-		Transform ret = null;
+	public T Spawn<T>(string type, string name, Transform toParent, string waypoint) where T : EntityBase {
+		T entityRet = null;
 		
 		FactoryData dat;
 		if(mFactory.TryGetValue(type, out dat)) {
-			ret = dat.Allocate(name, toParent == null ? dat.defaultParent == null ? transform : null : toParent);
+			entityRet = dat.Allocate<T>(name, toParent == null ? dat.defaultParent == null ? transform : null : toParent);
 			
-			if(ret != null) {				
+			if(entityRet != null) {
 				if(!string.IsNullOrEmpty(waypoint)) {
 					Transform wp = WaypointManager.instance.GetWaypoint(waypoint);
 					if(wp != null) {
-						ret.position = wp.position;
+						entityRet.transform.position = wp.position;
 					}
 				}
 				
-				ret.gameObject.SetActive(true);
-				
-				EntityBase entity = ret.GetComponentInChildren<EntityBase>();
-				if(entity != null) {
-					entity.Spawn();
-				}
+				entityRet.Spawn();
+			}
+			else {
+				Debug.LogWarning("Failed to allocate type: "+type+" for: "+name);
 			}
 		}
 		else {
 			Debug.LogWarning("No such type: "+type+" attempt to allocate: "+name);
 		}
 		
-		return ret;
+		return entityRet;
 	}
 	
-	public void Release(Transform t) {
-		PoolDataController pdc = t.GetComponent<PoolDataController>();
+	public void Release(EntityBase entity) {
+		PoolDataController pdc = entity.GetComponent<PoolDataController>();
 		if(pdc != null) {
 			FactoryData dat;
 			if(mFactory.TryGetValue(pdc.factoryKey, out dat)) {
 				pdc.claimed = true;
-				dat.Release(t);
+				dat.Release(entity.transform);
 			}
 		}
 		else { //not in the pool, just kill it
-			Object.Destroy(t.gameObject);
+			Object.Destroy(entity.gameObject);
 		}
 	}
 	
@@ -166,6 +168,8 @@ public class EntityManager : MonoBehaviour {
 	void Awake() {
 		mInstance = this;
 		
+		poolHolder.gameObject.SetActive(false);
+		
 		//generate cache and such
 		mFactory = new Dictionary<string, FactoryData>(factory.Length);
 		foreach(FactoryData factoryData in factory) {
@@ -173,7 +177,5 @@ public class EntityManager : MonoBehaviour {
 			
 			mFactory.Add(factoryData.template.name, factoryData);
 		}
-		
-		poolHolder.gameObject.SetActive(false);
 	}
 }

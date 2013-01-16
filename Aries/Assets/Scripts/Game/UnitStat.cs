@@ -4,14 +4,14 @@ using System.Collections;
 public class UnitStat : StatBase {
 	public UnitType type;
 	
-	[SerializeField] float _love; //cost of unit or what enemies drop
+	private float mLove; //cost of unit or what enemies drop
 	
 	public float love {
-		get { return _love; }
+		get { return mLove; }
 	}
 	
 	public float loveHPScale {
-		get { return _love*HPScale; }
+		get { return mLove*HPScale; }
 	}
 	
 	protected override void Awake() {
@@ -20,7 +20,7 @@ public class UnitStat : StatBase {
 	
 	// Use this for initialization
 	void Start() {
-	
+		mLove = UnitConfig.instance.GetUnitResourceCost(type);
 	}
 	
 	// Update is called once per frame

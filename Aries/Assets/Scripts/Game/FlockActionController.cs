@@ -81,7 +81,7 @@ public class FlockActionController : ActionListener {
 	
 	//using flock's sensor to determine when to stop moving while following
 	void OnTriggerEnter(Collider other) {
-		if(!mStopActive) {
+		if(currentTarget != null && !mStopActive) {
 			mStopActive = 
 				currentTarget.type == ActionType.Follow
 				&& currentTarget.collider == other;
@@ -89,7 +89,7 @@ public class FlockActionController : ActionListener {
 	}
 	
 	void OnTriggerExit(Collider other) {
-		if(mStopActive) {
+		if(currentTarget != null && mStopActive) {
 			//go back to following
 			ResumeFollow(other, false);
 		}

@@ -7,15 +7,11 @@ public class ActionListener : MonoBehaviour {
 	private ActionTarget mDefaultActionTarget = null;
 	private bool mLockAction = false;
 	
-	//lock action, preventing action being set, returns to defaultTarget
+	///<summary> lock action, preventing action being set </summary>
 	public bool lockAction {
 		get { return mLockAction; }
 		
 		set {
-			if(value) {
-				SetTarget(null);
-			}
-			
 			mLockAction = value;
 		}
 	}

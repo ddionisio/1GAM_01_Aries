@@ -27,6 +27,10 @@ public class PlayerCursor : MonoBehaviour {
 		set { mDir = value; }
 	}
 	
+	public bool CheckArea(int layerMask) {
+		return Physics.CheckSphere(transform.position, radius, layerMask);
+	}
+	
 	void Awake() {
 	}
 	
