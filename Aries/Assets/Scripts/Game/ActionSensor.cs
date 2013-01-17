@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class ActionSensor : Sensor<ActionTarget> {
+public class ActionSensor : SensorCheckSphere<ActionTarget> {
 
 	protected override bool UnitVerify(ActionTarget unit) {
 		return true;

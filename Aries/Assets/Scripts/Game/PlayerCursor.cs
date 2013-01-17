@@ -6,10 +6,10 @@ public class PlayerCursor : MonoBehaviour {
 	
 	public float distance = 5.0f;
 	
+	public LayerMask checkMask;
+	
 	public ActionSensor attackSensor; //for all hostile enemies
 	public ActionSensor contextSensor; //anything non-combat related (or sub target for bosses)
-	
-	private int mLayerMask;
 	
 	private Transform mOrigin;
 	
@@ -36,8 +36,6 @@ public class PlayerCursor : MonoBehaviour {
 	
 	// Use this for initialization
 	void Start () {
-		//put other stuff here if needed
-		mLayerMask = Layers.layerMaskWall;
 	}
 	
 	void Update() {
@@ -46,7 +44,7 @@ public class PlayerCursor : MonoBehaviour {
 		//cast to reposition
 		if(mDir != Vector2.zero) {
 			RaycastHit hit;
-			if(Physics.SphereCast(start, radius, mDir, out hit, distance, mLayerMask)) {
+			if(Physics.SphereCast(start, radius, mDir, out hit, distance, checkMask.value)) {
 				Vector3 delta = mDir*hit.distance;
 				transform.position = start + delta;
 			}

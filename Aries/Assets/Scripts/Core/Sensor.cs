@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public abstract class Sensor<T> : MonoBehaviour where T : MonoBehaviour {
+public abstract class Sensor<T> : MonoBehaviour where T : Component {
 	public HashSet<T> units = new HashSet<T>();
 	
 	protected abstract bool UnitVerify(T unit);

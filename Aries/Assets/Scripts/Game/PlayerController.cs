@@ -186,6 +186,7 @@ public class PlayerController : MotionBase {
 			}
 			else if(cursor.contextSensor.units.Count > 0) {
 				//do something
+				Debug.Log("context found: "+cursor.contextSensor.units.Count);
 			}
 			else {
 				//recall sheeps
