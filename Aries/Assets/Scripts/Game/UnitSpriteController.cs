@@ -136,27 +136,49 @@ public class UnitSpriteController : MonoBehaviour {
 	void Update () {
 		if(!GetCurAnimData().sticky) {
 			//set dir
-			Vector2 moveDir = mover.dir;
 			
-			//get dir index
-			if((moveDir - mCurMoveDir).sqrMagnitude > 0.01f) {
-				mCurMoveDir = moveDir;
-				
-				float theta = Mathf.Atan2(mCurMoveDir.y, mCurMoveDir.x);
-				if(theta < 0) {
-					theta += M8.Math.TwoPI;
-				}
-				
-				theta -= LameShift;
-										
-				int newDir = theta < 0 ? 0 : Mathf.RoundToInt(theta*AngleToInd) % (int)Dir.NumDir;
-				
-				if(mCurDir != newDir) {
-					mCurDir = newDir;
-					ApplyCurState();
-				}
+			//fuck this
+			/*Vector2 moveDir = mover.body.velocity;
+			
+			mCurMoveDir = moveDir;
+			
+			float theta = Mathf.Atan2(mCurMoveDir.y, mCurMoveDir.x);
+			if(theta < 0) {
+				theta += M8.Math.TwoPI;
 			}
-			else if((mover.curSpeed <= stopThreshold && !mCurStopped)
+			
+			//theta -= LameShift;
+									
+			int newDir = theta < 0 ? 0 : Mathf.RoundToInt(theta*AngleToInd) % (int)Dir.NumDir;
+			
+			bool applyState = true;
+			
+			mCurDir = newDir;
+			
+			if((mover.curSpeed <= stopThreshold && !mCurStopped)
+				|| (mover.curSpeed > stopThreshold && mCurStopped)) {
+				applyState = true;
+			}
+			
+			if(applyState) {
+				ApplyCurState();
+			}*/
+			
+			
+			//well this is definitely cheaper
+			mCurMoveDir = mover.dir;
+			
+			int prevDir = mCurDir;
+			
+			if(Mathf.Abs(mCurMoveDir.x) >= Mathf.Abs(mCurMoveDir.y)) {
+				mCurDir = (int)(mCurMoveDir.x < 0.0f ? Dir.W : Dir.E);
+			}
+			else {
+				mCurDir = (int)(mCurMoveDir.y < 0.0f ? Dir.S : Dir.N);
+			}
+			
+			if(prevDir != mCurDir 
+				|| (mover.curSpeed <= stopThreshold && !mCurStopped)
 				|| (mover.curSpeed > stopThreshold && mCurStopped)) {
 				ApplyCurState();
 			}
