@@ -11,7 +11,20 @@ public class StatBase : MonoBehaviour {
 	[SerializeField] float _damage = 1.0f;
 	[SerializeField] float _maxHP = 1.0f;
 	
+	public UnitDamageType damageType;
+	
+	[HideInInspector] public UnitDamageType immuneFlags;
+	
+	[System.NonSerialized] public bool invulnerable = false;
+	
 	protected float mCurHP;
+	
+	/// <summary>
+	/// Determines whether this instance can damage the specified target.
+	/// </summary>
+	public bool CanDamage(StatBase target) {
+		return !invulnerable && (target.immuneFlags & damageType) != (UnitDamageType)0;
+	}
 		
 	public virtual float damage {
 		get { return _damage; }
@@ -60,6 +73,11 @@ public class StatBase : MonoBehaviour {
 	
 	public virtual void ResetStats() {
 		mCurHP = _maxHP;
+		invulnerable = false;
+	}
+	
+	protected virtual void OnDestroy() {
+		hpChangeCallback = null;
 	}
 	
 	protected virtual void Awake() {

@@ -7,6 +7,7 @@ public class Player : EntityBase {
 		PlayerController control = GetComponent<PlayerController>();
 		if(control != null) {
 			control.CancelActions();
+			control.followAction.StopAction();
 		}
 		
 		base.Release();

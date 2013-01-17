@@ -8,15 +8,15 @@ public class EditorFlockAntiField : Editor {
 		//serializedObject.Update();
 		FlockAntiField item = target as FlockAntiField;
 		
-		item.type = (FlockAntiField.Type)EditorGUILayout.EnumPopup("Type:", item.type);
+		item.type = (FlockAntiField.Type)EditorGUILayout.EnumPopup("Type", item.type);
 		
 		//item.layerMask = EditorGUILayoutx.LayerMaskField("Filter:", item.layerMask);
 		
-		item.angle = EditorGUILayout.Slider("Dir Angle:", item.angle, 0.0f, 360.0f);
+		item.angle = EditorGUILayout.Slider("Dir Angle", item.angle, 0.0f, 360.0f);
 		
-		item.force = EditorGUILayout.FloatField("Force:", item.force);
+		item.force = EditorGUILayout.FloatField("Force", item.force);
 		
-		item.updateDelay = EditorGUILayout.FloatField("Update Delay:", item.updateDelay);
+		item.updateDelay = EditorGUILayout.FloatField("Update Delay", item.updateDelay);
 	}
 	
 	

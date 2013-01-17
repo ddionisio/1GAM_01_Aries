@@ -10,8 +10,6 @@ public class FlockActionController : ActionListener {
 	
 	public float resumeDistance = 2.0f;
 	
-	public UnitSpriteController spriteControl;
-	
 	private bool mStopActive = false;
 	private float mCurStopDelay = 0.0f;
 	private Vector3 mLastFollowPos = Vector3.zero;
@@ -72,7 +70,7 @@ public class FlockActionController : ActionListener {
 	}
 	
 	void ResumeFollow(Collider targetCheck, bool stopActive) {
-		if(targetCheck == null || targetCheck == currentTarget.collider) {
+		if(targetCheck == null || targetCheck == currentTargetCollider) {
 			flockUnit.moveTarget = currentTarget.target;
 			mLastFollowPos = flockUnit.moveTarget.position;
 			mStopActive = stopActive;
@@ -84,7 +82,7 @@ public class FlockActionController : ActionListener {
 		if(currentTarget != null && !mStopActive) {
 			mStopActive = 
 				currentTarget.type == ActionType.Follow
-				&& currentTarget.collider == other;
+				&& currentTargetCollider == other;
 		}
 	}
 	

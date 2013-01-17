@@ -184,6 +184,14 @@ public class InputManager : MonoBehaviour {
 	
 	//internal
 	
+	void OnDestroy() {
+		foreach(BindData bind in mBinds) {
+			if(bind != null) {
+				bind.ClearCallback();
+			}
+		}
+	}
+	
 	void Awake() {
 		if(config != null) {
 			fastJSON.JSON.Instance.Parameters.UseExtensions = false;

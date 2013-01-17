@@ -8,10 +8,10 @@ public class EntityBase : MonoBehaviour {
 	
 	public float spawnDelay = 0.1f;
 	
-	public event OnSetState setStateCallback = null;
-	public event OnSetBool setBlinkCallback = null;
-	public event OnFinish spawnFinishCallback = null;
-	public event OnFinish releaseCallback = null;
+	public event OnSetState setStateCallback;
+	public event OnSetBool setBlinkCallback;
+	public event OnFinish spawnFinishCallback;
+	public event OnFinish releaseCallback;
 	
 	private EntityState mState = EntityState.NumState;
 	private EntityState mPrevState = EntityState.NumState;
@@ -88,6 +88,13 @@ public class EntityBase : MonoBehaviour {
 		
 		StopAllCoroutines();
 		EntityManager.instance.Release(this);
+	}
+	
+	protected virtual void OnDestroy() {
+		setStateCallback = null;
+		setBlinkCallback = null;
+		spawnFinishCallback = null;
+		releaseCallback = null;
 	}
 	
 	protected virtual void Awake() {

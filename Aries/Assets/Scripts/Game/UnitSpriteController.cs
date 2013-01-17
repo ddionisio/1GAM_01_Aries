@@ -2,7 +2,9 @@ using UnityEngine;
 using System.Collections;
 
 public class UnitSpriteController : MonoBehaviour {
-	public enum Dir { E, NE, N, NW, W, SW, S, SE, NumDir }
+	public enum Dir { E, N, W, S, NumDir }
+	
+	public delegate void OnStateAnimComplete(int state, int dir);
 		
 	[System.Serializable]
 	public class StateDir {
@@ -15,11 +17,11 @@ public class UnitSpriteController : MonoBehaviour {
 	public class StateData {
 		public string moveName;
 		public string stopName;
+		public bool sticky; //don't change state during update
 		public StateDir[] dirs; //size = 0: omni-dir, size = 8: state per dir
 	}
 	
 	public const float AngleToInd = ((float)Dir.NumDir)/M8.Math.TwoPI;
-	public const float AngleRes = 5.0f*Mathf.Deg2Rad;
 	public const float LameShift = (M8.Math.TwoPI/((float)Dir.NumDir))*0.5f;
 	
 	public tk2dAnimatedSprite sprite;
@@ -33,16 +35,17 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	public string defaultState; //state to change to if state is not found in states
 	
+	public event OnStateAnimComplete stateFinishCallback;
+	
 	private class AnimData {
 		public int moveId;
 		public int stopId;
-		public bool horzFlipped;
-		public bool vertFlipped;
+		public bool horzFlipped = false;
+		public bool vertFlipped = false;
+		public bool sticky = false;
 		
 		public AnimData(tk2dAnimatedSprite spr, int defaultId, 
-			string moveName, string stopName, 
-			Dir dir, 
-			bool aHorzFlipped, bool aVertFlipped) {
+			string moveName, string stopName, Dir dir) {
 			//omni dir
 			if(dir == Dir.NumDir) {
 				moveId = spr.GetClipIdByName(moveName);
@@ -68,9 +71,6 @@ public class UnitSpriteController : MonoBehaviour {
 					stopId = defaultId;
 				}
 			}
-			
-			horzFlipped = aHorzFlipped;
-			vertFlipped = aVertFlipped;
 		}
 	}
 					
@@ -91,7 +91,14 @@ public class UnitSpriteController : MonoBehaviour {
 		}
 	}
 	
+	void OnDestroy() {
+		stateFinishCallback = null;
+		
+		sprite.animationCompleteDelegate -= OnSpriteAnimComplete;
+	}
+	
 	void Awake() {
+		sprite.animationCompleteDelegate += OnSpriteAnimComplete;
 	}
 	
 	void Start () {
@@ -108,7 +115,8 @@ public class UnitSpriteController : MonoBehaviour {
 			//omni dir
 			if(state.dirs.Length == 0) {
 				mAnim[stateInd] = new AnimData[1];
-				mAnim[stateInd][0] = new AnimData(sprite, defaultId, moveName, stopName, Dir.NumDir, false, false);
+				mAnim[stateInd][0] = new AnimData(sprite, defaultId, moveName, stopName, Dir.NumDir);
+				mAnim[stateInd][0].sticky = state.sticky;
 			}
 			else {
 				mAnim[stateInd] = new AnimData[(int)Dir.NumDir];
@@ -116,44 +124,58 @@ public class UnitSpriteController : MonoBehaviour {
 				for(int i = 0; i < state.dirs.Length; i++) {
 					StateDir stateDir = state.dirs[i];
 					
-					mAnim[stateInd][i] = new AnimData(sprite, defaultId, moveName, stopName, stateDir.dir, stateDir.horzFlipped, stateDir.vertFlipped);
+					mAnim[stateInd][i] = new AnimData(sprite, defaultId, moveName, stopName, stateDir.dir);
+					mAnim[stateInd][i].horzFlipped = stateDir.horzFlipped;
+					mAnim[stateInd][i].vertFlipped = stateDir.vertFlipped;
+					mAnim[stateInd][i].sticky = state.sticky;
 				}
 			}
 		}
 	}
 	
 	void Update () {
-		//set dir
-		Vector2 moveDir = mover.dir;
-		
-		//get dir index
-		if((moveDir - mCurMoveDir).sqrMagnitude > 0.01f) {
-			mCurMoveDir = moveDir;
+		if(!GetCurAnimData().sticky) {
+			//set dir
+			Vector2 moveDir = mover.dir;
 			
-			float theta = Mathf.Atan2(mCurMoveDir.y, mCurMoveDir.x);
-			if(theta < 0) {
-				theta += M8.Math.TwoPI;
+			//get dir index
+			if((moveDir - mCurMoveDir).sqrMagnitude > 0.01f) {
+				mCurMoveDir = moveDir;
+				
+				float theta = Mathf.Atan2(mCurMoveDir.y, mCurMoveDir.x);
+				if(theta < 0) {
+					theta += M8.Math.TwoPI;
+				}
+				
+				theta -= LameShift;
+										
+				int newDir = theta < 0 ? 0 : Mathf.RoundToInt(theta*AngleToInd) % (int)Dir.NumDir;
+				
+				if(mCurDir != newDir) {
+					mCurDir = newDir;
+					ApplyCurState();
+				}
 			}
-			
-			theta -= LameShift;
-									
-			int newDir = theta < 0 ? 0 : Mathf.RoundToInt(theta*AngleToInd) % (int)Dir.NumDir;
-			
-			if(mCurDir != newDir) {
-				mCurDir = newDir;
+			else if((mover.curSpeed <= stopThreshold && !mCurStopped)
+				|| (mover.curSpeed > stopThreshold && mCurStopped)) {
 				ApplyCurState();
 			}
 		}
-		else if((mover.curSpeed <= stopThreshold && !mCurStopped)
-			|| (mover.curSpeed > stopThreshold && mCurStopped)) {
-			ApplyCurState();
+	}
+	
+	void OnSpriteAnimComplete(tk2dAnimatedSprite spr, int clipId) {
+		if(stateFinishCallback != null) {
+			stateFinishCallback(mCurState, mCurDir);
 		}
 	}
 	
-	private void ApplyCurState() {
+	private AnimData GetCurAnimData() {
 		AnimData[] animDirs = mAnim[mCurState];
-		
-		AnimData dat = animDirs.Length == 1 ? animDirs[0] : animDirs[mCurDir];
+		return animDirs.Length == 1 ? animDirs[0] : animDirs[mCurDir];
+	}
+	
+	private void ApplyCurState() {
+		AnimData dat = GetCurAnimData();
 						
 		mCurStopped = mover.curSpeed <= stopThreshold;
 		

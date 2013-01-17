@@ -54,6 +54,7 @@ public class FlockUnit : MotionBase {
 	private RaycastHit mWallHit;
 	
 	private float mRadius;
+	private float mPathRadiusSqr;
 	
 	private State mState = State.Move;
 	
@@ -87,6 +88,8 @@ public class FlockUnit : MotionBase {
 		
 		SphereCollider sc = GetComponent<SphereCollider>();
 		mRadius = sc != null ? sc.radius : 0.0f;
+		
+		mPathRadiusSqr = pathRadius*pathRadius;
 	}
 	
 	void Update() {
@@ -108,9 +111,6 @@ public class FlockUnit : MotionBase {
 						else {
 							mCurSeekDelay = 0.0f;
 						}
-					}
-					else {
-						
 					}
 				}
 			}
@@ -136,66 +136,71 @@ public class FlockUnit : MotionBase {
 	
 	// Update is called once per frame
 	protected override void FixedUpdate () {
-		mCurUpdateDelay += Time.fixedDeltaTime;
-		if(mCurUpdateDelay >= updateDelay) {
-			mCurUpdateDelay = 0;
+		if(mState == State.Waypoint) {
+			Vector2 desired = mSeekPath.vectorPath[mSeekCurPath] - transform.position;
 			
-			Vector2 sumForce = Vector2.zero;
-			
-			switch(mState) {
-			case State.Waypoint:
-				Vector2 desired = mSeekPath.vectorPath[mSeekCurPath] - transform.position;
-				float distance = desired.magnitude;
+			//check if we need to move to next waypoint
+			if(desired.sqrMagnitude < mPathRadiusSqr) {
+				//path complete?
+				int nextPath = mSeekCurPath+1;
+				if(nextPath == mSeekPath.vectorPath.Count) {
+					SeekPathStop();
+				}
+				else {
+					mSeekCurPath = nextPath;
+				}
+			}
+			else {
+				mCurUpdateDelay += Time.fixedDeltaTime;
+				if(mCurUpdateDelay >= updateDelay) {
+					mCurUpdateDelay = 0;
+					
+					//continue moving to wp
+					desired.Normalize();
+					Vector2 sumForce = ComputeSeparate() + desired*(maxForce*pathFactor);
+					body.AddForce(sumForce.x, sumForce.y, 0.0f);
+				}
+			}
+		}
+		else {
+			mCurUpdateDelay += Time.fixedDeltaTime;
+			if(mCurUpdateDelay >= updateDelay) {
+				mCurUpdateDelay = 0;
 				
-				//check if we need to move to next waypoint
-				if(distance < pathRadius) {
-					//path complete?
-					int nextPath = mSeekCurPath+1;
-					if(nextPath == mSeekPath.vectorPath.Count) {
-						SeekPathStop();
+				Vector2 sumForce = Vector2.zero;
+				
+				switch(mState) {
+				case State.Move:
+					if(moveTarget == null) {
+						mState = State.Idle;
 					}
 					else {
-						mSeekCurPath = nextPath;
+						//move to destination
+						Vector2 pos = mTrans.localPosition;
+						Vector2 dest = moveTarget.position;
+						Vector2 _dir = dest - pos;
+						mMoveTargetDist = _dir.magnitude;
+						
+						//catch up?
+						float factor = (sensor == null || sensor.units.Count == 0) && mMoveTargetDist > catchUpMinDistance 
+							? catchUpFactor : moveToFactor;
+						
+						sumForce = ComputeMovement();
+						
+						if(mMoveTargetDist > 0) {
+							_dir /= mMoveTargetDist;
+							sumForce += M8.Math.Steer(body.velocity, _dir*maxSpeed, maxForce, factor);
+						}
 					}
-				}
-				else {
-					//continue moving to wp
-					desired /= distance;
+					break;
 					
-					sumForce = ComputeSeparate() + desired*(maxForce*pathFactor);
+				default:
+					sumForce = ComputeSeparate();
+					break;
 				}
-				break;
 				
-			case State.Move:
-				if(moveTarget == null) {
-					mState = State.Idle;
-				}
-				else {
-					//move to destination
-					Vector2 pos = mTrans.localPosition;
-					Vector2 dest = moveTarget.position;
-					Vector2 _dir = dest - pos;
-					mMoveTargetDist = _dir.magnitude;
-					
-					//catch up?
-					float factor = (sensor == null || sensor.units.Count == 0) && mMoveTargetDist > catchUpMinDistance 
-						? catchUpFactor : moveToFactor;
-					
-					sumForce = ComputeMovement();
-					
-					if(mMoveTargetDist > 0) {
-						_dir /= mMoveTargetDist;
-						sumForce += M8.Math.Steer(body.velocity, _dir*maxSpeed, maxForce, factor);
-					}
-				}
-				break;
-				
-			default:
-				sumForce = ComputeSeparate();
-				break;
+				body.AddForce(sumForce.x, sumForce.y, 0.0f);
 			}
-			
-			body.AddForce(sumForce.x, sumForce.y, 0.0f);
 		}
 		
 		if(mWallCheck) {

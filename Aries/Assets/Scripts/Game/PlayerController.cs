@@ -9,8 +9,8 @@ public class PlayerController : MotionBase {
 	
 	public string fireProjectile;
 	public float fireStartDistance = 0.75f;
-	public float fireStartDelay = 0.5f;
-	public float firePerSecond = 1.0f;
+	public float fireDelay = 0.5f;
+	public float fireAngleSpread = 5.0f;
 	
 	public LayerMask summonLayerCheck;
 			
@@ -24,6 +24,9 @@ public class PlayerController : MotionBase {
 	
 	private float mCurFollowActiveTime = 0.0f;
 	
+	private bool mIsFire = false;
+	private float mCurFireTime = 0.0f;
+	
 	private UnitType[] mTypeSummons = {
 		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepCarrier, UnitType.sheepHexer };
 	
@@ -32,7 +35,7 @@ public class PlayerController : MotionBase {
 	
 	private PlayerCursor mCursor;
 	
-	private Vector2 mInputDir = Vector2.zero;
+	private Vector2 mInputDir = Vector2.right;
 	
 	private UnitEntity mCurSummonUnit = null;
 	
@@ -109,6 +112,7 @@ public class PlayerController : MotionBase {
 	void OnApplicationFocus(bool focus) {
 		if(!focus) {
 			ApplySummon(ActMode.Normal);
+			mIsFire = false;
 		}
 	}
 	
@@ -122,6 +126,23 @@ public class PlayerController : MotionBase {
 		}
 		
 		switch(mCurActMode) {
+		case ActMode.Normal:
+			if(mCurFireTime < fireDelay) {
+				mCurFireTime += Time.deltaTime;
+			}
+			else if(mIsFire) {
+				mCurFireTime = 0.0f;
+				if(!string.IsNullOrEmpty(fireProjectile)) {
+					float rad = fireAngleSpread*Mathf.Deg2Rad;
+					Vector2 dir = M8.Math.Rotate(mInputDir, Random.Range(-rad, rad));
+					Vector2 start = transform.position;
+					start += mInputDir*fireStartDistance;
+					
+					Projectile.Create(fireProjectile, start, dir);
+				}
+			}
+			break;
+			
 		case ActMode.Summon:
 		case ActMode.UnSummon:
 			if(mCurSummonInd != -1 && mCurSummonUnit == null) {
@@ -175,13 +196,7 @@ public class PlayerController : MotionBase {
 	}
 	
 	void InputFire(InputManager.Info data) {
-		if(data.state == InputManager.State.Pressed) {
-			Debug.Log("fire");
-			InvokeRepeating("FireUpdate", fireStartDelay, firePerSecond);
-		}
-		else {
-			CancelInvoke("FireUpdate");
-		}
+		mIsFire = data.state == InputManager.State.Pressed;
 	}
 	
 	void InputMenu(InputManager.Info data) {
@@ -238,15 +253,6 @@ public class PlayerController : MotionBase {
 			for(int i = 0; 
 				i < mTypeSummons.Length || mTypeSummons[mCurSummonInd] == UnitType.NumTypes; 
 				mCurSummonInd = (mCurSummonInd+1)%mTypeSummons.Length, i++);
-		}
-	}
-	
-	void FireUpdate() {
-		if(!string.IsNullOrEmpty(fireProjectile)) {
-			Vector2 start = transform.position;
-			start += mInputDir*fireStartDistance;
-			
-			Projectile.Create(fireProjectile, start, mInputDir);
 		}
 	}
 	

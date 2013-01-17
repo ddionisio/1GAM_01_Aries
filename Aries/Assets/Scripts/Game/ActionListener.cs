@@ -3,7 +3,17 @@ using System.Collections;
 
 //attach with a rigid body
 public class ActionListener : MonoBehaviour {
+	public delegate void Callback(ActionListener listen);
+	public delegate void CollisionCallback(ActionListener listen, ContactPoint info);
+	
+	public event Callback enterCallback;
+	public event Callback exitCallback;
+	public event CollisionCallback hitEnterCallback;
+	public event Callback hitExitCallback;
+	public event Callback finishCallback;
+	
 	private ActionTarget mCurActionTarget = null;
+	private Collider mCurActionCollider = null;
 	private ActionTarget mDefaultActionTarget = null;
 	private bool mLockAction = false;
 	
@@ -18,6 +28,10 @@ public class ActionListener : MonoBehaviour {
 	
 	public ActionTarget.Priority currentPriority {
 		get { return mCurActionTarget != null ? mCurActionTarget.priority : ActionTarget.Priority.Low; }
+	}
+	
+	public Collider currentTargetCollider {
+		get { return mCurActionCollider; }
 	}
 	
 	//use this to manually set target (e.g. attacking with specific units)
@@ -80,7 +94,12 @@ public class ActionListener : MonoBehaviour {
 			
 			OnActionFinish();
 			
+			if(finishCallback != null) {
+				finishCallback(this);
+			}
+			
 			mCurActionTarget = null;
+			mCurActionCollider = null;
 			
 			if(resumeDefault) {
 				ApplyToCurTarget(mDefaultActionTarget);
@@ -97,6 +116,12 @@ public class ActionListener : MonoBehaviour {
 	
 	protected virtual void OnActionExit() {
 	}
+			
+	protected virtual void OnActionHitEnter(ContactPoint info) {
+	}
+	
+	protected virtual void OnActionHitExit() {
+	}
 	
 	protected virtual void OnActionFinish() {
 	}
@@ -104,22 +129,59 @@ public class ActionListener : MonoBehaviour {
 	void OnDestroy() {
 		defaultTarget = null;
 		currentTarget = null;
+		
+		enterCallback = null;
+		exitCallback = null;
+		hitEnterCallback = null;
+		hitExitCallback = null;
+		finishCallback = null;
 	}
 	
 	void OnTriggerEnter(Collider other) {
 		if(!mLockAction) {
-			SetTarget(other.GetComponent<ActionTarget>());
+			ActionTarget target = other.GetComponent<ActionTarget>();
+			if(target != null) {
+				SetTarget(target);
+			}
 		}
 	}
 	
 	void OnTriggerExit(Collider other) {
-		ActionTarget target = other.GetComponent<ActionTarget>();
-		if(target != null && target == mCurActionTarget) {
-			if(target.stopOnExit) {
+		if(other == mCurActionCollider) {
+			if(mCurActionTarget.stopOnExit) {
 				StopAction(ActionTarget.Priority.Highest, true);
 			}
 			else {
 				OnActionExit();
+				
+				if(exitCallback != null) {
+					exitCallback(this);
+				}
+			}
+		}
+	}
+	
+	//if we are a rigid body and so is the target, these are called
+	void OnCollisionEnter(Collision collision) {
+		if(collision.collider == mCurActionCollider) {
+			//TODO: first contact guaranteed to be collision?
+			ContactPoint info = collision.contacts[0];
+			
+			OnActionHitEnter(info);
+			
+			if(hitEnterCallback != null) {
+				hitEnterCallback(this, info);
+			}
+		}
+	}
+	
+	//if we are a rigid body and so is the target, these are called
+	void OnCollisionExit(Collision collision) {
+		if(collision.collider == mCurActionCollider) {
+			OnActionHitExit();
+			
+			if(hitExitCallback != null) {
+				hitExitCallback(this);
 			}
 		}
 	}
@@ -142,7 +204,12 @@ public class ActionListener : MonoBehaviour {
 		target.AddListener(this);
 		
 		mCurActionTarget = target;
+		mCurActionCollider = target.collider;
 		
 		OnActionEnter();
+		
+		if(enterCallback != null) {
+			enterCallback(this);
+		}
 	}
 }

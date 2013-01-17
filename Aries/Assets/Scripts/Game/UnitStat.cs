@@ -22,9 +22,4 @@ public class UnitStat : StatBase {
 	void Start() {
 		mLove = UnitConfig.instance.GetUnitResourceCost(type);
 	}
-	
-	// Update is called once per frame
-	void Update() {
-	
-	}
 }

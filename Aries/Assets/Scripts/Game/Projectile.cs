@@ -5,10 +5,11 @@ public class Projectile : EntityBase {
 	public enum ContactType {
 		None,
 		End,
-		Explode,
 		Stop,
 		Bounce
 	}
+	
+	public UnitDamageType damageType;
 	
 	public MotionBase mover;
 	
@@ -128,13 +129,27 @@ public class Projectile : EntityBase {
 			state = EntityState.dying;
 			break;
 			
-		case ContactType.Explode:
-			DoExplode();
-			break;
-			
 		case ContactType.Stop:
 			mover.body.velocity = Vector3.zero;
 			break;
+			
+		case ContactType.Bounce:
+			if(collision.contacts.Length > 0) {
+				Vector2 normal = collision.contacts[0].normal;
+				Vector2 reflect = M8.Math.Reflect(mover.dir, normal);
+				Vector2 vel = mover.body.velocity;
+				float velMag = vel.magnitude;
+				mover.body.velocity = reflect*velMag;
+			}
+			break;
+		}
+		
+		//do damage
+		if(minDamage > 0.0f && !explodeOnDeath) {
+			UnitStat stat = collision.gameObject.GetComponentInChildren<UnitStat>();
+			if(stat != null) {
+				stat.curHP -= minDamage;
+			}
 		}
 	}
 	

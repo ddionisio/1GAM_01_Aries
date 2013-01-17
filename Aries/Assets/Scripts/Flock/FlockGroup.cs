@@ -68,6 +68,9 @@ public class FlockGroup : MonoBehaviour {
 	
 	protected virtual void OnDestroy() {
 		mGroups[(int)type] = null;
+		
+		addCallback = null;
+		removeCallback = null;
 	}
 	
 	protected virtual void Awake() {

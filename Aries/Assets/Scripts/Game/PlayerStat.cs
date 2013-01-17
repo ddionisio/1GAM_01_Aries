@@ -48,6 +48,12 @@ public class PlayerStat : StatBase {
 		base.ResetStats();
 	}
 	
+	protected override void OnDestroy() {
+		resourceChangeCallback = null;
+		
+		base.OnDestroy();
+	}
+	
 	protected override void Awake() {
 		base.Awake();
 	}
