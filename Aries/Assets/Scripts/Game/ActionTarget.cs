@@ -4,10 +4,10 @@ using System.Collections.Generic;
 
 public class ActionTarget : MonoBehaviour {
 	public enum Priority {
-		Highest,
-		High,
+		Low,
 		Normal,
-		Low
+		High,
+		Highest
 	}
 	
 	public const int Unlimited = -1;
@@ -16,10 +16,7 @@ public class ActionTarget : MonoBehaviour {
 	public Priority priority = Priority.Normal;
 	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	
-	public Collider sensor;
-		
 	public bool stopOnExit = false;
-	public bool startSensorOff = false; //turn off sensor at start
 			
 	private HashSet<ActionListener> mListeners = new HashSet<ActionListener>();
 	
@@ -35,21 +32,6 @@ public class ActionTarget : MonoBehaviour {
 		set {
 			if(indicator != null) {
 				indicator.SetActive(value);
-			}
-		}
-	}
-	
-	public bool sensorOn {
-		get { return sensor == null ? false : sensor.enabled; }
-		
-		set {
-			if(sensor != null) {
-				sensor.enabled = value;
-				
-				//remove listeners
-				if(!value) {
-					StopAction();
-				}
 			}
 		}
 	}
@@ -100,18 +82,11 @@ public class ActionTarget : MonoBehaviour {
 	}
 	
 	void Awake() {
-		if(sensor == null) {
-			sensor = collider;
-		}
-		
 		if(indicator != null) {
 			indicator.SetActive(false);
 		}
 	}
 	
 	void Start() {
-		if(startSensorOff && sensor != null) {
-			sensor.enabled = false;
-		}
 	}
 }

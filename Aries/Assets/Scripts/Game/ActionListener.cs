@@ -27,7 +27,11 @@ public class ActionListener : MonoBehaviour {
 	}
 	
 	public ActionTarget.Priority currentPriority {
-		get { return mCurActionTarget != null ? mCurActionTarget.priority : ActionTarget.Priority.Low; }
+		get {
+			//if current target is the default, then that is low
+			return mCurActionTarget != null && mCurActionTarget != mDefaultActionTarget ? 
+				mCurActionTarget.priority : ActionTarget.Priority.Low; 
+		}
 	}
 	
 	public Collider currentTargetCollider {
@@ -89,7 +93,7 @@ public class ActionListener : MonoBehaviour {
 		if(mCurActionTarget == null) {
 			return true;
 		}
-		else if(mCurActionTarget.priority <= priority) {
+		else if(mCurActionTarget == mDefaultActionTarget || mCurActionTarget.priority <= priority) {
 			mCurActionTarget.RemoveListener(this);
 			
 			OnActionFinish();
@@ -101,7 +105,7 @@ public class ActionListener : MonoBehaviour {
 			mCurActionTarget = null;
 			mCurActionCollider = null;
 			
-			if(resumeDefault) {
+			if(resumeDefault && mDefaultActionTarget != null) {
 				ApplyToCurTarget(mDefaultActionTarget);
 			}
 			

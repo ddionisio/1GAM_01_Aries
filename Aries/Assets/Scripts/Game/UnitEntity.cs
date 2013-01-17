@@ -84,6 +84,10 @@ public class UnitEntity : EntityBase {
 		//complete
 		FlockUnitInit();
 		
+		if(mListener != null) {
+			mListener.lockAction = false;
+		}
+		
 		state = EntityState.normal;
 	}
 	
@@ -132,6 +136,9 @@ public class UnitEntity : EntityBase {
 			if(mSpriteControl != null) {
 				mSpriteControl.state = (int)UnitSpriteState.AttackPursue;
 			}
+			
+			//disable group follow
+			mFlockUnit.groupMoveEnabled = false;
 			break;
 			
 		default:
@@ -143,6 +150,19 @@ public class UnitEntity : EntityBase {
 	}
 	
 	void OnActionExit(ActionListener listen) {
+		/*if(mSpriteControl != null) {
+			mSpriteControl.state = (int)UnitSpriteState.Move;
+		}*/
+	}
+	
+	void OnActionFinish(ActionListener listen) {
+		if(mFlockUnit != null) {
+			mFlockUnit.enabled = true;
+			
+			//re-enable group follow
+			mFlockUnit.groupMoveEnabled = true;
+		}
+		
 		if(mSpriteControl != null) {
 			mSpriteControl.state = (int)UnitSpriteState.Move;
 		}
@@ -162,7 +182,7 @@ public class UnitEntity : EntityBase {
 					
 					//halt
 					if(mFlockUnit != null) {
-						mFlockUnit.moveTarget = null;
+						mFlockUnit.enabled = false;
 					}
 					
 					if(rigidbody != null) {
@@ -183,13 +203,7 @@ public class UnitEntity : EntityBase {
 			break;
 		}
 	}
-	
-	void OnActionFinish(ActionListener listen) {
-		if(mSpriteControl != null) {
-			mSpriteControl.state = (int)UnitSpriteState.Move;
-		}
-	}
-	
+			
 	void OnSpriteAnimationComplete(int state, int dir) {
 		if(state == (int)UnitSpriteState.Attack) {
 			//make sure we still have a target and we are still attacking
@@ -198,7 +212,7 @@ public class UnitEntity : EntityBase {
 				case ActionType.Attack:
 					//return to pursue
 					if(mFlockUnit != null) {
-						mFlockUnit.moveTarget = mListener.currentTarget.target;
+						mFlockUnit.enabled = true;
 					}
 					
 					//push back a bit
@@ -206,11 +220,11 @@ public class UnitEntity : EntityBase {
 						Vector2 force = mAttackHitNormal*attackForceBack;
 						rigidbody.AddForce(force.x, force.y, 0.0f);
 					}
+					
+					mSpriteControl.state = (int)UnitSpriteState.AttackPursue;
 					break;
 				}
 			}
-			
-			mSpriteControl.state = (int)UnitSpriteState.AttackPursue;
 		}
 		//other things
 	}
@@ -237,6 +251,8 @@ public class UnitEntity : EntityBase {
 		//add to group
 		//remove from group if it still exists
 		if(mFlockUnit != null) {
+			mFlockUnit.enabled = true;
+			mFlockUnit.groupMoveEnabled = true;
 			mFlockUnit.sensor.collider.enabled = true;
 			
 			FlockGroup grp = FlockGroup.GetGroup(mFlockUnit.type);

@@ -11,7 +11,7 @@ public class CameraController : MonoBehaviour {
 	
 	private Transform mAttachTo;
 	
-	private Hashtable mMoveParam;
+	private Vector3 mCurVelocity = Vector3.zero;
 		
 	public static CameraController instance { get { return mInstance; } }
 	
@@ -20,13 +20,6 @@ public class CameraController : MonoBehaviour {
 		
 		set {
 			mAttachTo = value;
-			
-			if(mAttachTo != null) {
-				mMoveParam.Add(iT.MoveUpdate.position, mAttachTo);
-			}
-			else {
-				mMoveParam.Remove(iT.MoveUpdate.position);
-			}
 		}
 	}
 	
@@ -36,20 +29,16 @@ public class CameraController : MonoBehaviour {
 	
 	void Awake() {
 		mInstance = this;
-		
-		mMoveParam = new Hashtable(2);
-		mMoveParam.Add(iT.MoveUpdate.time, moveDelay);
 	}
 
 	// Use this for initialization
 	void Start () {
-		//iTween.mo
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if(mAttachTo != null) {
-			iTween.MoveUpdate(gameObject, mMoveParam);
+			transform.position = Vector3.SmoothDamp(transform.position, mAttachTo.position, ref mCurVelocity, moveDelay);
 		}
 	}
 }

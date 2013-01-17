@@ -37,6 +37,8 @@ public class FlockUnit : MotionBase {
 	
 	public float catchUpMinDistance; //min distance to use catchup factor
 	
+	[System.NonSerializedAttribute] public bool groupMoveEnabled = true; //false = no cohesion and alignment
+	
 	private Transform mMoveTarget = null;
 	private float mMoveTargetDist;
 	
@@ -185,7 +187,7 @@ public class FlockUnit : MotionBase {
 						float factor = (sensor == null || sensor.units.Count == 0) && mMoveTargetDist > catchUpMinDistance 
 							? catchUpFactor : moveToFactor;
 						
-						sumForce = ComputeMovement();
+						sumForce = groupMoveEnabled ? ComputeMovement() : ComputeSeparate();
 						
 						if(mMoveTargetDist > 0) {
 							_dir /= mMoveTargetDist;

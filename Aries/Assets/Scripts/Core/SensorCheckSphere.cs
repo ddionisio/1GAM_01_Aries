@@ -16,6 +16,22 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	protected abstract void UnitAdded(T unit);
 	protected abstract void UnitRemoved(T unit);
 	
+	/// <summary>
+	/// Grabs one unit in the set
+	/// </summary>
+	public T GetSingleUnit() {
+		T ret = null;
+		
+		if(units.Count > 0) {
+			HashSet<T>.Enumerator e = units.GetEnumerator();
+			if(e.MoveNext()) {
+				ret = e.Current;
+			}
+		}
+		
+		return ret;
+	}
+	
 	void OnEnable() {
 		InvokeRepeating("Check", delay, delay);
 	}

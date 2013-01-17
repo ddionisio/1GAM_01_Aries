@@ -5,12 +5,14 @@ public class PlayerController : MotionBase {
 	public float force;
 	
 	public ActionTarget followAction;
-	public float followActiveDelay = 1.0f;
 	
 	public string fireProjectile;
 	public float fireStartDistance = 0.75f;
 	public float fireDelay = 0.5f;
 	public float fireAngleSpread = 5.0f;
+	
+	public float recallRadius = 8.0f;
+	public LayerMask recallLayerCheck;
 	
 	public LayerMask summonLayerCheck;
 			
@@ -21,8 +23,6 @@ public class PlayerController : MotionBase {
 	}
 	
 	private PlayerStat mPlayerStats;
-	
-	private float mCurFollowActiveTime = 0.0f;
 	
 	private bool mIsFire = false;
 	private float mCurFireTime = 0.0f;
@@ -117,14 +117,6 @@ public class PlayerController : MotionBase {
 	}
 	
 	void Update() {
-		//cancel actions of units within while recall is active
-		if(followAction.sensorOn) {
-			mCurFollowActiveTime += Time.deltaTime;
-			if(mCurFollowActiveTime >= followActiveDelay) {
-				followAction.sensorOn = false;
-			}
-		}
-		
 		switch(mCurActMode) {
 		case ActMode.Normal:
 			if(mCurFireTime < fireDelay) {
@@ -181,17 +173,25 @@ public class PlayerController : MotionBase {
 			//do something amazing
 			Debug.Log("act");
 			
-			if(cursor.attackSensor.units.Count > 0) {
-				//attack
-			}
-			else if(cursor.contextSensor.units.Count > 0) {
+			if(cursor.contextSensor.units.Count > 0) {
+				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(FlockType.PlayerUnits);
+				
 				//do something
 				Debug.Log("context found: "+cursor.contextSensor.units.Count);
+				
+				
+				ActionTarget target = cursor.contextSensor.GetSingleUnit();
+				
+				foreach(UnitEntity unit in grp.GetTargetFilter(mTypeSummons[mCurSummonInd], target)) {
+					unit.listener.currentTarget = target;
+				}
+			}
+			else if(cursor.attackSensor.units.Count > 0) {
+				//attack
 			}
 			else {
 				//recall sheeps
-				followAction.sensorOn = true;
-				mCurFollowActiveTime = 0.0f;
+				RecallUnits();
 			}
 		}
 	}
@@ -300,6 +300,26 @@ public class PlayerController : MotionBase {
 			
 			if(mCurSummonUnit == ent) {
 				mCurSummonUnit = null;
+			}
+		}
+	}
+	
+	void OnDrawGizmosSelected() {
+		Gizmos.color = Color.yellow;
+		Gizmos.DrawWireSphere(transform.position, recallRadius);
+	}
+	
+	private void RecallUnits() {
+		UnitType type = mCurSummonInd == -1 ? UnitType.NumTypes : mTypeSummons[mCurSummonInd];
+		
+		Collider[] collides = Physics.OverlapSphere(transform.position, recallRadius, recallLayerCheck.value);
+		foreach(Collider col in collides) {
+			UnitEntity unit = col.GetComponentInChildren<UnitEntity>();
+			if(unit != null) {
+				//check type
+				if(type == UnitType.NumTypes || unit.stats.type == type) {
+					unit.listener.StopAction(ActionTarget.Priority.High, true);
+				}
 			}
 		}
 	}

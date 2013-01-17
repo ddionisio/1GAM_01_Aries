@@ -93,6 +93,7 @@ public class Obstacle : EntityBase {
 	
 	
 	void OnHPChange(StatBase stat, float delta) {
+		Debug.Log("ouch");
 		if(stat.curHP == 0.0f) {
 			state = EntityState.dying;
 		}
