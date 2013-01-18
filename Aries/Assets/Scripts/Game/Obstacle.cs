@@ -17,11 +17,13 @@ public class Obstacle : EntityBase {
 		base.Awake();
 		
 		mSprite = GetComponentInChildren<tk2dAnimatedSprite>();
-		mStats = GetComponentInChildren<UnitStat>();
+		mStats = GetComponentInChildren<StatBase>();
 		mActTarget = GetComponentInChildren<ActionTarget>();
 		
 		//hook calls up
-		mStats.hpChangeCallback += OnHPChange;
+		if(mStats != null) {
+			mStats.hpChangeCallback += OnHPChange;
+		}
 	}
 	
 	// Use this for initialization
@@ -39,7 +41,9 @@ public class Obstacle : EntityBase {
 		
 		ClearData();
 		
-		mStats.ResetStats();
+		if(mStats != null) {
+			mStats.ResetStats();
+		}
 						
 		base.Release();
 	}
@@ -56,14 +60,11 @@ public class Obstacle : EntityBase {
 			break;
 			
 		case EntityState.dying:
-			//clear out path blocks
-			if(updatePathing && mPathCreated) {
-				mPathCreated = false;
-			}
-			
 			if(mActTarget != null) {
 				mActTarget.StopAction();
 			}
+			
+			Release();
 			break;
 		}
 	}

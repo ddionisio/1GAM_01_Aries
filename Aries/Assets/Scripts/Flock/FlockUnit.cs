@@ -71,6 +71,10 @@ public class FlockUnit : MotionBase {
 			}
 		}
 	}
+	
+	public float moveTargetDistance {
+		get { return mMoveTargetDist; }
+	}
 			
 	void OnDestroy() {
 		mSeek.pathCallback -= OnSeekPathComplete;
@@ -184,8 +188,8 @@ public class FlockUnit : MotionBase {
 						mMoveTargetDist = _dir.magnitude;
 						
 						//catch up?
-						float factor = (sensor == null || sensor.units.Count == 0) && mMoveTargetDist > catchUpMinDistance 
-							? catchUpFactor : moveToFactor;
+						float factor = (!groupMoveEnabled || sensor == null || sensor.units.Count == 0) 
+							&& mMoveTargetDist > catchUpMinDistance ? catchUpFactor : moveToFactor;
 						
 						sumForce = groupMoveEnabled ? ComputeMovement() : ComputeSeparate();
 						

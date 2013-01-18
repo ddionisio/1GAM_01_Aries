@@ -8,6 +8,7 @@ public class StatBase : MonoBehaviour {
 	
 	[SerializeField] protected StatHUD hud; //the hud associated with the stat
 	
+	[SerializeField] bool _hudAutoHide = true;
 	[SerializeField] float _damage = 1.0f;
 	[SerializeField] float _maxHP = 1.0f;
 	
@@ -23,7 +24,7 @@ public class StatBase : MonoBehaviour {
 	/// Determines whether this instance can damage the specified target.
 	/// </summary>
 	public bool CanDamage(StatBase target) {
-		return !invulnerable && (target.immuneFlags & damageType) != (UnitDamageType)0;
+		return !invulnerable && (target.immuneFlags & damageType) == (UnitDamageType)0;
 	}
 		
 	public virtual float damage {
@@ -74,6 +75,10 @@ public class StatBase : MonoBehaviour {
 	public virtual void ResetStats() {
 		mCurHP = _maxHP;
 		invulnerable = false;
+		
+		if(_hudAutoHide && hud != null) {
+			hud.show = false;
+		}
 	}
 	
 	protected virtual void OnDestroy() {

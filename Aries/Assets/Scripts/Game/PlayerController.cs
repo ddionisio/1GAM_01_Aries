@@ -5,6 +5,7 @@ public class PlayerController : MotionBase {
 	public float force;
 	
 	public ActionTarget followAction;
+	public Transform followInputRotate;
 	
 	public string fireProjectile;
 	public float fireStartDistance = 0.75f;
@@ -163,7 +164,7 @@ public class PlayerController : MotionBase {
 			body.AddForce(moveX*force, moveY*force, 0.0f);
 		}
 		
-		followAction.transform.up = dir;
+		followInputRotate.up = dir;
 		
 		base.FixedUpdate();
 	}

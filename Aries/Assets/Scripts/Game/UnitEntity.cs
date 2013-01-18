@@ -81,13 +81,13 @@ public class UnitEntity : EntityBase {
 	}
 	
 	protected override void SpawnFinish() {
-		//complete
-		FlockUnitInit();
-		
 		if(mListener != null) {
 			mListener.lockAction = false;
 		}
 		
+		//complete
+		FlockUnitInit();
+						
 		state = EntityState.normal;
 	}
 	
