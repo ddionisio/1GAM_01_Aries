@@ -40,10 +40,10 @@
 		"action":"SummonSelect",
 		"control":"Button",
 		"keys" : [
-			{ "code":"Alpha0", "index":0 },
-			{ "code":"Alpha1", "index":1 },
-			{ "code":"Alpha2", "index":2 },
-			{ "code":"Alpha3", "index":3 }
+			{ "code":"Alpha1", "index":0 },
+			{ "code":"Alpha2", "index":1 },
+			{ "code":"Alpha3", "index":2 },
+			{ "code":"Alpha4", "index":3 }
 		]
 	},
 	

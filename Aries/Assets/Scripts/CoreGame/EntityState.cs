@@ -2,8 +2,9 @@ public enum EntityState {
 	spawning,
 	normal,
 	dying,
-	unsummon,
-	seek,
+	unsummon, //player unit
+	seek, //projectile
+	attacking,
 		
 	NumState
 }

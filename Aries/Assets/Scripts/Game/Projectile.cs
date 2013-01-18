@@ -146,7 +146,7 @@ public class Projectile : EntityBase {
 		
 		//do damage
 		if(minDamage > 0.0f && !explodeOnDeath) {
-			UnitStat stat = collision.gameObject.GetComponentInChildren<UnitStat>();
+			StatBase stat = collision.gameObject.GetComponentInChildren<StatBase>();
 			if(stat != null) {
 				stat.curHP -= minDamage;
 			}

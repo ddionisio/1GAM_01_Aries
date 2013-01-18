@@ -6,6 +6,10 @@ public class ActionListener : MonoBehaviour {
 	public delegate void Callback(ActionListener listen);
 	public delegate void CollisionCallback(ActionListener listen, ContactPoint info);
 	
+	//for true: make sure you have a trigger collider
+	//for false: if you want to assign target manually
+	public bool triggerCheckEnable = false;
+	
 	public event Callback enterCallback;
 	public event Callback exitCallback;
 	public event CollisionCallback hitEnterCallback;
@@ -142,7 +146,7 @@ public class ActionListener : MonoBehaviour {
 	}
 	
 	void OnTriggerEnter(Collider other) {
-		if(!mLockAction) {
+		if(triggerCheckEnable && !mLockAction) {
 			ActionTarget target = other.GetComponent<ActionTarget>();
 			if(target != null) {
 				SetTarget(target);
@@ -151,7 +155,7 @@ public class ActionListener : MonoBehaviour {
 	}
 	
 	void OnTriggerExit(Collider other) {
-		if(other == mCurActionCollider) {
+		if(triggerCheckEnable && other == mCurActionCollider) {
 			if(mCurActionTarget.stopOnExit) {
 				StopAction(ActionTarget.Priority.Highest, true);
 			}

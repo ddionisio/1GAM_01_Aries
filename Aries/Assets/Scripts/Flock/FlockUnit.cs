@@ -39,11 +39,13 @@ public class FlockUnit : MotionBase {
 	public float catchUpMinDistance; //min distance to use catchup factor
 	
 	[System.NonSerializedAttribute] public bool groupMoveEnabled = true; //false = no cohesion and alignment
+	[System.NonSerializedAttribute] public bool catchUpEnabled = true; //false = don't use catch up factor
 	
 	FlockFilter mFilter = null;
 	
 	private Transform mMoveTarget = null;
-	private float mMoveTargetDist;
+	private float mMoveTargetDist = 0;
+	private Vector2 mMoveTargetDir = Vector2.right;
 	
 	private float mCurUpdateDelay = 0;
 	private float mCurSeekDelay = 0;
@@ -82,6 +84,10 @@ public class FlockUnit : MotionBase {
 	
 	public float moveTargetDistance {
 		get { return mMoveTargetDist; }
+	}
+	
+	public Vector2 moveTargetDir {
+		get { return mMoveTargetDir; }
 	}
 			
 	void OnDestroy() {
@@ -194,13 +200,18 @@ public class FlockUnit : MotionBase {
 						mMoveTargetDist = _dir.magnitude;
 						
 						//catch up?
-						float factor = (!groupMoveEnabled || sensor == null || sensor.units.Count == 0) 
-							&& mMoveTargetDist > catchUpMinDistance ? catchUpFactor : moveToFactor;
+						float factor = catchUpEnabled 
+							&& (!groupMoveEnabled || sensor == null || sensor.units.Count == 0) 
+							&& mMoveTargetDist > catchUpMinDistance ? 
+								catchUpFactor : moveToFactor;
 						
 						sumForce = groupMoveEnabled ? ComputeMovement() : ComputeSeparate();
 						
 						if(mMoveTargetDist > 0) {
 							_dir /= mMoveTargetDist;
+							
+							mMoveTargetDir = _dir;
+							
 							sumForce += M8.Math.Steer(body.velocity, _dir*maxSpeed, maxForce, factor);
 						}
 					}
@@ -229,6 +240,10 @@ public class FlockUnit : MotionBase {
 		
 		Gizmos.color *= 1.25f;
 		Gizmos.DrawWireSphere(transform.position, wallRadius);
+		
+		Gizmos.color = Color.yellow;
+		Gizmos.color *= 0.75f;
+		Gizmos.DrawWireSphere(transform.position, avoidDistance);
 	}
 	
 	void OnSeekPathComplete(Path p) {

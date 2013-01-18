@@ -4,6 +4,7 @@ using System.Collections;
 public class UnitEntity : EntityBase {
 	public UnitAttackType attackType;
 	
+	public float attackRange = 0.0f; //range to attack (0 for melee)
 	public float attackForceBack = 50.0f; //amount of force to move back after an attack
 	
 	public float unSummonDelay = 0.5f;
@@ -61,6 +62,14 @@ public class UnitEntity : EntityBase {
 	}
 		
 	protected override void StateChanged() {
+		switch(prevState) {
+		case EntityState.unsummon:
+			if(mListener != null) {
+				mListener.lockAction = false;
+			}
+			break;
+		}
+		
 		switch(state) {
 		case EntityState.spawning:
 			//spawn started
@@ -68,6 +77,10 @@ public class UnitEntity : EntityBase {
 			
 		case EntityState.unsummon:
 			//fx
+			if(mListener != null) {
+				mListener.currentTarget = null;
+				mListener.lockAction = true;
+			}
 			
 			mCurSummonTime = 0.0f;
 			break;
@@ -124,7 +137,47 @@ public class UnitEntity : EntityBase {
 				Release();
 			}
 			break;
+			
+		case EntityState.attacking:
+			//if target is null or something else, then we shouldn't be in this state
+			//perform attack if we haven't already
+			if(mSpriteControl.state != (int)UnitSpriteState.Attack) {
+				//only range types will attack and shoot weapon
+				if(attackRange > 0.0f) {
+					//distance check
+					bool goAttack = mFlockUnit != null ? 
+						mFlockUnit.avoidDistance <= mFlockUnit.moveTargetDistance && mFlockUnit.moveTargetDistance <= attackRange && Vector2.Dot(mFlockUnit.moveTargetDir, mFlockUnit.dir) > 0.0f
+					 : (mListener.currentTarget.target.position - transform.position).sqrMagnitude <= attackRange*attackRange;
+					
+					if(goAttack) {
+						if(mFlockUnit != null) {
+							mAttackHitNormal = -mFlockUnit.dir;
+						}
+						
+						//attack, should get a call later when we finish
+						mSpriteControl.state = (int)UnitSpriteState.Attack;
+						
+						//halt
+						if(mFlockUnit != null) {
+							mFlockUnit.enabled = false;
+						}
+						
+						if(rigidbody != null) {
+							rigidbody.velocity = Vector3.zero;
+						}
+						//
+						
+						//shoot weapon
+					}
+				}
+			}
+			break;
 		}
+	}
+	
+	void OnDrawGizmosSelected() {
+		Gizmos.color = Color.red;
+		Gizmos.DrawWireSphere(transform.position, attackRange);
 	}
 	
 	
@@ -139,6 +192,13 @@ public class UnitEntity : EntityBase {
 			
 			//disable group follow
 			mFlockUnit.groupMoveEnabled = false;
+			
+			//no catch up for range types
+			if(attackRange > 0.0f) {
+				mFlockUnit.catchUpEnabled = false;
+			}
+			
+			state = EntityState.attacking;
 			break;
 			
 		default:
@@ -159,13 +219,16 @@ public class UnitEntity : EntityBase {
 		if(mFlockUnit != null) {
 			mFlockUnit.enabled = true;
 			
-			//re-enable group follow
+			//re-enable certain flock flags
 			mFlockUnit.groupMoveEnabled = true;
+			mFlockUnit.catchUpEnabled = true;
 		}
 		
 		if(mSpriteControl != null) {
 			mSpriteControl.state = (int)UnitSpriteState.Move;
 		}
+		
+		state = EntityState.normal;
 	}
 	
 	void OnActionHitEnter(ActionListener listen, ContactPoint info) {
@@ -174,7 +237,8 @@ public class UnitEntity : EntityBase {
 		case ActionType.Attack:
 			//perform attack if we haven't already
 			if(mSpriteControl.state != (int)UnitSpriteState.Attack) {
-				if(attackType == UnitAttackType.Melee) {
+				//only melee can attack and damage on hit
+				if(attackRange == 0.0f) {
 					mAttackHitNormal = info.normal;
 					
 					//attack, should get a call later when we finish
@@ -253,6 +317,7 @@ public class UnitEntity : EntityBase {
 		if(mFlockUnit != null) {
 			mFlockUnit.enabled = true;
 			mFlockUnit.groupMoveEnabled = true;
+			mFlockUnit.catchUpEnabled = true;
 			mFlockUnit.sensor.collider.enabled = true;
 			
 			FlockGroup grp = FlockGroup.GetGroup(mFlockUnit.type);

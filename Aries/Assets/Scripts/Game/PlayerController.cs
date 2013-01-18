@@ -334,7 +334,6 @@ public class PlayerController : MotionBase {
 			if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
 				if(mCurSummonUnit.state == EntityState.unsummon) {
 					mCurSummonUnit.state = EntityState.normal;
-					mCurSummonUnit.listener.lockAction = false;
 				}
 				
 				mCurSummonUnit = null;
@@ -379,8 +378,6 @@ public class PlayerController : MotionBase {
 			
 			mCurSummonUnit = grp.GrabUnit(mTypeSummons[mCurSummonInd], ActionTarget.Priority.High);
 			if(mCurSummonUnit != null) {
-				mCurSummonUnit.listener.currentTarget = null;
-				mCurSummonUnit.listener.lockAction = true;
 				mCurSummonUnit.state = EntityState.unsummon;
 			}
 			break;
