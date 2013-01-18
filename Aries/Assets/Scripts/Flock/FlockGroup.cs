@@ -38,6 +38,8 @@ public class FlockGroup : MonoBehaviour {
 		}
 		
 		if(mUnits.Add(unit)) {
+			unit.type = type;
+			
 			OnAddUnit(unit);
 			
 			if(addCallback != null) {

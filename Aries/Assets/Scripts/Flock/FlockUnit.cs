@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Pathfinding;
 
+[RequireComponent(typeof(FlockFilter))]
 public class FlockUnit : MotionBase {
 	public enum State {
 		Idle, //no cohesion, move, alignment
@@ -11,9 +12,7 @@ public class FlockUnit : MotionBase {
 		//Wander, //cohesion and alignment
 		//Disperse //anti-cohesion and no alignment
 	}
-	
-	public FlockType type;
-	
+			
 	public FlockSensor sensor;
 	
 	public float maxForce = 120.0f; //N
@@ -22,6 +21,7 @@ public class FlockUnit : MotionBase {
 	public float wallRadius;
 	
 	public float separateDistance = 2.0f;
+	public float avoidDistance = 0.0f;
 	
 	public float separateFactor = 1.5f;
 	public float alignFactor = 1.0f;
@@ -30,6 +30,7 @@ public class FlockUnit : MotionBase {
 	public float catchUpFactor = 2.0f; //when we have a move target and there are no other flocks around
 	public float pathFactor = 1.0f;
 	public float wallFactor = 1.0f;
+	public float avoidFactor = 1.0f;
 	
 	public float updateDelay = 1.0f;
 	
@@ -38,6 +39,8 @@ public class FlockUnit : MotionBase {
 	public float catchUpMinDistance; //min distance to use catchup factor
 	
 	[System.NonSerializedAttribute] public bool groupMoveEnabled = true; //false = no cohesion and alignment
+	
+	FlockFilter mFilter = null;
 	
 	private Transform mMoveTarget = null;
 	private float mMoveTargetDist;
@@ -59,6 +62,11 @@ public class FlockUnit : MotionBase {
 	private float mPathRadiusSqr;
 	
 	private State mState = State.Move;
+	
+	public FlockType type {
+		get { return mFilter.type; }
+		set { mFilter.type = value; }
+	}
 	
 	public Transform moveTarget {
 		get { return mMoveTarget; }
@@ -83,11 +91,9 @@ public class FlockUnit : MotionBase {
 	protected override void Awake() {
 		base.Awake();
 		
-		mTrans = transform;
+		mFilter = GetComponent<FlockFilter>();
 		
-		if(sensor != null) {
-			sensor.typeFilter = type;
-		}
+		mTrans = transform;
 		
 		mSeek = GetComponent<Seeker>();
 		mSeek.pathCallback += OnSeekPathComplete;
@@ -182,7 +188,7 @@ public class FlockUnit : MotionBase {
 					}
 					else {
 						//move to destination
-						Vector2 pos = mTrans.localPosition;
+						Vector2 pos = mTrans.position;
 						Vector2 dest = moveTarget.position;
 						Vector2 _dir = dest - pos;
 						mMoveTargetDist = _dir.magnitude;
@@ -273,7 +279,7 @@ public class FlockUnit : MotionBase {
 	}
 	
 	private Vector2 Seek(Vector2 target, float factor) {
-		Vector2 pos = mTrans.localPosition;
+		Vector2 pos = mTrans.position;
 		
 		Vector2 desired = target - pos;
 		desired.Normalize();
@@ -283,26 +289,41 @@ public class FlockUnit : MotionBase {
 	
 	//use for idle, waypoint, etc.
 	private Vector2 ComputeSeparate() {
-		Vector2 separate = Vector2.zero;
+		Vector2 forceRet = Vector2.zero;
 		
 		if(sensor != null && sensor.units.Count > 0) {
-			Vector2 pos = mTrans.localPosition;
+			Vector2 separate = Vector2.zero;
+			Vector2 avoid = Vector2.zero;
+			
+			Vector2 pos = mTrans.position;
 			
 			Vector2 dPos;
 			float dist;
 			
 			int numSeparate = 0;
+			int numAvoid = 0;
 			
-			foreach(FlockUnit unit in sensor.units) {
-				Vector2 otherPos = unit.transform.localPosition;
+			foreach(FlockFilter unit in sensor.units) {
+				Vector2 otherPos = unit.transform.position;
 				
-				//separate
 				dPos = pos - otherPos;
 				dist = dPos.magnitude;
-				if(dist < separateDistance) {
-					dPos /= dist;
-					separate += dPos;
-					numSeparate++;
+				
+				if(mFilter.CheckAvoid(unit.type)) {
+					//avoid
+					if(dist < avoidDistance) {
+						dPos /= dist;
+						avoid += dPos;
+						numAvoid++;
+					}
+				}
+				else {
+					//separate	
+					if(dist < separateDistance) {
+						dPos /= dist;
+						separate += dPos;
+						numSeparate++;
+					}
 				}
 			}
 			
@@ -313,47 +334,78 @@ public class FlockUnit : MotionBase {
 				dist = separate.magnitude;
 				if(dist > 0) {
 					separate /= dist;
-					separate = M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
+					forceRet += M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
+				}
+			}
+			
+			//calculate avoid
+			if(numAvoid > 0) {
+				avoid /= (float)numAvoid;
+				
+				dist = avoid.magnitude;
+				if(dist > 0) {
+					avoid /= dist;
+					forceRet += M8.Math.Steer(body.velocity, avoid*maxSpeed, maxForce, avoidFactor);
 				}
 			}
 		}
 		
-		return separate;
+		return forceRet;
 	}
 	
 	private Vector2 ComputeMovement() {
-		Vector2 forceRet;
+		Vector2 forceRet = Vector2.zero;
 		
 		if(sensor != null && sensor.units.Count > 0) {
 			Vector2 separate = Vector2.zero;
 			Vector2 align = Vector2.zero;
 			Vector2 cohesion = Vector2.zero;
+			Vector2 avoid = Vector2.zero;
 			
-			Vector2 pos = mTrans.localPosition;
+			Vector2 pos = mTrans.position;
 			
 			Vector2 dPos;
 			float dist;
 			
+			int numFollow = 0;
 			int numSeparate = 0;
+			int numAvoid = 0;
 			
-			foreach(FlockUnit unit in sensor.units) {
-				Vector2 otherPos = unit.transform.localPosition;
-				Vector2 otherVel = unit.body.velocity;
+			foreach(FlockFilter unit in sensor.units) {
+				Vector2 otherPos = unit.transform.position;
 				
-				//separate
 				dPos = pos - otherPos;
 				dist = dPos.magnitude;
-				if(dist < separateDistance) {
-					dPos /= dist;
-					separate += dPos;
-					numSeparate++;
+				
+				if(mFilter.CheckAvoid(unit.type)) {
+					//avoid
+					if(dist < avoidDistance) {
+						dPos /= dist;
+						avoid += dPos;
+						numAvoid++;
+					}
 				}
-				
-				//align speed
-				align += otherVel;
-				
-				//cohesion
-				cohesion += otherPos;
+				else if(mFilter.type == unit.type) {
+					//separate	
+					if(dist < separateDistance) {
+						dPos /= dist;
+						separate += dPos;
+						numSeparate++;
+					}
+					
+					//only follow if it has a legit body
+					Rigidbody otherBody = unit.rigidbody;
+					if(otherBody != null && !otherBody.isKinematic) {
+						//align speed
+						Vector2 vel = otherBody.velocity;
+						align += vel;
+						
+						//cohesion
+						cohesion += otherPos;
+					
+						numFollow++;
+					}
+				}
 			}
 			
 			//calculate separate
@@ -363,25 +415,36 @@ public class FlockUnit : MotionBase {
 				dist = separate.magnitude;
 				if(dist > 0) {
 					separate /= dist;
-					separate = M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
+					forceRet += M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
+					
 				}
 			}
 			
-			float fCount = (float)sensor.units.Count;
+			//calculate avoid
+			if(numAvoid > 0) {
+				avoid /= (float)numAvoid;
+				
+				dist = avoid.magnitude;
+				if(dist > 0) {
+					avoid /= dist;
+					forceRet += M8.Math.Steer(body.velocity, avoid*maxSpeed, maxForce, avoidFactor);
+				}
+			}
 			
-			//calculate align
-			align /= fCount;
-			align.Normalize();
-			align = M8.Math.Steer(body.velocity, align*maxSpeed, maxForce, alignFactor);
-			
-			//calculate cohesion
-			cohesion /= fCount;
-			cohesion = Seek(cohesion, cohesionFactor);
-			
-			forceRet = separate + align + cohesion;
-		}
-		else {
-			forceRet = Vector2.zero;
+			if(numFollow > 0) {
+				float fCount = (float)numFollow;
+				
+				//calculate align
+				align /= fCount;
+				align.Normalize();
+				align = M8.Math.Steer(body.velocity, align*maxSpeed, maxForce, alignFactor);
+				
+				//calculate cohesion
+				cohesion /= fCount;
+				cohesion = Seek(cohesion, cohesionFactor);
+				
+				forceRet += align + cohesion;
+			}
 		}
 		
 		return forceRet;

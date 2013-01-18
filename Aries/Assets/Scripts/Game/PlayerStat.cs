@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class PlayerStat : StatBase {
+	public FlockType flockGroup = FlockType.PlayerOneUnits;
 	
 	public float maxResource;
 	public float minResource; //regen if current resource is below this number
@@ -66,7 +67,7 @@ public class PlayerStat : StatBase {
 	// Update is called once per frame
 	void Update () {
 		if(curResource < minResource) {
-			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(FlockType.PlayerUnits);
+			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(flockGroup);
 			if(grp.count < minSummonCriteria) {
 				curResource += resourcePerSecond*Time.deltaTime;
 			}

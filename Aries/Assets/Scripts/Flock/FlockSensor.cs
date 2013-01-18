@@ -2,16 +2,14 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class FlockSensor : Sensor<FlockUnit> {
-	[System.NonSerialized] public FlockType typeFilter;
-	
-	protected override bool UnitVerify(FlockUnit unit) {
-		return unit.type == typeFilter;
+public class FlockSensor : Sensor<FlockFilter> {
+	protected override bool UnitVerify(FlockFilter unit) {
+		return true;
 	}
 	
-	protected override void UnitAdded(FlockUnit unit) {
+	protected override void UnitAdded(FlockFilter unit) {
 	}
 	
-	protected override void UnitRemoved(FlockUnit unit) {
+	protected override void UnitRemoved(FlockFilter unit) {
 	}
 }

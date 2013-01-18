@@ -1,11 +1,17 @@
 
 
 public enum FlockType {
-	PlayerUnits,
+	PlayerOneUnits,
+	PlayerTwoUnits,
+	PlayerThreeUnits,
+	PlayerFourUnits,
 	
-	EnemyCaptain,
+	EnemyOneUnits,
+	EnemyTwoUnits,
+	EnemyThreeUnits,
+	EnemyFourUnits,
 	
-	EnemyUnits,
+	NeutralUnits,
 	
 	NumType
 }

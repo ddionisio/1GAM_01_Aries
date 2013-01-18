@@ -77,7 +77,7 @@ public class PlayerController : MotionBase {
 			Main.instance.input.RemoveButtonCall(InputAction.UnSummon, InputUnSummon);
 		}
 		
-		FlockGroup playerGroup = FlockGroup.GetGroup(FlockType.PlayerUnits);
+		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayerStats.flockGroup);
 		if(playerGroup != null) {
 			playerGroup.addCallback -= OnGroupUnitAdd;
 			playerGroup.removeCallback -= OnGroupUnitRemove;
@@ -103,7 +103,7 @@ public class PlayerController : MotionBase {
 		Main.instance.input.AddButtonCall(InputAction.Summon, InputSummon);
 		Main.instance.input.AddButtonCall(InputAction.UnSummon, InputUnSummon);
 		
-		FlockGroup playerGroup = FlockGroup.GetGroup(FlockType.PlayerUnits);
+		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayerStats.flockGroup);
 		if(playerGroup != null) {
 			playerGroup.addCallback += OnGroupUnitAdd;
 			playerGroup.removeCallback += OnGroupUnitRemove;
@@ -175,7 +175,7 @@ public class PlayerController : MotionBase {
 			Debug.Log("act");
 			
 			if(cursor.contextSensor.units.Count > 0) {
-				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(FlockType.PlayerUnits);
+				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayerStats.flockGroup);
 				
 				//do something
 				Debug.Log("context found: "+cursor.contextSensor.units.Count);
@@ -353,7 +353,7 @@ public class PlayerController : MotionBase {
 		
 		switch(mCurActMode) {
 		case ActMode.Summon:
-			grp = (PlayerGroup)FlockGroup.GetGroup(FlockType.PlayerUnits);
+			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayerStats.flockGroup);
 			
 			//check if there's enough resource to summon
 			//TODO: user feedback
@@ -375,7 +375,7 @@ public class PlayerController : MotionBase {
 			break;
 			
 		case ActMode.UnSummon:
-			grp = (PlayerGroup)FlockGroup.GetGroup(FlockType.PlayerUnits);
+			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayerStats.flockGroup);
 			
 			mCurSummonUnit = grp.GrabUnit(mTypeSummons[mCurSummonInd], ActionTarget.Priority.High);
 			if(mCurSummonUnit != null) {
