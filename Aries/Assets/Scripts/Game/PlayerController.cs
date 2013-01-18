@@ -7,11 +7,6 @@ public class PlayerController : MotionBase {
 	public ActionTarget followAction;
 	public Transform followInputRotate;
 	
-	public string fireProjectile;
-	public float fireStartDistance = 0.75f;
-	public float fireDelay = 0.5f;
-	public float fireAngleSpread = 5.0f;
-	
 	public float recallRadius = 8.0f;
 	public LayerMask recallLayerCheck;
 	
@@ -23,10 +18,10 @@ public class PlayerController : MotionBase {
 		UnSummon
 	}
 	
-	private PlayerStat mPlayerStats;
+	private Weapon mWeapon;
+	private Weapon.RepeatParam mWeaponParam = new Weapon.RepeatParam();
 	
-	private bool mIsFire = false;
-	private float mCurFireTime = 0.0f;
+	private PlayerStat mPlayerStats;
 	
 	private UnitType[] mTypeSummons = {
 		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepCarrier, UnitType.sheepHexer };
@@ -36,12 +31,10 @@ public class PlayerController : MotionBase {
 	
 	private PlayerCursor mCursor;
 	
-	private Vector2 mInputDir = Vector2.right;
-	
 	private UnitEntity mCurSummonUnit = null;
 	
 	public Vector2 inputDir {
-		get { return mInputDir; }
+		get { return mWeaponParam.dir; }
 	}
 	
 	public PlayerCursor cursor {
@@ -63,6 +56,10 @@ public class PlayerController : MotionBase {
 		CancelInvoke();
 		
 		ApplySummon(ActMode.Normal);
+		
+		if(mWeapon != null) {
+			mWeapon.Release();
+		}
 	}
 	
 	void OnDestroy() {
@@ -89,6 +86,9 @@ public class PlayerController : MotionBase {
 	protected override void Awake() {
 		base.Awake();
 		
+		mWeapon = GetComponentInChildren<Weapon>();
+		mWeaponParam.source = transform;
+		
 		mPlayerStats = GetComponentInChildren<PlayerStat>();
 	}
 	
@@ -113,27 +113,16 @@ public class PlayerController : MotionBase {
 	void OnApplicationFocus(bool focus) {
 		if(!focus) {
 			ApplySummon(ActMode.Normal);
-			mIsFire = false;
+			
+			if(mWeapon != null) {
+				mWeapon.RepeatStop();
+			}
 		}
 	}
 	
 	void Update() {
 		switch(mCurActMode) {
 		case ActMode.Normal:
-			if(mCurFireTime < fireDelay) {
-				mCurFireTime += Time.deltaTime;
-			}
-			else if(mIsFire) {
-				mCurFireTime = 0.0f;
-				if(!string.IsNullOrEmpty(fireProjectile)) {
-					float rad = fireAngleSpread*Mathf.Deg2Rad;
-					Vector2 dir = M8.Math.Rotate(mInputDir, Random.Range(-rad, rad));
-					Vector2 start = transform.position;
-					start += mInputDir*fireStartDistance;
-					
-					Projectile.Create(fireProjectile, start, dir);
-				}
-			}
 			break;
 			
 		case ActMode.Summon:
@@ -154,9 +143,7 @@ public class PlayerController : MotionBase {
 		float moveY = input.GetAxis(InputAction.MoveY);
 		
 		if(moveX != 0.0f || moveY != 0.0f) {
-			//mInputDir.Set(moveX, moveY);
-			//mInputDir.Normalize();
-			mInputDir = dir;
+			mWeaponParam.dir = dir;
 			if(mCursor != null) {
 				mCursor.dir = dir;
 			}
@@ -198,7 +185,14 @@ public class PlayerController : MotionBase {
 	}
 	
 	void InputFire(InputManager.Info data) {
-		mIsFire = data.state == InputManager.State.Pressed;
+		if(mWeapon != null) {
+			if(data.state == InputManager.State.Pressed) {
+				mWeapon.Repeat(mWeaponParam);
+			}
+			else {
+				mWeapon.RepeatStop();
+			}
+		}
 	}
 	
 	void InputMenu(InputManager.Info data) {

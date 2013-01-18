@@ -37,6 +37,16 @@ public class PlayerStat : StatBase {
 		}
 	}
 	
+	public void InitResource() {
+		//TODO: check for reserved unit spawns (e.g. level transition)
+		if(curResource < minResource) {
+			FlockGroup grp = FlockGroup.GetGroup(flockGroup);
+			if(grp == null || grp.count < minSummonCriteria) {
+				curResource = minResource;
+			}
+		}
+	}
+	
 	public override void Refresh() {
 		base.Refresh();
 		

@@ -26,6 +26,18 @@ public class Player : EntityBase {
 		
 		CameraController camCtrl = CameraController.instance;
 		camCtrl.attachTo = transform;
+		
+		PlayerStat stat = GetComponentInChildren<PlayerStat>();
+		stat.InitResource();
+	}
+	
+	protected override void StateChanged() {
+		switch(state) {
+		case EntityState.spawning:
+			PlayerStat stat = GetComponentInChildren<PlayerStat>();
+			stat.InitResource();
+			break;
+		}
 	}
 	
 	void LateUpdate () {
