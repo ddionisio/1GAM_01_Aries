@@ -21,7 +21,7 @@ public class PlayerController : MotionBase {
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam = new Weapon.RepeatParam();
 	
-	private PlayerStat mPlayerStats;
+	private Player mPlayer;
 	
 	private UnitType[] mTypeSummons = {
 		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepCarrier, UnitType.sheepHexer };
@@ -32,6 +32,10 @@ public class PlayerController : MotionBase {
 	private PlayerCursor mCursor;
 	
 	private UnitEntity mCurSummonUnit = null;
+	
+	public Player player {
+		get { return mPlayer; }
+	}
 	
 	public Vector2 inputDir {
 		get { return mWeaponParam.dir; }
@@ -74,13 +78,15 @@ public class PlayerController : MotionBase {
 			Main.instance.input.RemoveButtonCall(InputAction.UnSummon, InputUnSummon);
 		}
 		
-		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayerStats.flockGroup);
+		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 		if(playerGroup != null) {
 			playerGroup.addCallback -= OnGroupUnitAdd;
 			playerGroup.removeCallback -= OnGroupUnitRemove;
 		}
 		
-		cursor = null;
+		if(mCursor != null) {
+			mCursor.origin = null;
+		}
 	}
 	
 	protected override void Awake() {
@@ -89,7 +95,12 @@ public class PlayerController : MotionBase {
 		mWeapon = GetComponentInChildren<Weapon>();
 		mWeaponParam.source = transform;
 		
-		mPlayerStats = GetComponentInChildren<PlayerStat>();
+		mPlayer = GetComponentInChildren<Player>();
+		
+		mCursor = GameObject.FindObjectOfType(typeof(PlayerCursor)) as PlayerCursor;
+		if(mCursor != null) {
+			mCursor.origin = transform;
+		}
 	}
 	
 	// Use this for initialization
@@ -103,7 +114,7 @@ public class PlayerController : MotionBase {
 		Main.instance.input.AddButtonCall(InputAction.Summon, InputSummon);
 		Main.instance.input.AddButtonCall(InputAction.UnSummon, InputUnSummon);
 		
-		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayerStats.flockGroup);
+		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 		if(playerGroup != null) {
 			playerGroup.addCallback += OnGroupUnitAdd;
 			playerGroup.removeCallback += OnGroupUnitRemove;
@@ -162,7 +173,7 @@ public class PlayerController : MotionBase {
 			Debug.Log("act");
 			
 			if(cursor.contextSensor.units.Count > 0) {
-				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayerStats.flockGroup);
+				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 				
 				//do something
 				Debug.Log("context found: "+cursor.contextSensor.units.Count);
@@ -188,9 +199,11 @@ public class PlayerController : MotionBase {
 		if(mWeapon != null) {
 			if(data.state == InputManager.State.Pressed) {
 				mWeapon.Repeat(mWeaponParam);
+				player.state = EntityState.attacking;
 			}
 			else {
 				mWeapon.RepeatStop();
+				player.state = EntityState.normal;
 			}
 		}
 	}
@@ -266,7 +279,7 @@ public class PlayerController : MotionBase {
 		if(ent != null) {
 			//check summoning
 			if(ent.prevState == EntityState.spawning) {
-				mPlayerStats.curResource -= ent.stats.love;
+				mPlayer.stats.curResource -= ent.stats.love;
 			}
 			
 			if(mCurSummonUnit == ent) {
@@ -290,7 +303,7 @@ public class PlayerController : MotionBase {
 			//check unsummoning
 			if(ent.state == EntityState.unsummon) {
 				//refund based on hp percent
-				mPlayerStats.curResource += ent.stats.loveHPScale;
+				mPlayer.stats.curResource += ent.stats.loveHPScale;
 			}
 			
 			if(mCurSummonUnit == ent) {
@@ -322,8 +335,6 @@ public class PlayerController : MotionBase {
 	//for both summon/unsummon
 	private void ApplySummon(ActMode toMode) {
 		if(mCurActMode != toMode) {
-			StopSummonAuraFX();
-			
 			//revert currently selected unsummon
 			if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
 				if(mCurSummonUnit.state == EntityState.unsummon) {
@@ -335,8 +346,18 @@ public class PlayerController : MotionBase {
 									
 			mCurActMode = toMode;
 			
-			if(mCurActMode != ActMode.Normal) {
-				StartSummonAuraFX();
+			switch(mCurActMode) {
+			case ActMode.Normal:
+				player.state = EntityState.normal;
+				break;
+				
+			case ActMode.Summon:
+				player.state = EntityState.castSummon;
+				break;
+				
+			case ActMode.UnSummon:
+				player.state = EntityState.castUnSummon;
+				break;
 			}
 		}
 	}
@@ -346,13 +367,13 @@ public class PlayerController : MotionBase {
 		
 		switch(mCurActMode) {
 		case ActMode.Summon:
-			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayerStats.flockGroup);
+			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 			
 			//check if there's enough resource to summon
 			//TODO: user feedback
 			UnitType unitType = mTypeSummons[mCurSummonInd];
-			if(grp.count < mPlayerStats.maxSummon) {
-				if(mPlayerStats.curResource >= UnitConfig.instance.GetUnitResourceCost(unitType)) {
+			if(grp.count < mPlayer.stats.maxSummon) {
+				if(mPlayer.stats.curResource >= UnitConfig.instance.GetUnitResourceCost(unitType)) {
 					//check if it's safe to summon on the spot
 					if(!cursor.CheckArea(summonLayerCheck.value)) {
 						string typeName = unitType.ToString();
@@ -368,32 +389,12 @@ public class PlayerController : MotionBase {
 			break;
 			
 		case ActMode.UnSummon:
-			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayerStats.flockGroup);
+			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 			
 			mCurSummonUnit = grp.GrabUnit(mTypeSummons[mCurSummonInd], ActionTarget.Priority.High);
 			if(mCurSummonUnit != null) {
 				mCurSummonUnit.state = EntityState.unsummon;
 			}
-			break;
-		}
-	}
-	
-	private void StartSummonAuraFX() {
-		switch(mCurActMode) {
-		case ActMode.Summon:
-			break;
-			
-		case ActMode.UnSummon:
-			break;
-		}
-	}
-	
-	private void StopSummonAuraFX() {
-		switch(mCurActMode) {
-		case ActMode.Summon:
-			break;
-			
-		case ActMode.UnSummon:
 			break;
 		}
 	}

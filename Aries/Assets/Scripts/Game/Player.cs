@@ -3,21 +3,41 @@ using System.Collections;
 
 public class Player : EntityBase {
 	
+	private PlayerController mControl;
+	private UnitSpriteController mSprite;
+	private PlayerStat mPlayerStats;
+	
+	public PlayerStat stats {
+		get { return mPlayerStats; }
+	}
+	
 	public override void Release() {
-		PlayerController control = GetComponent<PlayerController>();
-		if(control != null) {
-			control.CancelActions();
-			control.followAction.StopAction();
-		}
+		mControl.CancelActions();
+		mControl.followAction.StopAction();
 		
 		base.Release();
+	}
+	
+	protected override void OnDestroy () {
+		mPlayerStats.hpChangeCallback -= OnHPChange;
+		
+		base.OnDestroy();
+	}
+	
+	protected override void SpawnFinish () {
+		base.SpawnFinish();
+		
+		state = EntityState.normal;
 	}
 	
 	protected override void Awake() {
 		base.Awake();
 		
-		PlayerController control = GetComponentInChildren<PlayerController>();
-		control.cursor = GameObject.FindObjectOfType(typeof(PlayerCursor)) as PlayerCursor;
+		mControl = GetComponentInChildren<PlayerController>();
+		mPlayerStats = GetComponentInChildren<PlayerStat>();
+		mSprite = GetComponentInChildren<UnitSpriteController>();
+		
+		mPlayerStats.hpChangeCallback += OnHPChange;
 	}
 
 	// Use this for initialization
@@ -27,20 +47,58 @@ public class Player : EntityBase {
 		CameraController camCtrl = CameraController.instance;
 		camCtrl.attachTo = transform;
 		
-		PlayerStat stat = GetComponentInChildren<PlayerStat>();
-		stat.InitResource();
+		mPlayerStats.InitResource();
 	}
 	
 	protected override void StateChanged() {
+		switch(prevState) {
+		case EntityState.castSummon:
+			//stop fx
+			break;
+			
+		case EntityState.castUnSummon:
+			//stop fx
+			break;
+		}
+		
 		switch(state) {
 		case EntityState.spawning:
-			PlayerStat stat = GetComponentInChildren<PlayerStat>();
-			stat.InitResource();
+			mPlayerStats.InitResource();
+			break;
+			
+		case EntityState.normal:
+			mSprite.state = UnitSpriteState.Move;
+			break;
+			
+		case EntityState.castSummon:
+			//start fx
+			mSprite.state = UnitSpriteState.Casting;
+			break;
+			
+		case EntityState.castUnSummon:
+			//start fx
+			mSprite.state = UnitSpriteState.Casting;
+			break;
+			
+		case EntityState.attacking:
+			mSprite.state = UnitSpriteState.AttackPursue;
+			break;
+					
+		case EntityState.dying:
+			mSprite.state = UnitSpriteState.Die;
+			
+			//gameover
 			break;
 		}
 	}
 	
 	void LateUpdate () {
 	
+	}
+	
+	void OnHPChange(StatBase stat, float delta) {
+		if(stat.curHP == 0.0f) {
+			state = EntityState.dying;
+		}
 	}
 }

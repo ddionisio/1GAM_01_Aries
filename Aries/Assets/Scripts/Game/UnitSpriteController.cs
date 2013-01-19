@@ -105,6 +105,10 @@ public class UnitSpriteController : MonoBehaviour {
 		}
 	}
 	
+	public bool HasState(UnitSpriteState checkState) {
+		return mAnim[(int)checkState] != null;
+	}
+	
 	void OnDestroy() {
 		stateFinishCallback = null;
 		stateEventCallback = null;
@@ -149,7 +153,8 @@ public class UnitSpriteController : MonoBehaviour {
 	}
 	
 	void Update () {
-		if(!GetCurAnimData().sticky) {
+		AnimData curAnim = GetCurAnimData();
+		if(!(curAnim == null || curAnim.sticky)) {
 			//set dir
 			
 			//fuck this

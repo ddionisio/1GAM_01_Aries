@@ -8,5 +8,7 @@ public enum UnitSpriteState {
 	Summon,
 	UnSummon,
 	
+	Casting, //chanting a spell of some sort
+	
 	NumState
 }

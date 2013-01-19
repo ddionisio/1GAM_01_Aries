@@ -84,11 +84,24 @@ public class UnitEntity : EntityBase {
 		}
 		
 		switch(state) {
+		case EntityState.normal:
+			if(mSpriteControl != null) {
+				mSpriteControl.state = UnitSpriteState.Move;
+			}
+			break;
+			
 		case EntityState.spawning:
 			//spawn started
+			if(mSpriteControl != null && mSpriteControl.HasState(UnitSpriteState.Summon)) {
+				mSpriteControl.state = UnitSpriteState.Summon;
+			}
 			break;
 			
 		case EntityState.unsummon:
+			if(mSpriteControl != null && mSpriteControl.HasState(UnitSpriteState.UnSummon)) {
+				mSpriteControl.state = UnitSpriteState.UnSummon;
+			}
+			
 			//fx
 			if(mListener != null) {
 				mListener.currentTarget = null;
@@ -101,6 +114,10 @@ public class UnitEntity : EntityBase {
 		case EntityState.dying:
 			if(mActTarget != null) {
 				mActTarget.StopAction();
+			}
+			
+			if(mSpriteControl != null) {
+				mSpriteControl.state = UnitSpriteState.Die;
 			}
 			break;
 		}
@@ -187,10 +204,6 @@ public class UnitEntity : EntityBase {
 			mFlockUnit.catchUpEnabled = true;
 		}
 		
-		if(mSpriteControl != null) {
-			mSpriteControl.state = UnitSpriteState.Move;
-		}
-		
 		state = EntityState.normal;
 	}
 	
@@ -231,8 +244,8 @@ public class UnitEntity : EntityBase {
 		}
 	}
 	
-	protected virtual void OnSpriteAnimationComplete(UnitSpriteState state, UnitSpriteController.Dir dir) {
-		switch(state) {
+	protected virtual void OnSpriteAnimationComplete(UnitSpriteState animState, UnitSpriteController.Dir animDir) {
+		switch(animState) {
 		case UnitSpriteState.Attack:
 			//make sure we still have a target and we are still attacking
 			if(mListener != null && mListener.currentTarget != null) {
@@ -254,11 +267,15 @@ public class UnitEntity : EntityBase {
 				}
 			}
 			break;
+			
+		case UnitSpriteState.Die:
+			Release();
+			break;
 		}
 	}
 	
-	protected virtual void OnSpriteAnimationEvent(UnitSpriteState state, UnitSpriteController.Dir dir, UnitSpriteController.EventData data) {
-		switch((UnitSpriteEvent)data.valI) {
+	protected virtual void OnSpriteAnimationEvent(UnitSpriteState animState, UnitSpriteController.Dir animDir, UnitSpriteController.EventData animDat) {
+		switch((UnitSpriteEvent)animDat.valI) {
 		case UnitSpriteEvent.WeaponShoot:
 			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
 				mWeapon.Shoot(transform.position, mAttackHitNormal, mListener.currentTarget.target);
