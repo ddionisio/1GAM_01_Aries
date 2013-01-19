@@ -38,6 +38,7 @@ public class Player : EntityBase {
 		mSprite = GetComponentInChildren<UnitSpriteController>();
 		
 		mPlayerStats.hpChangeCallback += OnHPChange;
+		//hoook to hud
 	}
 
 	// Use this for initialization

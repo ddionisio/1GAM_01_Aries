@@ -9,7 +9,7 @@ public class FlockUnit : MotionBase {
 		Idle, //no cohesion, move, alignment
 		Move, //move toward moveTarget, will use seek if blocked
 		Waypoint, //go through generated waypoint
-		//Wander, //cohesion and alignment
+		Wander, //cohesion and alignment
 		//Disperse //anti-cohesion and no alignment
 	}
 			
@@ -38,10 +38,13 @@ public class FlockUnit : MotionBase {
 	
 	public float catchUpMinDistance; //min distance to use catchup factor
 	
+	public float wanderDelay;
+	
+	[System.NonSerializedAttribute] public bool wanderEnabled = false; //Set unit to wander if there's no move target
 	[System.NonSerializedAttribute] public bool groupMoveEnabled = true; //false = no cohesion and alignment
 	[System.NonSerializedAttribute] public bool catchUpEnabled = true; //false = don't use catch up factor
 	
-	FlockFilter mFilter = null;
+	private FlockFilter mFilter = null;
 	
 	private Transform mMoveTarget = null;
 	private float mMoveTargetDist = 0;
@@ -49,6 +52,7 @@ public class FlockUnit : MotionBase {
 	
 	private float mCurUpdateDelay = 0;
 	private float mCurSeekDelay = 0;
+	private float mWanderStartTime = 0;
 	
 	private Transform mTrans;
 	
@@ -86,10 +90,13 @@ public class FlockUnit : MotionBase {
 		get { return mMoveTargetDist; }
 	}
 	
+	/// <summary>
+	/// Direction from unit towards move target. (Note: this is updated based on seek delay or update delay)
+	/// </summary>
 	public Vector2 moveTargetDir {
 		get { return mMoveTargetDir; }
 	}
-			
+	
 	void OnDestroy() {
 		mSeek.pathCallback -= OnSeekPathComplete;
 	}
@@ -119,11 +126,15 @@ public class FlockUnit : MotionBase {
 				if(mSeekPath != null) {
 					mCurSeekDelay += Time.deltaTime;
 					if(mCurSeekDelay >= seekDelay) {
+						//check if target is blocked, also update move dir
 						Vector3 dest = moveTarget.position;
+						mMoveTargetDir = (dest - pos);
+						mMoveTargetDist = mMoveTargetDir.magnitude;
+						mMoveTargetDir /= mMoveTargetDist;
 						
 						//check to see if destination has changed or no longer blocked
 						if(dest != mSeekPath.vectorPath[mSeekPath.vectorPath.Count-1]
-							|| !CheckTargetBlock(pos, dest, mRadius)) {
+							|| !CheckTargetBlock(pos, mMoveTargetDir, mMoveTargetDist, mRadius)) {
 							SeekPathStop();
 						}
 						else {
@@ -135,10 +146,13 @@ public class FlockUnit : MotionBase {
 			else {
 				mCurSeekDelay += Time.deltaTime;
 				if(mCurSeekDelay >= seekDelay) {
-					//check if target is blocked
+					//check if target is blocked, also update move dir
 					Vector3 dest = moveTarget.position;
+					mMoveTargetDir = (dest - pos);
+					mMoveTargetDist = mMoveTargetDir.magnitude;
+					mMoveTargetDir /= mMoveTargetDist;
 					
-					if(CheckTargetBlock(pos, dest, mRadius)) {
+					if(CheckTargetBlock(pos, mMoveTargetDir, mMoveTargetDist, mRadius)) {
 						SeekPathStart(pos, dest);
 					}
 					else {
@@ -155,6 +169,7 @@ public class FlockUnit : MotionBase {
 	// Update is called once per frame
 	protected override void FixedUpdate () {
 		if(mState == State.Waypoint) {
+			//need to keep checking per frame if we have reached a waypoint
 			Vector2 desired = mSeekPath.vectorPath[mSeekCurPath] - transform.position;
 			
 			//check if we need to move to next waypoint
@@ -190,7 +205,7 @@ public class FlockUnit : MotionBase {
 				switch(mState) {
 				case State.Move:
 					if(moveTarget == null) {
-						mState = State.Idle;
+						ApplyState(wanderEnabled ? State.Wander : State.Idle);
 					}
 					else {
 						//move to destination
@@ -215,6 +230,14 @@ public class FlockUnit : MotionBase {
 							sumForce += M8.Math.Steer(body.velocity, _dir*maxSpeed, maxForce, factor);
 						}
 					}
+					break;
+					
+				case State.Wander:
+					if(Time.fixedTime - mWanderStartTime >= wanderDelay) {
+						WanderRefresh();
+					}
+					
+					sumForce = ComputeSeparate() + M8.Math.Steer(body.velocity, mMoveTargetDir*maxSpeed, maxForce, moveToFactor);
 					break;
 					
 				default:
@@ -254,13 +277,11 @@ public class FlockUnit : MotionBase {
 			mSeekPath = p;
 			mSeekCurPath = 0;
 			
-			mState = State.Waypoint;
+			ApplyState(State.Waypoint);
 		}
 	}
 	
-	private bool CheckTargetBlock(Vector3 pos, Vector3 dest, float radius) {
-		Vector3 dir = dest - pos;
-		float dist = dir.magnitude;
+	private bool CheckTargetBlock(Vector3 pos, Vector3 dir, float dist, float radius) {
 		if(dist > 0.0f) {
 			Ray ray = new Ray(pos, dir/dist);
 			return Physics.SphereCast(ray, pathRadius, dist, Layers.layerMaskWall);
@@ -276,7 +297,7 @@ public class FlockUnit : MotionBase {
 		mCurSeekDelay = 0.0f;
 		mSeekStarted = true;
 		
-		mState = State.Idle;
+		ApplyState(State.Idle);
 	}
 	
 	private void SeekPathStop() {
@@ -285,7 +306,24 @@ public class FlockUnit : MotionBase {
 		mSeekStarted = false;
 		mSeekCurPath = -1;
 		
-		mState = mMoveTarget == null ? State.Idle : State.Move;
+		ApplyState(mMoveTarget == null ? wanderEnabled ? State.Wander : State.Idle : State.Move);
+	}
+	
+	private void ApplyState(State toState) {
+		
+		mState = toState;
+		
+		switch(mState) {
+		case State.Wander:
+			WanderRefresh();
+			break;
+		}
+	}
+	
+	private void WanderRefresh() {
+		mWanderStartTime = Time.fixedTime;
+		
+		mMoveTargetDir = Random.onUnitSphere;
 	}
 		
 	//use if mWallCheck is true
