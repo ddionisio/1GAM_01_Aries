@@ -4,7 +4,16 @@ using System.Collections;
 public class UnitSpriteController : MonoBehaviour {
 	public enum Dir { E, N, W, S, NumDir }
 	
-	public delegate void OnStateAnimComplete(int state, int dir);
+	public delegate void OnStateAnimComplete(UnitSpriteState state, Dir dir);
+	public delegate void OnStateAnimEvent(UnitSpriteState state, Dir dir, EventData data);
+	
+	public struct EventData {
+		public int valI;
+		public float valF;
+		public string valS;
+		
+		public EventData(int i, float f, string s) { valI = i; valF = f; valS = s; }
+	}
 		
 	[System.Serializable]
 	public class StateDir {
@@ -15,6 +24,7 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	[System.Serializable]
 	public class StateData {
+		public UnitSpriteState state;
 		public string moveName;
 		public string stopName;
 		public bool sticky; //don't change state during update
@@ -36,6 +46,7 @@ public class UnitSpriteController : MonoBehaviour {
 	public string defaultState; //state to change to if state is not found in states
 	
 	public event OnStateAnimComplete stateFinishCallback;
+	public event OnStateAnimEvent stateEventCallback;
 	
 	private class AnimData {
 		public int moveId;
@@ -74,14 +85,15 @@ public class UnitSpriteController : MonoBehaviour {
 		}
 	}
 					
-	private AnimData[][] mAnim;
-	private int mCurState = 0;
+	private AnimData[][] mAnim = new AnimData[(int)UnitSpriteState.NumState][]; //[UnitSpriteState][Dir]
 	
-	private int mCurDir = (int)Dir.E;
+	private UnitSpriteState mCurState = UnitSpriteState.NumState;
+	private Dir mCurDir = Dir.E;
+	
 	private Vector2 mCurMoveDir = Vector2.zero;
 	private bool mCurStopped = false;
 	
-	public int state {
+	public UnitSpriteState state {
 		get { return mCurState; }
 		set {
 			if(mCurState != value) {
@@ -93,21 +105,22 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	void OnDestroy() {
 		stateFinishCallback = null;
+		stateEventCallback = null;
 		
 		sprite.animationCompleteDelegate -= OnSpriteAnimComplete;
+		sprite.animationEventDelegate -= OnSpriteAnimFrameEvent;
 	}
 	
 	void Awake() {
 		sprite.animationCompleteDelegate += OnSpriteAnimComplete;
+		sprite.animationEventDelegate += OnSpriteAnimFrameEvent;
 	}
 	
 	void Start () {
 		int defaultId = !string.IsNullOrEmpty(defaultState) ? sprite.GetClipIdByName(defaultState) : 0;
 		
-		mAnim = new AnimData[states.Length][];
-		
-		for(int stateInd = 0; stateInd < states.Length; stateInd++) {
-			StateData state = states[stateInd];
+		foreach(StateData state in states) {
+			int stateInd = (int)state.state;
 			
 			string moveName = state.moveName;
 			string stopName = state.stopName;
@@ -168,13 +181,13 @@ public class UnitSpriteController : MonoBehaviour {
 			//well this is definitely cheaper
 			mCurMoveDir = mover.dir;
 			
-			int prevDir = mCurDir;
+			Dir prevDir = mCurDir;
 			
 			if(Mathf.Abs(mCurMoveDir.x) >= Mathf.Abs(mCurMoveDir.y)) {
-				mCurDir = (int)(mCurMoveDir.x < 0.0f ? Dir.W : Dir.E);
+				mCurDir = mCurMoveDir.x < 0.0f ? Dir.W : Dir.E;
 			}
 			else {
-				mCurDir = (int)(mCurMoveDir.y < 0.0f ? Dir.S : Dir.N);
+				mCurDir = mCurMoveDir.y < 0.0f ? Dir.S : Dir.N;
 			}
 			
 			if(prevDir != mCurDir 
@@ -191,31 +204,38 @@ public class UnitSpriteController : MonoBehaviour {
 		}
 	}
 	
+	void OnSpriteAnimFrameEvent(tk2dAnimatedSprite sprite, tk2dSpriteAnimationClip clip, tk2dSpriteAnimationFrame frame, int frameNum) {
+		if(stateEventCallback != null) {
+			stateEventCallback(mCurState, mCurDir, new EventData(frame.eventInt, frame.eventFloat, frame.eventInfo));
+		}
+	}
+	
 	private AnimData GetCurAnimData() {
-		AnimData[] animDirs = mAnim[mCurState];
-		return animDirs.Length == 1 ? animDirs[0] : animDirs[mCurDir];
+		AnimData[] animDirs = mAnim[(int)mCurState];
+		return animDirs == null ? null : animDirs.Length == 1 ? animDirs[0] : animDirs[(int)mCurDir];
 	}
 	
 	private void ApplyCurState() {
 		AnimData dat = GetCurAnimData();
-						
-		mCurStopped = mover.curSpeed <= stopThreshold;
-		
-		sprite.Play(mCurStopped ? dat.stopId : dat.moveId);
-		
-		//flip
-		Vector3 s = sprite.scale;
-		s.x = Mathf.Abs(s.x);
-		s.y = Mathf.Abs(s.y);
-		
-		if(dat.horzFlipped) {
-			s.x *= -1.0f;
+		if(dat != null) {		
+			mCurStopped = mover.curSpeed <= stopThreshold;
+			
+			sprite.Play(mCurStopped ? dat.stopId : dat.moveId);
+			
+			//flip
+			Vector3 s = sprite.scale;
+			s.x = Mathf.Abs(s.x);
+			s.y = Mathf.Abs(s.y);
+			
+			if(dat.horzFlipped) {
+				s.x *= -1.0f;
+			}
+			
+			if(dat.vertFlipped) {
+				s.y *= -1.0f;
+			}
+			
+			sprite.scale = s;
 		}
-		
-		if(dat.vertFlipped) {
-			s.y *= -1.0f;
-		}
-		
-		sprite.scale = s;
 	}
 }

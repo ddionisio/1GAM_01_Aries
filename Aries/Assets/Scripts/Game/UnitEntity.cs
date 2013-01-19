@@ -15,14 +15,18 @@ public class UnitEntity : EntityBase {
 	private ActionTarget mActTarget;
 	private UnitSpriteController mSpriteControl;
 	
+	private Weapon mWeapon;
+	private Weapon.RepeatParam mWeaponParam;
+	
 	private float mCurSummonTime = 0.0f;
-	private Vector2 mAttackHitNormal; //the contact normal from when we hit something while attacking
+	private Vector2 mAttackHitNormal; //for melee: the contact normal during collision hit, for range: direction to shoot
 	
 	public UnitStat stats { get { return mStats; } }
 	public FlockUnit flockUnit { get { return mFlockUnit; } }
 	public ActionListener listener { get { return mListener; } }
 	public ActionTarget actionTarget { get { return mActTarget; } }
 	public UnitSpriteController spriteControl { get { return mSpriteControl; } }
+	public Weapon weapon { get { return mWeapon; } }
 			
 	protected override void Awake() {
 		base.Awake();
@@ -32,11 +36,20 @@ public class UnitEntity : EntityBase {
 		mListener = GetComponentInChildren<ActionListener>();
 		mActTarget = GetComponentInChildren<ActionTarget>();
 		mSpriteControl = GetComponentInChildren<UnitSpriteController>();
+		mWeapon = GetComponentInChildren<Weapon>();
 		
 		//hook calls up
 		mStats.hpChangeCallback += OnHPChange;
 		
-		mSpriteControl.stateFinishCallback += OnSpriteAnimationComplete;
+		if(mWeapon != null) {
+			mWeaponParam = new Weapon.RepeatParam();
+			mWeaponParam.source = transform;
+		}
+		
+		if(mSpriteControl != null) {
+			mSpriteControl.stateFinishCallback += OnSpriteAnimationComplete;
+			mSpriteControl.stateEventCallback += OnSpriteAnimationEvent;
+		}
 		
 		if(mListener != null) {
 			mListener.enterCallback += OnActionEnter;
@@ -123,6 +136,7 @@ public class UnitEntity : EntityBase {
 		
 		if(mSpriteControl != null) {
 			mSpriteControl.stateFinishCallback -= OnSpriteAnimationComplete;
+			mSpriteControl.stateEventCallback -= OnSpriteAnimationEvent;
 		}
 		
 		base.OnDestroy();
@@ -141,7 +155,7 @@ public class UnitEntity : EntityBase {
 		case EntityState.attacking:
 			//if target is null or something else, then we shouldn't be in this state
 			//perform attack if we haven't already
-			if(mSpriteControl.state != (int)UnitSpriteState.Attack) {
+			if(mSpriteControl.state != UnitSpriteState.Attack) {
 				//only range types will attack and shoot weapon
 				if(attackRange > 0.0f) {
 					//distance check
@@ -150,15 +164,13 @@ public class UnitEntity : EntityBase {
 					 : (mListener.currentTarget.target.position - transform.position).sqrMagnitude <= attackRange*attackRange;
 					
 					if(goAttack) {
-						if(mFlockUnit != null) {
-							mAttackHitNormal = -mFlockUnit.dir;
-						}
-						
 						//attack, should get a call later when we finish
-						mSpriteControl.state = (int)UnitSpriteState.Attack;
+						mSpriteControl.state = UnitSpriteState.Attack;
 						
-						//halt
 						if(mFlockUnit != null) {
+							mAttackHitNormal = mFlockUnit.dir;
+							
+							//halt
 							mFlockUnit.enabled = false;
 						}
 						
@@ -167,7 +179,7 @@ public class UnitEntity : EntityBase {
 						}
 						//
 						
-						//shoot weapon
+						//NOTE: weapon should be shot within an event in the animation
 					}
 				}
 			}
@@ -187,7 +199,7 @@ public class UnitEntity : EntityBase {
 			mAttackHitNormal = Vector2.zero;
 			
 			if(mSpriteControl != null) {
-				mSpriteControl.state = (int)UnitSpriteState.AttackPursue;
+				mSpriteControl.state = UnitSpriteState.AttackPursue;
 			}
 			
 			//disable group follow
@@ -203,7 +215,7 @@ public class UnitEntity : EntityBase {
 			
 		default:
 			if(mSpriteControl != null) {
-				mSpriteControl.state = (int)UnitSpriteState.Move;
+				mSpriteControl.state = UnitSpriteState.Move;
 			}
 			break;
 		}
@@ -211,7 +223,7 @@ public class UnitEntity : EntityBase {
 	
 	void OnActionExit(ActionListener listen) {
 		/*if(mSpriteControl != null) {
-			mSpriteControl.state = (int)UnitSpriteState.Move;
+			mSpriteControl.state = UnitSpriteState.Move;
 		}*/
 	}
 	
@@ -225,7 +237,7 @@ public class UnitEntity : EntityBase {
 		}
 		
 		if(mSpriteControl != null) {
-			mSpriteControl.state = (int)UnitSpriteState.Move;
+			mSpriteControl.state = UnitSpriteState.Move;
 		}
 		
 		state = EntityState.normal;
@@ -236,13 +248,13 @@ public class UnitEntity : EntityBase {
 		switch(listen.currentTarget.type) {
 		case ActionType.Attack:
 			//perform attack if we haven't already
-			if(mSpriteControl.state != (int)UnitSpriteState.Attack) {
+			if(mSpriteControl.state != UnitSpriteState.Attack) {
 				//only melee can attack and damage on hit
 				if(attackRange == 0.0f) {
 					mAttackHitNormal = info.normal;
 					
 					//attack, should get a call later when we finish
-					mSpriteControl.state = (int)UnitSpriteState.Attack;
+					mSpriteControl.state = UnitSpriteState.Attack;
 					
 					//halt
 					if(mFlockUnit != null) {
@@ -268,8 +280,9 @@ public class UnitEntity : EntityBase {
 		}
 	}
 			
-	void OnSpriteAnimationComplete(int state, int dir) {
-		if(state == (int)UnitSpriteState.Attack) {
+	void OnSpriteAnimationComplete(UnitSpriteState state, UnitSpriteController.Dir dir) {
+		switch(state) {
+		case UnitSpriteState.Attack:
 			//make sure we still have a target and we are still attacking
 			if(mListener != null && mListener.currentTarget != null) {
 				switch(mListener.currentTarget.type) {
@@ -285,12 +298,37 @@ public class UnitEntity : EntityBase {
 						rigidbody.AddForce(force.x, force.y, 0.0f);
 					}
 					
-					mSpriteControl.state = (int)UnitSpriteState.AttackPursue;
+					mSpriteControl.state = UnitSpriteState.AttackPursue;
 					break;
 				}
 			}
+			break;
 		}
-		//other things
+	}
+	
+	void OnSpriteAnimationEvent(UnitSpriteState state, UnitSpriteController.Dir dir, UnitSpriteController.EventData data) {
+		switch((UnitSpriteEvent)data.valI) {
+		case UnitSpriteEvent.WeaponShoot:
+			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
+				mWeapon.Shoot(transform.position, mAttackHitNormal, mListener.currentTarget.target);
+			}
+			break;
+			
+		case UnitSpriteEvent.WeaponShootRepeat:
+			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
+				mWeaponParam.seek = mListener.currentTarget.target;
+				mWeaponParam.dir = mAttackHitNormal;
+				mWeapon.Repeat(mWeaponParam);
+			}
+			break;
+			
+		case UnitSpriteEvent.WeaponShootRepeatStop:
+			if(mWeapon != null) {
+				mWeaponParam.seek = null;
+				mWeapon.RepeatStop();
+			}
+			break;
+		}
 	}
 	
 	void OnHPChange(StatBase stat, float delta) {
@@ -300,6 +338,11 @@ public class UnitEntity : EntityBase {
 	}
 			
 	private void ClearData() {
+		if(mWeapon != null) {
+			mWeaponParam.seek = null;
+			mWeapon.Release();
+		}
+		
 		if(mListener != null) {
 			mListener.currentTarget = null;
 		}

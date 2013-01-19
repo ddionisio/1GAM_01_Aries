@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class SceneManager : MonoBehaviour {
 	
@@ -26,6 +27,10 @@ public class SceneManager : MonoBehaviour {
 	
 	private string mSceneToLoad = null;
 	
+	private List<Transform> mRoots = new List<Transform>();
+	
+	private bool mIsFullscreen = false;
+	
 	public int curLevel {
 		get {
 			return mCurLevel;
@@ -35,6 +40,14 @@ public class SceneManager : MonoBehaviour {
 	public SceneController sceneController {
 		get {
 			return mSceneController;
+		}
+	}
+	
+	public void RootBroadcastMessage(string methodName, Object param, SendMessageOptions options) {
+		BroadcastMessage(methodName, param, options);
+		
+		foreach(Transform t in mRoots) {
+			t.BroadcastMessage(methodName, param, options);
 		}
 	}
 	
@@ -77,21 +90,13 @@ public class SceneManager : MonoBehaviour {
 			Time.timeScale = 0.0f;
 		}
 		
-		BroadcastMessage("OnScenePause", null, SendMessageOptions.DontRequireReceiver);
-		
-		if(mSceneController != null) {
-			mSceneController.BroadcastMessage("OnScenePause", null, SendMessageOptions.DontRequireReceiver);
-		}
+		RootBroadcastMessage("OnScenePause", null, SendMessageOptions.DontRequireReceiver);
 	}
 	
 	public void Resume() {
 		Time.timeScale = mPrevTimeScale;
 		
-		BroadcastMessage("OnSceneResume", null, SendMessageOptions.DontRequireReceiver);
-		
-		if(mSceneController != null) {
-			mSceneController.BroadcastMessage("OnSceneResume", null, SendMessageOptions.DontRequireReceiver);
-		}
+		RootBroadcastMessage("OnSceneResume", null, SendMessageOptions.DontRequireReceiver);
 	}
 	
 	/// <summary>
@@ -104,6 +109,15 @@ public class SceneManager : MonoBehaviour {
 	}
 	
 	void OnLevelWasLoaded(int sceneInd) {
+		//refresh roots, excluding main
+		mRoots.Clear();
+		Transform[] trans = (Transform[])FindObjectsOfType(typeof(Transform));
+		foreach(Transform tran in trans) {
+			if(tran.parent == null && tran != transform) {
+				mRoots.Add(tran);
+			}
+		}
+		
 		InitScene();
 		
 		if(mCheckPoint != null && mCurSceneStr == mCheckPointForScene) {
@@ -120,9 +134,20 @@ public class SceneManager : MonoBehaviour {
 	}
 	
 	void Awake() {
+		mIsFullscreen = Screen.fullScreen;
+		
 		mPrevTimeScale = Time.timeScale;
 		
 		screenTransition.finishCallback = OnScreenTransitionFinish;
+	}
+	
+	void Update() {
+		//lame
+		//check resolution and fullscreen
+		if(mIsFullscreen != Screen.fullScreen) {
+			mIsFullscreen = Screen.fullScreen;
+			RootBroadcastMessage("OnSceneScreenChanged", null, SendMessageOptions.DontRequireReceiver);
+		}
 	}
 	
 	void OnScreenTransitionFinish(ScreenTransition.State state) {
@@ -138,7 +163,7 @@ public class SceneManager : MonoBehaviour {
 	}
 	
 	void DoLoad() {
-		Main.instance.BroadcastMessage("SceneChange", null, SendMessageOptions.DontRequireReceiver);
+		RootBroadcastMessage("SceneChange", null, SendMessageOptions.DontRequireReceiver);
 		
 		mCurSceneStr = mSceneToLoad;
 		

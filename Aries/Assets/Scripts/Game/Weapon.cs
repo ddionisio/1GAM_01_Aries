@@ -10,6 +10,7 @@ public abstract class Weapon : MonoBehaviour {
 	
 	public string projectile;
 	public float delayPerShot = 0.5f;
+	public float recoilForce = 0.0f;
 	
 	private bool mIsFiring = false;
 	private bool mIsRepeatActive = false;

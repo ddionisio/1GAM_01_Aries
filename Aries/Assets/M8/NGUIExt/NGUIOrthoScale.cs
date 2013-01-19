@@ -21,6 +21,10 @@ public class NGUIOrthoScale : MonoBehaviour {
 		}
 	}
 	
+	void OnSceneScreenChanged() {
+		Refresh();
+	}
+	
 #if UNITY_EDITOR
 	void Update () {
 		Refresh();

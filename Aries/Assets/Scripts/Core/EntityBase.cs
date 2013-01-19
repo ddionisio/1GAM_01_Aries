@@ -16,9 +16,13 @@ public class EntityBase : MonoBehaviour {
 	private EntityState mState = EntityState.NumState;
 	private EntityState mPrevState = EntityState.NumState;
 	
+	private EntityActivator mActivator = null;
+	
 	private float mEntCurTime = 0;
 	private float mBlinkCurTime = 0;
 	private float mBlinkDelay = 0;
+	
+	private bool mDoSpawn = false;
 	
 	public EntityState state {
 		get { return mState; }
@@ -76,21 +80,50 @@ public class EntityBase : MonoBehaviour {
 	/// NOTE: calls after an update to ensure Awake and Start is called.
 	/// </summary>
 	public void Spawn() {
+		if(mActivator != null) {
+			mActivator.Start();
+		}
+		
+		//check if we are still active
+		mDoSpawn = gameObject.activeSelf;
+		
 		mState = mPrevState = EntityState.NumState; //avoid invalid updates
-		//ensure start is called before spawning if we are freshly allocated from entity manager
-		StartCoroutine(DoSpawn());
+		
+		if(mDoSpawn) {
+			//ensure start is called before spawning if we are freshly allocated from entity manager
+			StartCoroutine(DoSpawn());
+		}
 	}
 	
 	public virtual void Release() {
+		if(mActivator != null) {
+			mActivator.Release(false);
+		}
+		
 		if(releaseCallback != null) {
 			releaseCallback(this);
 		}
+		
+		mDoSpawn = false;
 		
 		StopAllCoroutines();
 		EntityManager.instance.Release(this);
 	}
 	
+	protected virtual void ActivatorWakeUp() {
+		if(mDoSpawn) { //if we haven't properly spawned yet, do so now
+			StartCoroutine(DoSpawn());
+		}
+	}
+	
+	protected virtual void ActivatorSleep() {
+	}
+	
 	protected virtual void OnDestroy() {
+		if(mActivator != null) {
+			mActivator.Release(true);
+		}
+		
 		setStateCallback = null;
 		setBlinkCallback = null;
 		spawnFinishCallback = null;
@@ -98,6 +131,11 @@ public class EntityBase : MonoBehaviour {
 	}
 	
 	protected virtual void Awake() {
+		mActivator = GetComponentInChildren<EntityActivator>();
+		if(mActivator != null) {
+			mActivator.awakeCallback += ActivatorWakeUp;
+			mActivator.sleepCallback += ActivatorSleep;
+		}
 	}
 
 	// Use this for initialization
@@ -155,6 +193,8 @@ public class EntityBase : MonoBehaviour {
 		mEntCurTime = 0;
 		
 		state = EntityState.spawning;
+		
+		mDoSpawn = false;
 		
 		yield break;
 	}

@@ -83,6 +83,8 @@ public class EntityManager : MonoBehaviour {
 				t.localRotation = Quaternion.identity;
 				t.localScale = Vector3.one;
 				
+				t.gameObject.SetActive(true);
+				
 				allocateCounter++;
 			}
 			
@@ -104,6 +106,9 @@ public class EntityManager : MonoBehaviour {
 	[SerializeField]
 	Transform poolHolder;
 	
+	[SerializeField]
+	Transform _activatorHolder;
+	
 	private static EntityManager mInstance = null;
 	
 	private Dictionary<string, FactoryData> mFactory;
@@ -112,6 +117,10 @@ public class EntityManager : MonoBehaviour {
 		get {
 			return mInstance;
 		}
+	}
+	
+	public Transform activatorHolder {
+		get { return _activatorHolder; }
 	}
 	
 	//if toParent is null, then set parent to us or factory's default

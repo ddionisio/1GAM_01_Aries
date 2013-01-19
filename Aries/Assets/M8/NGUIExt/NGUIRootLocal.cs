@@ -83,7 +83,9 @@ public class NGUIRootLocal : MonoBehaviour
 		UpdateScale();
 	}
 	
-	//TODO: call for screen resolution change
+	void OnSceneScreenChanged() {
+		UpdateScale();
+	}
 	
 #if UNITY_EDITOR
 	void Update() {

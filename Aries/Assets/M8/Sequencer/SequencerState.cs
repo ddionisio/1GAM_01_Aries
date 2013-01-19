@@ -20,7 +20,7 @@ public class SequencerState {
 		mSequences = Sequencer.Load(sequences);
 	}
 	
-	public void Start(MonoBehaviour behaviour, Sequencer.StateInstance stateData, string stateName) {
+	public void Start(MonoBehaviour behaviour, SequencerInstance instance, string stateName) {
 		if(stateName == null) {
 			stateName = sequenceDefaultState;
 		}
@@ -32,7 +32,7 @@ public class SequencerState {
 				
 				Sequencer seq;
 				if(mSequences.TryGetValue(stateName, out seq)) {
-					behaviour.StartCoroutine(seq.Go(stateData, behaviour));
+					behaviour.StartCoroutine(seq.Go(instance, behaviour));
 				}
 				else {
 					Debug.LogError("State not found: "+stateName, behaviour);
