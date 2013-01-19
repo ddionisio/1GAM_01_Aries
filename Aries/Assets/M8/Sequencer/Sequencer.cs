@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using fastJSON;
 
 public class SequencerEval {
-	public string toPhase = "";
+	public string phase = "";
 	public List<SequencerCriteria> criterias = null;
 	
 	public bool Check(MonoBehaviour behaviour, SequencerInstance instance) {
@@ -108,8 +108,8 @@ public class Sequencer {
 				foreach(SequencerEval eval in mEvals) {
 					//check then try to fill phase data
 					if(eval.Check(behaviour, instance)
-						&& !string.IsNullOrEmpty(eval.toPhase) 
-						&& mPhases.TryGetValue(eval.toPhase, out curPhase)) {
+						&& !string.IsNullOrEmpty(eval.phase) 
+						&& mPhases.TryGetValue(eval.phase, out curPhase)) {
 						break;
 					}
 				}

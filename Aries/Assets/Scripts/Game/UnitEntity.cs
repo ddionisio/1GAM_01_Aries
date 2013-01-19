@@ -142,6 +142,146 @@ public class UnitEntity : EntityBase {
 		base.OnDestroy();
 	}
 	
+	//optional implements of callbacks
+	
+	protected virtual void OnActionEnter(ActionListener listen) {
+		switch(listen.currentTarget.type) {
+		case ActionType.Attack:
+			mAttackHitNormal = Vector2.zero;
+			
+			if(mSpriteControl != null) {
+				mSpriteControl.state = UnitSpriteState.AttackPursue;
+			}
+			
+			//disable group follow
+			mFlockUnit.groupMoveEnabled = false;
+			
+			//no catch up for range types
+			if(attackRange > 0.0f) {
+				mFlockUnit.catchUpEnabled = false;
+			}
+			
+			state = EntityState.attacking;
+			break;
+			
+		default:
+			if(mSpriteControl != null) {
+				mSpriteControl.state = UnitSpriteState.Move;
+			}
+			break;
+		}
+	}
+	
+	protected virtual void OnActionExit(ActionListener listen) {
+		/*if(mSpriteControl != null) {
+			mSpriteControl.state = UnitSpriteState.Move;
+		}*/
+	}
+	
+	protected virtual void OnActionFinish(ActionListener listen) {
+		if(mFlockUnit != null) {
+			mFlockUnit.enabled = true;
+			
+			//re-enable certain flock flags
+			mFlockUnit.groupMoveEnabled = true;
+			mFlockUnit.catchUpEnabled = true;
+		}
+		
+		if(mSpriteControl != null) {
+			mSpriteControl.state = UnitSpriteState.Move;
+		}
+		
+		state = EntityState.normal;
+	}
+	
+	protected virtual void OnActionHitEnter(ActionListener listen, ContactPoint info) {
+		//collided with target
+		switch(listen.currentTarget.type) {
+		case ActionType.Attack:
+			//perform attack if we haven't already
+			if(mSpriteControl.state != UnitSpriteState.Attack) {
+				//only melee can attack and damage on hit
+				if(attackRange == 0.0f) {
+					mAttackHitNormal = info.normal;
+					
+					//attack, should get a call later when we finish
+					mSpriteControl.state = UnitSpriteState.Attack;
+					
+					//halt
+					if(mFlockUnit != null) {
+						mFlockUnit.enabled = false;
+					}
+					
+					if(rigidbody != null) {
+						rigidbody.velocity = Vector3.zero;
+					}
+					//
+					
+					//hit the bastard
+					StatBase targetStat = listen.currentTarget.GetComponent<StatBase>();
+					if(targetStat != null && mStats.CanDamage(targetStat)) {
+						targetStat.curHP -= mStats.damage;
+					}
+					else {
+						//TODO: react?
+					}
+				}
+			}
+			break;
+		}
+	}
+	
+	protected virtual void OnSpriteAnimationComplete(UnitSpriteState state, UnitSpriteController.Dir dir) {
+		switch(state) {
+		case UnitSpriteState.Attack:
+			//make sure we still have a target and we are still attacking
+			if(mListener != null && mListener.currentTarget != null) {
+				switch(mListener.currentTarget.type) {
+				case ActionType.Attack:
+					//return to pursue
+					if(mFlockUnit != null) {
+						mFlockUnit.enabled = true;
+					}
+					
+					//push back a bit
+					if(attackForceBack > 0.0f && rigidbody != null) {
+						Vector2 force = mAttackHitNormal*attackForceBack;
+						rigidbody.AddForce(force.x, force.y, 0.0f);
+					}
+					
+					mSpriteControl.state = UnitSpriteState.AttackPursue;
+					break;
+				}
+			}
+			break;
+		}
+	}
+	
+	protected virtual void OnSpriteAnimationEvent(UnitSpriteState state, UnitSpriteController.Dir dir, UnitSpriteController.EventData data) {
+		switch((UnitSpriteEvent)data.valI) {
+		case UnitSpriteEvent.WeaponShoot:
+			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
+				mWeapon.Shoot(transform.position, mAttackHitNormal, mListener.currentTarget.target);
+			}
+			break;
+			
+		case UnitSpriteEvent.WeaponShootRepeat:
+			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
+				mWeaponParam.seek = mListener.currentTarget.target;
+				mWeaponParam.dir = mAttackHitNormal;
+				mWeapon.Repeat(mWeaponParam);
+			}
+			break;
+			
+		case UnitSpriteEvent.WeaponShootRepeatStop:
+			if(mWeapon != null) {
+				mWeaponParam.seek = null;
+				mWeapon.RepeatStop();
+			}
+			break;
+		}
+	}
+	
 	// Update is called once per frame
 	void LateUpdate () {
 		switch(state) {
@@ -190,145 +330,6 @@ public class UnitEntity : EntityBase {
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(transform.position, attackRange);
-	}
-	
-	
-	void OnActionEnter(ActionListener listen) {
-		switch(listen.currentTarget.type) {
-		case ActionType.Attack:
-			mAttackHitNormal = Vector2.zero;
-			
-			if(mSpriteControl != null) {
-				mSpriteControl.state = UnitSpriteState.AttackPursue;
-			}
-			
-			//disable group follow
-			mFlockUnit.groupMoveEnabled = false;
-			
-			//no catch up for range types
-			if(attackRange > 0.0f) {
-				mFlockUnit.catchUpEnabled = false;
-			}
-			
-			state = EntityState.attacking;
-			break;
-			
-		default:
-			if(mSpriteControl != null) {
-				mSpriteControl.state = UnitSpriteState.Move;
-			}
-			break;
-		}
-	}
-	
-	void OnActionExit(ActionListener listen) {
-		/*if(mSpriteControl != null) {
-			mSpriteControl.state = UnitSpriteState.Move;
-		}*/
-	}
-	
-	void OnActionFinish(ActionListener listen) {
-		if(mFlockUnit != null) {
-			mFlockUnit.enabled = true;
-			
-			//re-enable certain flock flags
-			mFlockUnit.groupMoveEnabled = true;
-			mFlockUnit.catchUpEnabled = true;
-		}
-		
-		if(mSpriteControl != null) {
-			mSpriteControl.state = UnitSpriteState.Move;
-		}
-		
-		state = EntityState.normal;
-	}
-	
-	void OnActionHitEnter(ActionListener listen, ContactPoint info) {
-		//collided with target
-		switch(listen.currentTarget.type) {
-		case ActionType.Attack:
-			//perform attack if we haven't already
-			if(mSpriteControl.state != UnitSpriteState.Attack) {
-				//only melee can attack and damage on hit
-				if(attackRange == 0.0f) {
-					mAttackHitNormal = info.normal;
-					
-					//attack, should get a call later when we finish
-					mSpriteControl.state = UnitSpriteState.Attack;
-					
-					//halt
-					if(mFlockUnit != null) {
-						mFlockUnit.enabled = false;
-					}
-					
-					if(rigidbody != null) {
-						rigidbody.velocity = Vector3.zero;
-					}
-					//
-					
-					//hit the bastard
-					StatBase targetStat = listen.currentTarget.GetComponent<StatBase>();
-					if(targetStat != null && mStats.CanDamage(targetStat)) {
-						targetStat.curHP -= mStats.damage;
-					}
-					else {
-						//TODO: react?
-					}
-				}
-			}
-			break;
-		}
-	}
-			
-	void OnSpriteAnimationComplete(UnitSpriteState state, UnitSpriteController.Dir dir) {
-		switch(state) {
-		case UnitSpriteState.Attack:
-			//make sure we still have a target and we are still attacking
-			if(mListener != null && mListener.currentTarget != null) {
-				switch(mListener.currentTarget.type) {
-				case ActionType.Attack:
-					//return to pursue
-					if(mFlockUnit != null) {
-						mFlockUnit.enabled = true;
-					}
-					
-					//push back a bit
-					if(attackForceBack > 0.0f && rigidbody != null) {
-						Vector2 force = mAttackHitNormal*attackForceBack;
-						rigidbody.AddForce(force.x, force.y, 0.0f);
-					}
-					
-					mSpriteControl.state = UnitSpriteState.AttackPursue;
-					break;
-				}
-			}
-			break;
-		}
-	}
-	
-	void OnSpriteAnimationEvent(UnitSpriteState state, UnitSpriteController.Dir dir, UnitSpriteController.EventData data) {
-		switch((UnitSpriteEvent)data.valI) {
-		case UnitSpriteEvent.WeaponShoot:
-			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
-				mWeapon.Shoot(transform.position, mAttackHitNormal, mListener.currentTarget.target);
-			}
-			break;
-			
-		case UnitSpriteEvent.WeaponShootRepeat:
-			if(mWeapon != null && mListener != null && mListener.currentTarget != null) {
-				mWeaponParam.seek = mListener.currentTarget.target;
-				mWeaponParam.dir = mAttackHitNormal;
-				mWeapon.Repeat(mWeaponParam);
-			}
-			break;
-			
-		case UnitSpriteEvent.WeaponShootRepeatStop:
-			if(mWeapon != null) {
-				mWeaponParam.seek = null;
-				mWeapon.RepeatStop();
-			}
-			break;
-		}
 	}
 	
 	void OnHPChange(StatBase stat, float delta) {

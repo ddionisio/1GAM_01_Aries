@@ -23,7 +23,7 @@ public class EntityActivator : MonoBehaviour {
 	/// </summary>
 	public void Start() {
 		if(deactivateOnStart) {
-			DoInActive();
+			DoInActive(false);
 		}
 	}
 	
@@ -41,7 +41,7 @@ public class EntityActivator : MonoBehaviour {
 				transform.parent = mParentGo.transform;
 			}
 			
-			CancelInvoke("DoInActive");
+			CancelInvoke("InActiveDelay");
 			mParentGo = null;
 			mIsActive = true;
 		}
@@ -58,7 +58,7 @@ public class EntityActivator : MonoBehaviour {
 	
 	void OnTriggerExit(Collider c) {
 		if(mIsActive) {
-			Invoke("DoInActive", deactivateDelay);
+			Invoke("InActiveDelay", deactivateDelay);
 		}
 	}
 	
@@ -77,13 +77,17 @@ public class EntityActivator : MonoBehaviour {
 			}
 		}
 		else {
-			CancelInvoke("DoInActive");
+			CancelInvoke("InActiveDelay");
 		}
 	}
 	
-	void DoInActive() {
+	void InActiveDelay() {
+		DoInActive(true);
+	}
+	
+	void DoInActive(bool notifySleep) {
 		if(mIsActive) {
-			if(sleepCallback != null) {
+			if(notifySleep && sleepCallback != null) {
 				sleepCallback();
 			}
 			

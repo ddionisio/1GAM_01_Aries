@@ -35,10 +35,10 @@ public class SequencerActionToState : SequencerAction {
 
 //simple action sequence to change to a new phase, ideally add to the end for chaining phases
 public class SequencerActionToPhase : SequencerAction {
-	public string toPhase = "";
+	public string phase = "";
 	
 	public override void Finish(MonoBehaviour behaviour, SequencerInstance instance) {
-		instance.toPhase = toPhase;
+		instance.toPhase = phase;
 	}
 }
 

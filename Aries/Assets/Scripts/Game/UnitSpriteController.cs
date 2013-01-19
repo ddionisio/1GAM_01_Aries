@@ -93,6 +93,8 @@ public class UnitSpriteController : MonoBehaviour {
 	private Vector2 mCurMoveDir = Vector2.zero;
 	private bool mCurStopped = false;
 	
+	private int mDefaultStateId = 0;
+	
 	public UnitSpriteState state {
 		get { return mCurState; }
 		set {
@@ -117,7 +119,7 @@ public class UnitSpriteController : MonoBehaviour {
 	}
 	
 	void Start () {
-		int defaultId = !string.IsNullOrEmpty(defaultState) ? sprite.GetClipIdByName(defaultState) : 0;
+		mDefaultStateId = !string.IsNullOrEmpty(defaultState) ? sprite.GetClipIdByName(defaultState) : 0;
 		
 		foreach(StateData state in states) {
 			int stateInd = (int)state.state;
@@ -128,7 +130,7 @@ public class UnitSpriteController : MonoBehaviour {
 			//omni dir
 			if(state.dirs.Length == 0) {
 				mAnim[stateInd] = new AnimData[1];
-				mAnim[stateInd][0] = new AnimData(sprite, defaultId, moveName, stopName, Dir.NumDir);
+				mAnim[stateInd][0] = new AnimData(sprite, mDefaultStateId, moveName, stopName, Dir.NumDir);
 				mAnim[stateInd][0].sticky = state.sticky;
 			}
 			else {
@@ -137,7 +139,7 @@ public class UnitSpriteController : MonoBehaviour {
 				for(int i = 0; i < state.dirs.Length; i++) {
 					StateDir stateDir = state.dirs[i];
 					
-					mAnim[stateInd][i] = new AnimData(sprite, defaultId, moveName, stopName, stateDir.dir);
+					mAnim[stateInd][i] = new AnimData(sprite, mDefaultStateId, moveName, stopName, stateDir.dir);
 					mAnim[stateInd][i].horzFlipped = stateDir.horzFlipped;
 					mAnim[stateInd][i].vertFlipped = stateDir.vertFlipped;
 					mAnim[stateInd][i].sticky = state.sticky;
@@ -217,25 +219,37 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	private void ApplyCurState() {
 		AnimData dat = GetCurAnimData();
+		
+		bool hFlip, vFlip;
+		
 		if(dat != null) {		
 			mCurStopped = mover.curSpeed <= stopThreshold;
 			
 			sprite.Play(mCurStopped ? dat.stopId : dat.moveId);
 			
 			//flip
-			Vector3 s = sprite.scale;
-			s.x = Mathf.Abs(s.x);
-			s.y = Mathf.Abs(s.y);
-			
-			if(dat.horzFlipped) {
-				s.x *= -1.0f;
-			}
-			
-			if(dat.vertFlipped) {
-				s.y *= -1.0f;
-			}
-			
-			sprite.scale = s;
+			hFlip = dat.horzFlipped;
+			vFlip = dat.vertFlipped;
 		}
+		else {
+			sprite.Play(mDefaultStateId);
+			
+			hFlip = false;
+			vFlip = false;
+		}
+		
+		Vector3 s = sprite.scale;
+		s.x = Mathf.Abs(s.x);
+		s.y = Mathf.Abs(s.y);
+		
+		if(hFlip) {
+			s.x *= -1.0f;
+		}
+		
+		if(vFlip) {
+			s.y *= -1.0f;
+		}
+		
+		sprite.scale = s;
 	}
 }
