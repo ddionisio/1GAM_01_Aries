@@ -218,7 +218,7 @@ public class UnitSpriteController : MonoBehaviour {
 	}
 	
 	private AnimData GetCurAnimData() {
-		AnimData[] animDirs = mAnim[(int)mCurState];
+		AnimData[] animDirs = mCurState != UnitSpriteState.NumState ? mAnim[(int)mCurState] : null;
 		return animDirs == null ? null : animDirs.Length == 1 ? animDirs[0] : animDirs[(int)mCurDir];
 	}
 	

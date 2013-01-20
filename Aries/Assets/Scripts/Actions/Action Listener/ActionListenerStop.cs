@@ -4,9 +4,6 @@ namespace Game.Actions {
 	[ActionCategory("Game")]
 	[Tooltip("Stop current action of ActionListener (setting priority to highest essentially clears it, use this to cancel entity's current activity")]
 	public class ActionListenerStop : FsmStateAction {
-		[RequiredField]
-		[UIHint(UIHint.FsmGameObject)]
-		public ActionListener listener;
 		
 		public ActionTarget.Priority priority = ActionTarget.Priority.Highest;
 		public bool resumeDefault = true;
@@ -19,9 +16,18 @@ namespace Game.Actions {
 		
 		public bool everyFrame = false;
 		
+		private ActionListener listener;
+		
+		public override void Init (FsmState state)
+		{
+			base.Init (state);
+			
+			if(listener == null)
+				listener = state.Fsm.Owner.GetComponentInChildren<ActionListener>();
+		}
+		
 		public override void Reset ()
 		{
-			listener = null;
 			priority = ActionTarget.Priority.Highest;
 			resumeDefault = true;
 			everyFrame = false;

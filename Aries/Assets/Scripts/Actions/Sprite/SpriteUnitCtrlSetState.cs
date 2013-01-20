@@ -4,25 +4,29 @@ namespace Game.Actions {
 	[ActionCategory("Game")]
 	[Tooltip("Change unit sprite controller's state")]
 	public class SpriteUnitCtrlSetState : FsmStateAction {
-		[RequiredField]
-		[Tooltip("The unit sprite controller to set state")]
-		[UIHint(UIHint.FsmGameObject)]
-		public UnitSpriteController controller;
-		
 		[Tooltip("The state to change to")]
-		public UnitSpriteState state = UnitSpriteState.Move;
+		public UnitSpriteState spriteState = UnitSpriteState.Move;
 		
+		private UnitSpriteController controller;
+		
+		public override void Init(FsmState aState)
+		{
+			base.Init(aState);
+			
+			if(controller == null)
+				controller = aState.Fsm.Owner.GetComponentInChildren<UnitSpriteController>();
+		}
+				
 		public override void Reset ()
 		{
-			controller = null;
-			state = UnitSpriteState.Move;
+			spriteState = UnitSpriteState.Move;
 		}
 		
 		// Code that runs on entering the state.
 		public override void OnEnter()
 		{
-			if(controller.HasState(state))
-				controller.state = state;
+			if(controller.HasState(spriteState))
+				controller.state = spriteState;
 			
 			Finish();
 		}

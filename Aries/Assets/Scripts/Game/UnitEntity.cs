@@ -62,8 +62,6 @@ public class UnitEntity : EntityBase {
 	// Use this for initialization
 	protected override void Start() {
 		base.Start();
-		
-		//stuff
 	}
 	
 	public override void Release() {
@@ -76,33 +74,6 @@ public class UnitEntity : EntityBase {
 	
 	protected override void SpawnStart() {
 		FlockUnitInit();
-	}
-		
-	protected override void StateChanged() {
-		switch(prevState) {
-		case EntityState.unsummon:
-			if(mListener != null) {
-				mListener.lockAction = false;
-			}
-			break;
-		}
-		
-		switch(state) {
-		case EntityState.unsummon:
-			//fx
-			if(mListener != null) {
-				mListener.currentTarget = null;
-				mListener.lockAction = true;
-			}
-			
-			break;
-			
-		case EntityState.dying:
-			if(mActTarget != null) {
-				mActTarget.StopAction();
-			}
-			break;
-		}
 	}
 	
 	protected override void SetBlink(bool blink) {

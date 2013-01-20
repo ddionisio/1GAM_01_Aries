@@ -2,11 +2,7 @@ using HutongGames.PlayMaker;
 
 namespace Game.Actions {
 	public class ActionListenerCheckTarget : FsmStateAction {
-		[RequiredField]
-		[Tooltip("Check ActionListener's current target state")]
-		[UIHint(UIHint.FsmGameObject)]
-		public ActionListener listener;
-		
+				
 		[Tooltip("Check to see if there is no current target, then set event")]
 		public FsmEvent noTarget;
 		
@@ -23,9 +19,18 @@ namespace Game.Actions {
 		
 		public bool everyFrame;
 		
+		private ActionListener listener;
+		
+		public override void Init (FsmState state)
+		{
+			base.Init (state);
+			
+			if(listener == null)
+				listener = state.Fsm.Owner.GetComponentInChildren<ActionListener>();
+		}
+		
 		public override void Reset()
 		{
-			listener = null;
 			noTarget = null;
 			targetIsDefault = null;
 			actionChecks = null;

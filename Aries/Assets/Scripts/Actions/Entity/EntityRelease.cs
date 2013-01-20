@@ -6,10 +6,15 @@ namespace Game.Actions {
 	[Tooltip("Removes entity and returns it to the manager")]
 	public class EntityRelease : FsmStateAction
 	{
-		[RequiredField]
-		[Tooltip("The entity to release")]
-		[UIHint(UIHint.FsmGameObject)]
-		public EntityBase entity;
+		private EntityBase entity;
+		
+		public override void Init(FsmState aState)
+		{
+			base.Init(aState);
+			
+			if(entity == null)
+				entity = aState.Fsm.Owner.GetComponentInChildren<EntityBase>();
+		}
 		
 		// Code that runs on entering the state.
 		public override void OnEnter()

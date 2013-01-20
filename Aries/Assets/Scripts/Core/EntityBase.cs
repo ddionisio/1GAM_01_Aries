@@ -9,7 +9,7 @@ public class EntityBase : MonoBehaviour {
 	
 	public float spawnDelay = 0.1f;
 	
-	public bool activateFSMOnStart = false; //if we want FSM to activate on start (when placing entities on scene)
+	public bool activateOnStart = false; //if we want FSM/other stuff to activate on start (when placing entities on scene)
 	
 	public event OnSetState setStateCallback;
 	public event OnSetBool setBlinkCallback;
@@ -128,13 +128,13 @@ public class EntityBase : MonoBehaviour {
 		}
 		else if(mFSM != null) {
 			//resume FSM
-			mFSM.Fsm.Event("EntityWake");
+			mFSM.Fsm.Event(EntityEvent.Wake);
 		}
 	}
 	
 	protected virtual void ActivatorSleep() {
 		if(mFSM != null) {
-			mFSM.Fsm.Event("EntitySleep");
+			mFSM.Fsm.Event(EntityEvent.Sleep);
 		}
 	}
 	
@@ -168,7 +168,7 @@ public class EntityBase : MonoBehaviour {
 		BroadcastMessage("EntityStart", this, SendMessageOptions.DontRequireReceiver);
 		
 		//for when putting entities on scene, skip the spawning state
-		if(activateFSMOnStart && mFSM != null) {
+		if(activateOnStart && mFSM != null) {
 			mFSM.enabled = true;
 			StartCoroutine(DoStart());
 		}
@@ -203,6 +203,8 @@ public class EntityBase : MonoBehaviour {
 	
 	IEnumerator DoStart() {
 		yield return new WaitForFixedUpdate();
+		
+		SpawnStart();
 		
 		if(mFSM != null) {
 			mFSM.SendEvent("EntityStart");

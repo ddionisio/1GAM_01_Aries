@@ -6,9 +6,6 @@ namespace Game.Actions {
 	public abstract class StatCheckBase<T> : FsmStateAction where T : StatBase
 	{
 		[RequiredField]
-		public T stats;
-		
-		[RequiredField]
 		public FsmFloat val;
 		
 		[RequiredField]
@@ -20,9 +17,18 @@ namespace Game.Actions {
 		
 		public bool everyFrame;
 		
+		protected T stats;
+		
+		public override void Init(FsmState aState)
+		{
+			base.Init(aState);
+			
+			if(stats == null)
+				stats = aState.Fsm.Owner.GetComponentInChildren<T>();
+		}
+		
 		public override void Reset()
 		{
-			stats = null;
 			val = 0.0f;
 			tolerance = 0.0f;
 			equal = null;
