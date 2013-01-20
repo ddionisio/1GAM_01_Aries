@@ -67,16 +67,16 @@ public class Enemy : UnitEntity {
 		}
 	}
 	
-	protected override void SpawnFinish() {
-		base.SpawnFinish();
-		
-		mSpawnFinished = true;
-		
-		AIInit();
-	}
-	
 	protected override void StateChanged() {
 		base.StateChanged();
+		
+		switch(prevState) {
+		case EntityState.spawning:
+			//finished spawning
+			mSpawnFinished = true;
+			AIInit();
+			break;
+		}
 		
 		switch(state) {
 		case EntityState.dying:

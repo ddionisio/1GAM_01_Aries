@@ -12,10 +12,56 @@ public abstract class Criteria {
 		LessEqual,
 		GreaterEqual,
 		False,
-		True
+		True,
+		
+		NumEvals
 	}
 	
-	public Eval eval = Eval.True;
+	public static bool Check<T>(T lhs, T rhs, Eval eval, IComparer<T> comparer) {
+		switch(eval) {
+		case Eval.Less:
+			return comparer.Compare(lhs, rhs) < 0;
+		case Eval.Greater:
+			return comparer.Compare(lhs, rhs) > 0;
+		case Eval.Equal:
+		case Eval.True:
+			return comparer.Compare(lhs, rhs) == 0;
+		case Eval.NotEqual:
+		case Eval.False:
+			return comparer.Compare(lhs, rhs) != 0;
+		case Eval.LessEqual:
+			return comparer.Compare(lhs, rhs) <= 0;
+		case Eval.GreaterEqual:
+			return comparer.Compare(lhs, rhs) <= 0;
+		}
+		
+		return false;
+	}
+	
+	public static Eval ToEval(string e) {
+		if(!string.IsNullOrEmpty(e)) {
+			switch(e) {
+			case "<": return Eval.Less;
+			case ">": return Eval.Greater;
+			case "=": case "==": case "is": return Eval.Equal;
+			case "!=": return Eval.NotEqual;
+			case "<=": return Eval.LessEqual;
+			case ">=": return Eval.GreaterEqual;
+			case "false": case "!": return Eval.False;
+			}
+		}
+		
+		return Eval.True;
+	}
+	
+	//fill this in json
+	public string e = ""; //true
+	
+	public Eval eval {
+		get { return mEval; }
+	}
+	
+	private Eval mEval = Eval.True;
 	
 	public static Criteria[] LoadCriterias(string data) {
 		JSON.Instance.Parameters.UseExtensions = true;
@@ -33,6 +79,10 @@ public abstract class Criteria {
 		}
 		
 		return false;
+	}
+	
+	public Criteria() {
+		mEval = ToEval(e);
 	}
 	
 	//implements

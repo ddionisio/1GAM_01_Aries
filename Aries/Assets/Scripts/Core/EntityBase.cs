@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using HutongGames.PlayMaker;
 
 public class EntityBase : MonoBehaviour {
 	public delegate void OnSetState(EntityBase ent, EntityState state);
@@ -8,28 +9,35 @@ public class EntityBase : MonoBehaviour {
 	
 	public float spawnDelay = 0.1f;
 	
+	public bool activateFSMOnStart = false; //if we want FSM to activate on start (when placing entities on scene)
+	
 	public event OnSetState setStateCallback;
 	public event OnSetBool setBlinkCallback;
-	public event OnFinish spawnFinishCallback;
 	public event OnFinish releaseCallback;
 	
 	private EntityState mState = EntityState.NumState;
 	private EntityState mPrevState = EntityState.NumState;
 	
+	private PlayMakerFSM mFSM;
 	private EntityActivator mActivator = null;
 	
-	private float mEntCurTime = 0;
 	private float mBlinkCurTime = 0;
 	private float mBlinkDelay = 0;
 	
 	private bool mDoSpawn = false;
+	
+	public PlayMakerFSM FSM {
+		get { return mFSM; }
+	}
 	
 	public EntityState state {
 		get { return mState; }
 		
 		set {
 			if(mState != value) {
-				mPrevState = mState;
+				if(mState != EntityState.NumState)
+					mPrevState = mState;
+				
 				mState = value;
 				
 				if(setStateCallback != null) {
@@ -96,6 +104,10 @@ public class EntityBase : MonoBehaviour {
 	}
 	
 	public virtual void Release() {
+		if(mFSM != null) {
+			mFSM.enabled = false;
+		}
+		
 		if(mActivator != null) {
 			mActivator.Release(false);
 		}
@@ -114,9 +126,16 @@ public class EntityBase : MonoBehaviour {
 		if(mDoSpawn) { //if we haven't properly spawned yet, do so now
 			StartCoroutine(DoSpawn());
 		}
+		else if(mFSM != null) {
+			//resume FSM
+			mFSM.Fsm.Event("EntityWake");
+		}
 	}
 	
 	protected virtual void ActivatorSleep() {
+		if(mFSM != null) {
+			mFSM.Fsm.Event("EntitySleep");
+		}
 	}
 	
 	protected virtual void OnDestroy() {
@@ -126,7 +145,6 @@ public class EntityBase : MonoBehaviour {
 		
 		setStateCallback = null;
 		setBlinkCallback = null;
-		spawnFinishCallback = null;
 		releaseCallback = null;
 	}
 	
@@ -136,40 +154,37 @@ public class EntityBase : MonoBehaviour {
 			mActivator.awakeCallback += ActivatorWakeUp;
 			mActivator.sleepCallback += ActivatorSleep;
 		}
+		
+		//only start once we spawn
+		mFSM = GetComponentInChildren<PlayMakerFSM>();
+		if(mFSM != null) {
+			mFSM.Fsm.RestartOnEnable = false; //not when we want to sleep/wake
+			mFSM.enabled = false;
+		}
 	}
 
 	// Use this for initialization
 	protected virtual void Start () {
 		BroadcastMessage("EntityStart", this, SendMessageOptions.DontRequireReceiver);
+		
+		//for when putting entities on scene, skip the spawning state
+		if(activateFSMOnStart && mFSM != null) {
+			mFSM.enabled = true;
+			StartCoroutine(DoStart());
+		}
 	}
 	
 	protected virtual void StateChanged() {
 	}
 	
-	protected virtual void SpawnFinish() {
+	protected virtual void SetBlink(bool blink) {
 	}
 	
-	protected virtual void SetBlink(bool blink) {
+	protected virtual void SpawnStart() {
 	}
 	
 	// Update is called once per frame
 	private void Update () {
-		switch(mState) {
-		case EntityState.spawning:
-			mEntCurTime += Time.deltaTime;
-			if(mEntCurTime >= spawnDelay) {
-				mPrevState = mState;
-				mState = EntityState.NumState; //need to be set by something
-												
-				SpawnFinish();
-				
-				if(spawnFinishCallback != null) {
-					spawnFinishCallback(this);
-				}
-			}
-			break;
-		}
-		
 		if(mBlinkDelay > 0) {
 			mBlinkCurTime += Time.deltaTime;
 			if(mBlinkCurTime >= mBlinkDelay) {
@@ -185,17 +200,35 @@ public class EntityBase : MonoBehaviour {
 	}
 	
 	//////////internal
+	
+	IEnumerator DoStart() {
+		yield return new WaitForFixedUpdate();
+		
+		if(mFSM != null) {
+			mFSM.SendEvent("EntityStart");
+		}
+		
+		yield break;
+	}
 		
 	IEnumerator DoSpawn() {
 				
 		yield return new WaitForFixedUpdate();
 		
-		mEntCurTime = 0;
-		
-		state = EntityState.spawning;
-		
 		mDoSpawn = false;
 		
+		SpawnStart();
+		
+		//start up
+		if(mFSM != null) {
+			mFSM.Fsm.Reinitialize();
+			mFSM.enabled = true;
+			mFSM.SendEvent("EntitySpawn");
+		}
+		else {
+			yield return new WaitForSeconds(spawnDelay);
+		}
+										
 		yield break;
 	}
 }

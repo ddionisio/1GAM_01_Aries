@@ -18,7 +18,6 @@ public class UnitEntity : EntityBase {
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam;
 	
-	private float mCurSummonTime = 0.0f;
 	private Vector2 mAttackHitNormal; //for melee: the contact normal during collision hit, for range: direction to shoot
 	
 	public UnitStat stats { get { return mStats; } }
@@ -30,7 +29,7 @@ public class UnitEntity : EntityBase {
 			
 	protected override void Awake() {
 		base.Awake();
-		
+										
 		mStats = GetComponentInChildren<UnitStat>();
 		mFlockUnit = GetComponentInChildren<FlockUnit>();
 		mListener = GetComponentInChildren<ActionListener>();
@@ -55,6 +54,7 @@ public class UnitEntity : EntityBase {
 			mListener.enterCallback += OnActionEnter;
 			mListener.exitCallback += OnActionExit;
 			mListener.hitEnterCallback += OnActionHitEnter;
+			mListener.hitExitCallback += OnActionHitExit;
 			mListener.finishCallback += OnActionFinish;
 		}
 	}
@@ -70,8 +70,12 @@ public class UnitEntity : EntityBase {
 		ClearData();
 		
 		mStats.ResetStats();
-						
+		
 		base.Release();
+	}
+	
+	protected override void SpawnStart() {
+		FlockUnitInit();
 	}
 		
 	protected override void StateChanged() {
@@ -84,54 +88,21 @@ public class UnitEntity : EntityBase {
 		}
 		
 		switch(state) {
-		case EntityState.normal:
-			if(mSpriteControl != null) {
-				mSpriteControl.state = UnitSpriteState.Move;
-			}
-			break;
-			
-		case EntityState.spawning:
-			//spawn started
-			if(mSpriteControl != null && mSpriteControl.HasState(UnitSpriteState.Summon)) {
-				mSpriteControl.state = UnitSpriteState.Summon;
-			}
-			break;
-			
 		case EntityState.unsummon:
-			if(mSpriteControl != null && mSpriteControl.HasState(UnitSpriteState.UnSummon)) {
-				mSpriteControl.state = UnitSpriteState.UnSummon;
-			}
-			
 			//fx
 			if(mListener != null) {
 				mListener.currentTarget = null;
 				mListener.lockAction = true;
 			}
 			
-			mCurSummonTime = 0.0f;
 			break;
 			
 		case EntityState.dying:
 			if(mActTarget != null) {
 				mActTarget.StopAction();
 			}
-			
-			if(mSpriteControl != null) {
-				mSpriteControl.state = UnitSpriteState.Die;
-			}
 			break;
 		}
-	}
-	
-	protected override void SpawnFinish() {
-		if(mListener != null) {
-			mListener.lockAction = false;
-		}
-		
-		//complete
-		FlockUnitInit();
-						
-		state = EntityState.normal;
 	}
 	
 	protected override void SetBlink(bool blink) {
@@ -144,6 +115,7 @@ public class UnitEntity : EntityBase {
 			mListener.enterCallback -= OnActionEnter;
 			mListener.exitCallback -= OnActionExit;
 			mListener.hitEnterCallback -= OnActionHitEnter;
+			mListener.hitExitCallback -= OnActionHitExit;
 			mListener.finishCallback -= OnActionFinish;
 		}
 		
@@ -244,6 +216,9 @@ public class UnitEntity : EntityBase {
 		}
 	}
 	
+	protected virtual void OnActionHitExit(ActionListener listen) {
+	}
+	
 	protected virtual void OnSpriteAnimationComplete(UnitSpriteState animState, UnitSpriteController.Dir animDir) {
 		switch(animState) {
 		case UnitSpriteState.Attack:
@@ -302,13 +277,6 @@ public class UnitEntity : EntityBase {
 	// Update is called once per frame
 	void LateUpdate () {
 		switch(state) {
-		case EntityState.unsummon:
-			mCurSummonTime += Time.deltaTime;
-			if(mCurSummonTime >= unSummonDelay) {
-				Release();
-			}
-			break;
-			
 		case EntityState.attacking:
 			//if target is null or something else, then we shouldn't be in this state
 			//perform attack if we haven't already
@@ -362,6 +330,7 @@ public class UnitEntity : EntityBase {
 		}
 		
 		if(mListener != null) {
+			mListener.lockAction = false;
 			mListener.currentTarget = null;
 		}
 		

@@ -69,10 +69,6 @@ public class Obstacle : EntityBase {
 		}
 	}
 	
-	protected override void SpawnFinish() {
-		state = EntityState.normal;
-	}
-	
 	protected override void SetBlink(bool blink) {
 	}
 	

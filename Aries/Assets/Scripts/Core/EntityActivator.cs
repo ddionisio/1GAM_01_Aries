@@ -41,6 +41,7 @@ public class EntityActivator : MonoBehaviour {
 				transform.parent = mParentGo.transform;
 			}
 			
+			StopCoroutine("DoActive");
 			CancelInvoke("InActiveDelay");
 			mParentGo = null;
 			mIsActive = true;
@@ -53,16 +54,22 @@ public class EntityActivator : MonoBehaviour {
 	}
 	
 	void OnTriggerEnter(Collider c) {
+		//StartCoroutine("DoActive");
 		DoActive();
 	}
 	
 	void OnTriggerExit(Collider c) {
 		if(mIsActive) {
-			Invoke("InActiveDelay", deactivateDelay);
+			if(deactivateDelay > 0.0f) {
+				Invoke("InActiveDelay", deactivateDelay);
+			}
+			else {
+				DoInActive(true);
+			}
 		}
 	}
 	
-	void DoActive() {
+	/*IEnumerator*/void DoActive() {
 		if(!mIsActive) {
 			//put ourself back in parent
 			mParentGo.SetActive(true);
@@ -72,6 +79,8 @@ public class EntityActivator : MonoBehaviour {
 			
 			mIsActive = true;
 			
+			//yield return new WaitForFixedUpdate();
+			
 			if(awakeCallback != null) {
 				awakeCallback();
 			}
@@ -79,6 +88,8 @@ public class EntityActivator : MonoBehaviour {
 		else {
 			CancelInvoke("InActiveDelay");
 		}
+		
+		//yield break;
 	}
 	
 	void InActiveDelay() {
@@ -87,6 +98,8 @@ public class EntityActivator : MonoBehaviour {
 	
 	void DoInActive(bool notifySleep) {
 		if(mIsActive) {
+			//StopCoroutine("DoActive");
+			
 			if(notifySleep && sleepCallback != null) {
 				sleepCallback();
 			}

@@ -24,12 +24,6 @@ public class Player : EntityBase {
 		base.OnDestroy();
 	}
 	
-	protected override void SpawnFinish () {
-		base.SpawnFinish();
-		
-		state = EntityState.normal;
-	}
-	
 	protected override void Awake() {
 		base.Awake();
 		
@@ -52,16 +46,6 @@ public class Player : EntityBase {
 	}
 	
 	protected override void StateChanged() {
-		switch(prevState) {
-		case EntityState.castSummon:
-			//stop fx
-			break;
-			
-		case EntityState.castUnSummon:
-			//stop fx
-			break;
-		}
-		
 		switch(state) {
 		case EntityState.spawning:
 			mPlayerStats.InitResource();
@@ -91,6 +75,10 @@ public class Player : EntityBase {
 			//gameover
 			break;
 		}
+	}
+	
+	protected override void SpawnStart () {
+		state = EntityState.normal;
 	}
 	
 	void LateUpdate () {
