@@ -81,8 +81,6 @@ public class FlockUnit : MotionBase {
 			if(mMoveTarget != value) {
 				mMoveTarget = value;
 				
-				if(mMoveTarget == null) Debug.Log("fuck you");
-				
 				SeekPathStop();
 			}
 		}

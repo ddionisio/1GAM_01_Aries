@@ -10,6 +10,7 @@ namespace Game.Actions {
 		public bool checkChildren;
 		
 		protected T mComp;
+		protected GameObject mOwnerGO;
 		
 		public override void Reset()
 		{
@@ -19,11 +20,11 @@ namespace Game.Actions {
 		
 		public override void OnEnter ()
 		{
-			GameObject go = Fsm.GetOwnerDefaultTarget(owner);
-			mComp = go == null ? null : checkChildren ? go.GetComponentInChildren<T>() : go.GetComponent<T>();
+			mOwnerGO = Fsm.GetOwnerDefaultTarget(owner);
+			mComp = mOwnerGO == null ? null : checkChildren ? mOwnerGO.GetComponentInChildren<T>() : mOwnerGO.GetComponent<T>();
 #if UNITY_EDITOR
 			if(mComp == null) {
-				LogWarning("Component: "+typeof(T)+" not found for "+go.name);
+				LogWarning("Component: "+typeof(T)+" not found for "+mOwnerGO.name);
 			}
 #endif
 		}

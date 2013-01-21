@@ -11,6 +11,7 @@ public abstract class Weapon : MonoBehaviour {
 	public string projectile;
 	public float delayPerShot = 0.5f;
 	public float recoilForce = 0.0f;
+	public bool useUpVector = false;
 	
 	private bool mIsFiring = false;
 	private bool mIsRepeatActive = false;
@@ -19,6 +20,14 @@ public abstract class Weapon : MonoBehaviour {
 	/// Shoot from specified position with given dir and seek (if required by projectile)
 	/// </summary>
 	public abstract void Shoot(Vector2 pos, Vector2 dir, Transform seek);
+	
+	public void Shoot(Vector2 dir, Transform seek) {
+		Shoot(transform.position, dir, seek);
+	}
+	
+	public void ShootUp(Transform seek) {
+		Shoot(transform.position, transform.up, seek);
+	}
 	
 	public void Repeat(RepeatParam param) {
 		mIsFiring = true;
@@ -43,9 +52,14 @@ public abstract class Weapon : MonoBehaviour {
 	}
 	
 	private IEnumerator DoShoot(RepeatParam param) {
-		while(mIsFiring && param.source != null) {
-			Shoot(param.source.position, param.dir, param.seek);
-			
+		while(mIsFiring) {
+			if(useUpVector) {
+				Shoot(param.source != null ? param.source.position : transform.position, transform.up, param.seek);
+			}
+			else {
+				Shoot(param.source != null ? param.source.position : transform.position, param.dir, param.seek);
+			}
+									
 			yield return new WaitForSeconds(delayPerShot);
 		}
 		

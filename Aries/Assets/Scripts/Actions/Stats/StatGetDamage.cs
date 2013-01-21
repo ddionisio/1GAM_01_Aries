@@ -23,7 +23,7 @@ namespace Game.Actions {
 			base.OnEnter();
 			
 			if(mComp != null) {
-				toVar = mComp.damage;
+				toVar.Value = mComp.damage;
 			}
 			
 			Finish();
