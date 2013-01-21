@@ -43,6 +43,10 @@ public class UnitEntity : EntityBase {
 		//hook calls up
 		mStats.statChangeCallback += OnStatChange;
 		
+		if(mFlockUnit != null) {
+			mFlockUnit.groupMoveEnabled = false;
+		}
+		
 		if(mWeapon != null) {
 			mWeaponParam = new Weapon.RepeatParam();
 			mWeaponParam.source = transform;

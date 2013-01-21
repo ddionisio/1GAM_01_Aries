@@ -81,6 +81,8 @@ public class FlockUnit : MotionBase {
 			if(mMoveTarget != value) {
 				mMoveTarget = value;
 				
+				if(mMoveTarget == null) Debug.Log("fuck you");
+				
 				SeekPathStop();
 			}
 		}
@@ -447,16 +449,18 @@ public class FlockUnit : MotionBase {
 					}
 					
 					//only follow if it has a legit body
-					Rigidbody otherBody = unit.rigidbody;
-					if(otherBody != null && !otherBody.isKinematic) {
-						//align speed
-						Vector2 vel = otherBody.velocity;
-						align += vel;
+					if(unit.isLegit) {
+						Rigidbody otherBody = unit.rigidbody;
+						if(otherBody != null && !otherBody.isKinematic) {
+							//align speed
+							Vector2 vel = otherBody.velocity;
+							align += vel;
+							
+							//cohesion
+							cohesion += otherPos;
 						
-						//cohesion
-						cohesion += otherPos;
-					
-						numFollow++;
+							numFollow++;
+						}
 					}
 				}
 			}
