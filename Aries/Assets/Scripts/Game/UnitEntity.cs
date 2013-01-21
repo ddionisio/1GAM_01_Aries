@@ -4,9 +4,6 @@ using System.Collections;
 public class UnitEntity : EntityBase {
 	public UnitAttackType attackType;
 	
-	public float attackRange = 0.0f; //range to attack (0 for melee)
-	public float attackForceBack = 50.0f; //amount of force to move back after an attack
-	
 	public float unSummonDelay = 0.5f;
 	
 	private UnitStat mStats;
@@ -19,6 +16,8 @@ public class UnitEntity : EntityBase {
 	private Weapon.RepeatParam mWeaponParam;
 	
 	private UnitSpriteController.EventData mLastSpriteEventData;
+	
+	private float mAttackCosTheta;
 	
 	public UnitSpriteController.EventData lastSpriteEventData { get { return mLastSpriteEventData; } }
 	public UnitStat stats { get { return mStats; } }
@@ -69,14 +68,6 @@ public class UnitEntity : EntityBase {
 		base.Start();
 	}
 	
-	// Use this to determine if we can attack in range
-	public bool CheckRangeAttack() {
-		return mFlockUnit != null ? 
-			   mFlockUnit.avoidDistance <= mFlockUnit.moveTargetDistance && mFlockUnit.moveTargetDistance <= attackRange && Vector2.Dot(mFlockUnit.moveTargetDir, mFlockUnit.dir) > 0.0f
-			 : (mListener.currentTarget.target.position - transform.position).sqrMagnitude <= attackRange*attackRange;
-					
-	}
-	
 	public override void Release() {
 		ClearData();
 		
@@ -90,7 +81,7 @@ public class UnitEntity : EntityBase {
 	}
 	
 	protected override void ActivatorWakeUp() {
-		if(!doSpawn) {
+		if(!doSpawnOnWake) {
 			FlockUnitInit();
 		}
 		
@@ -176,11 +167,6 @@ public class UnitEntity : EntityBase {
 		}
 	}
 	
-	void OnDrawGizmosSelected() {
-		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(transform.position, attackRange);
-	}
-	
 	void OnStatChange(StatBase stat) {
 		FSM.SendEvent(EntityEvent.StatChanged);
 	}
@@ -210,6 +196,7 @@ public class UnitEntity : EntityBase {
 			mFlockUnit.enabled = true;
 			mFlockUnit.groupMoveEnabled = true;
 			mFlockUnit.catchUpEnabled = true;
+			mFlockUnit.minMoveTargetDistance = 0.0f;
 			mFlockUnit.sensor.collider.enabled = true;
 			
 			FlockGroup grp = FlockGroup.GetGroup(mFlockUnit.type);

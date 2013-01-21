@@ -4,8 +4,8 @@ using HutongGames.PlayMaker;
 
 namespace Game.Actions {
 	[ActionCategory("Game")]
-	[Tooltip("Check if unit can attack target at current distance.")]
-	public class UnitCheckRangeAttack : FSMActionComponentBase<UnitEntity> {
+	[Tooltip("Validate range based on current action of target.")]
+	public class ActionListenerCheckRange : FSMActionComponentBase<ActionListener> {
 		public FsmEvent isTrue;
 		public FsmEvent isFalse;
 		
@@ -51,7 +51,7 @@ namespace Game.Actions {
 		}
 		
 		void DoCheck() {
-			if(mComp.CheckRangeAttack())
+			if(mComp.CheckRange())
 				Fsm.Event(isTrue);
 			else
 				Fsm.Event(isFalse);

@@ -20,6 +20,8 @@ namespace Game.Actions {
 		// Code that runs on entering the state.
 		public override void OnEnter()
 		{
+			base.OnEnter();
+			
 			if(mComp != null) {
 				mComp.catchUpEnabled = catchUp.Value;
 				mComp.groupMoveEnabled = groupMove.Value;

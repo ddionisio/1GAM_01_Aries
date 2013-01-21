@@ -78,32 +78,36 @@ public class Projectile : EntityBase {
 		
 	}
 	
-	protected override void StateChanged() {
-		switch(prevState) {
-		case EntityState.spawning:
-			Invoke("OnDecayEnd", decayDelay);
+	public override void SpawnFinish ()
+	{
+		Invoke("OnDecayEnd", decayDelay);
+	
+		collider.enabled = true;
 		
-			collider.enabled = true;
-			
-			if(seekDelay > 0.0f) {
-				Invoke("OnSeekStart", seekDelay);
-			}
-			else {
-				state = EntityState.normal;
-			}
-			
-			//starting direction and force
-			if(mStartDir != Vector2.zero) {
-				//set force
-				rigidbody.AddForce(mStartDir*startForce);
-			}
-			
-			if(applyDirToUp) {
-				InvokeRepeating("OnUpUpdate", 0.0f, 0.1f);
-			}
-			break;
+		if(seekDelay > 0.0f) {
+			Invoke("OnSeekStart", seekDelay);
+		}
+		else {
+			state = EntityState.normal;
 		}
 		
+		//starting direction and force
+		if(mStartDir != Vector2.zero) {
+			//set force
+			rigidbody.AddForce(mStartDir*startForce);
+		}
+		
+		if(applyDirToUp) {
+			InvokeRepeating("OnUpUpdate", 0.0f, 0.1f);
+		}
+	}
+	
+	protected override void SpawnStart ()
+	{
+		state = EntityState.spawning;
+	}
+	
+	protected override void StateChanged() {
 		switch(state) {
 		case EntityState.spawning:
 			if(applyDirToUp && mStartDir != Vector2.zero) {

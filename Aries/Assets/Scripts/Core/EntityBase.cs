@@ -25,10 +25,10 @@ public class EntityBase : MonoBehaviour {
 	private float mBlinkCurTime = 0;
 	private float mBlinkDelay = 0;
 	
-	private bool mDoSpawn = false;
+	private bool mDoSpawnOnWake = false;
 	
-	public bool doSpawn {
-		get { return mDoSpawn; }
+	public bool doSpawnOnWake {
+		get { return mDoSpawnOnWake; }
 	}
 	
 	public PlayMakerFSM FSM {
@@ -93,17 +93,21 @@ public class EntityBase : MonoBehaviour {
 	/// NOTE: calls after an update to ensure Awake and Start is called.
 	/// </summary>
 	public void Spawn() {
-		if(mActivator != null) {
-			mActivator.Start();
-		}
-		
-		//check if we are still active
-		mDoSpawn = gameObject.activeSelf;
-		
 		mState = mPrevState = EntityState.NumState; //avoid invalid updates
 		
-		if(mDoSpawn) {
-			//ensure start is called before spawning if we are freshly allocated from entity manager
+		//allow activator to start and check if we need to spawn now or later
+		//ensure start is called before spawning if we are freshly allocated from entity manager
+		if(mActivator != null) {
+			mActivator.Start();
+			
+			if(mActivator.deactivateOnStart) {
+				mDoSpawnOnWake = true; //do it later when we wake up
+			}
+			else {
+				StartCoroutine(DoSpawn());
+			}
+		}
+		else {
 			StartCoroutine(DoSpawn());
 		}
 	}
@@ -127,14 +131,15 @@ public class EntityBase : MonoBehaviour {
 			releaseCallback(this);
 		}
 		
-		mDoSpawn = false;
+		mDoSpawnOnWake = false;
 		
 		StopAllCoroutines();
 		EntityManager.instance.Release(this);
 	}
 	
 	protected virtual void ActivatorWakeUp() {
-		if(mDoSpawn) { //if we haven't properly spawned yet, do so now
+		if(mDoSpawnOnWake) { //if we haven't properly spawned yet, do so now
+			mDoSpawnOnWake = false;
 			StartCoroutine(DoSpawn());
 		}
 		else if(mFSM != null) {
@@ -231,8 +236,6 @@ public class EntityBase : MonoBehaviour {
 				
 		yield return new WaitForFixedUpdate();
 		
-		mDoSpawn = false;
-		
 		SpawnStart();
 		
 		if(spawnCallback != null) {
@@ -241,15 +244,19 @@ public class EntityBase : MonoBehaviour {
 		
 		//start up
 		if(mFSM != null) {
+			//restart
 			mFSM.Fsm.Reinitialize();
 			mFSM.enabled = true;
 			
+			//allow fsm to boot up, then tell it to spawn
 			yield return new WaitForFixedUpdate();
 			
 			mFSM.SendEvent(EntityEvent.Spawn);
 		}
 		else {
 			yield return new WaitForSeconds(spawnDelay);
+			
+			SpawnFinish();
 		}
 										
 		yield break;

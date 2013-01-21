@@ -44,6 +44,8 @@ public class FlockUnit : MotionBase {
 	[System.NonSerializedAttribute] public bool groupMoveEnabled = true; //false = no cohesion and alignment
 	[System.NonSerializedAttribute] public bool catchUpEnabled = true; //false = don't use catch up factor
 	
+	[System.NonSerializedAttribute] public float minMoveTargetDistance = 0.0f; //minimum distance to maintain from move target
+	
 	private FlockFilter mFilter = null;
 	
 	private Transform mMoveTarget = null;
@@ -134,7 +136,7 @@ public class FlockUnit : MotionBase {
 						
 						//check to see if destination has changed or no longer blocked
 						if(dest != mSeekPath.vectorPath[mSeekPath.vectorPath.Count-1]
-							|| !CheckTargetBlock(pos, mMoveTargetDir, mMoveTargetDist, mRadius)) {
+							|| !CheckTargetBlock(pos, mMoveTargetDir, mMoveTargetDist-minMoveTargetDistance, mRadius)) {
 							SeekPathStop();
 						}
 						else {
@@ -152,7 +154,7 @@ public class FlockUnit : MotionBase {
 					mMoveTargetDist = mMoveTargetDir.magnitude;
 					mMoveTargetDir /= mMoveTargetDist;
 					
-					if(CheckTargetBlock(pos, mMoveTargetDir, mMoveTargetDist, mRadius)) {
+					if(CheckTargetBlock(pos, mMoveTargetDir, mMoveTargetDist-minMoveTargetDistance, mRadius)) {
 						SeekPathStart(pos, dest);
 					}
 					else {
@@ -223,7 +225,8 @@ public class FlockUnit : MotionBase {
 						sumForce = groupMoveEnabled ? ComputeMovement() : ComputeSeparate();
 						
 						if(mMoveTargetDist > 0) {
-							_dir /= mMoveTargetDist;
+							//determine direction if distance is too close
+							_dir /= mMoveTargetDist < minMoveTargetDistance ? -mMoveTargetDist : mMoveTargetDist;
 							
 							mMoveTargetDir = _dir;
 							
@@ -380,6 +383,17 @@ public class FlockUnit : MotionBase {
 				}
 			}
 			
+			//calculate avoid
+			if(numAvoid > 0) {
+				avoid /= (float)numAvoid;
+				
+				dist = avoid.magnitude;
+				if(dist > 0) {
+					avoid /= dist;
+					forceRet += M8.Math.Steer(body.velocity, avoid*maxSpeed, maxForce, avoidFactor);
+				}
+			}
+			
 			//calculate separate
 			if(numSeparate > 0) {
 				separate /= (float)numSeparate;
@@ -391,16 +405,7 @@ public class FlockUnit : MotionBase {
 				}
 			}
 			
-			//calculate avoid
-			if(numAvoid > 0) {
-				avoid /= (float)numAvoid;
-				
-				dist = avoid.magnitude;
-				if(dist > 0) {
-					avoid /= dist;
-					forceRet += M8.Math.Steer(body.velocity, avoid*maxSpeed, maxForce, avoidFactor);
-				}
-			}
+			
 		}
 		
 		return forceRet;
@@ -463,18 +468,6 @@ public class FlockUnit : MotionBase {
 				}
 			}
 			
-			//calculate separate
-			if(numSeparate > 0) {
-				separate /= (float)numSeparate;
-				
-				dist = separate.magnitude;
-				if(dist > 0) {
-					separate /= dist;
-					forceRet += M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
-					
-				}
-			}
-			
 			//calculate avoid
 			if(numAvoid > 0) {
 				avoid /= (float)numAvoid;
@@ -486,6 +479,18 @@ public class FlockUnit : MotionBase {
 				}
 			}
 			
+			//calculate separate
+			if(numSeparate > 0) {
+				separate /= (float)numSeparate;
+				
+				dist = separate.magnitude;
+				if(dist > 0) {
+					separate /= dist;
+					forceRet += M8.Math.Steer(body.velocity, separate*maxSpeed, maxForce, separateFactor);
+					
+				}
+			}
+									
 			if(numFollow > 0) {
 				float fCount = (float)numFollow;
 				

@@ -127,6 +127,10 @@ public class ActionListener : MonoBehaviour {
 		return false;
 	}
 	
+	public virtual bool CheckRange() {
+		return true;
+	}
+	
 	protected virtual void OnActionEnter() {
 	}
 	

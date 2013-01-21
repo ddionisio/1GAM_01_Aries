@@ -6,20 +6,51 @@ public class FlockActionController : ActionListener {
 	
 	public FlockUnit flockUnit;
 	
+	public float attackMinRange = 0.0f;
+	public float attackRange = 0.0f; //range to attack
+	public float attackAngle = 0.0f;
+	
 	public float followStopDelay = 1.0f;
 	public float followStopRadius = 2.0f;
 	public float followStopSpeed = 0.01f;
 	
-	private float mCurStopDelay = 0.0f;
-	
 	private MotionBase mTargetMotion = null;
+	private float mAttackCosTheta;
+	
+	// Use this to determine if we can attack in range
+	public override bool CheckRange() {
+		if(currentTarget != null) {
+			switch(currentTarget.type) {
+			case ActionType.Attack:
+				return flockUnit.enabled 
+					&& flockUnit.moveTargetDistance >= attackMinRange
+					&& flockUnit.moveTargetDistance <= attackRange 
+					&& Vector2.Dot(flockUnit.moveTargetDir, flockUnit.dir) > mAttackCosTheta;
+				
+			default:
+				break;
+			}
+		}
+		
+		return true;	
+	}
 	
 	protected override void OnActionEnter() {
-		mCurStopDelay = 0.0f;
 		mTargetMotion = currentTarget.GetComponent<MotionBase>();
 		
 		switch(currentTarget.type) {
 		case ActionType.Disperse:
+			break;
+			
+		case ActionType.Attack:
+			flockUnit.moveTarget = currentTarget.target;
+			flockUnit.minMoveTargetDistance = attackMinRange;
+			break;
+			
+		case ActionType.Follow:
+			flockUnit.moveTarget = currentTarget.target;
+			
+			StartCoroutine(FollowStop());
 			break;
 			
 		default:
@@ -33,19 +64,24 @@ public class FlockActionController : ActionListener {
 	
 	protected override void OnActionFinish() {
 		//do something
-		mCurStopDelay = 0.0f;
-		
 		flockUnit.moveTarget = null;
+		flockUnit.minMoveTargetDistance = 0.0f;
 		
 		mTargetMotion = null;
+		
+		StopAllCoroutines();
 	}
 	
-	void Update() {
-		if(currentTarget != null && mTargetMotion != null) {
-			mCurStopDelay += Time.deltaTime;
-			if(mCurStopDelay >= followStopDelay) {
-				mCurStopDelay = 0.0f;
-				
+	void Awake() {
+		mAttackCosTheta = Mathf.Cos(attackAngle*Mathf.Deg2Rad);
+	}
+	
+	IEnumerator FollowStop() {
+		while(currentTarget != null && mTargetMotion != null) {
+			yield return new WaitForSeconds(followStopDelay);
+			
+			switch(currentTarget.type) {
+			case ActionType.Follow:
 				if(mTargetMotion.curSpeed < followStopSpeed) {
 					if(flockUnit.moveTarget != null && flockUnit.moveTargetDistance <= followStopRadius)
 						flockUnit.moveTarget = null;
@@ -53,7 +89,23 @@ public class FlockActionController : ActionListener {
 				else {
 					flockUnit.moveTarget = currentTarget.target;
 				}
+				
+				yield return new WaitForFixedUpdate();
+				break;
+				
+			default:
+				yield break;
 			}
 		}
+		
+		yield break;
+	}
+	
+	void OnDrawGizmosSelected() {
+		Gizmos.color = Color.red;
+		Gizmos.DrawWireSphere(transform.position, attackMinRange);
+		
+		Gizmos.color *= 0.75f;
+		Gizmos.DrawWireSphere(transform.position, attackRange);
 	}
 }
