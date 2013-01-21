@@ -10,6 +10,9 @@ namespace Game.Actions {
 		public FsmEvent isFalse;
 		
 		public bool everyFrame;
+		public float delay;
+		
+		private float mLastTime;
 		
 		public override void Reset ()
 		{
@@ -18,6 +21,7 @@ namespace Game.Actions {
 			isTrue = null;
 			isFalse = null;
 			everyFrame = false;
+			delay = 0.0f;
 		}
 		
 		public override void OnEnter ()
@@ -25,10 +29,13 @@ namespace Game.Actions {
 			base.OnEnter ();
 			
 			if(mComp != null) {
-				DoCheck();
-				
-				if(!everyFrame)
+				if(!everyFrame) {
+					DoCheck();
 					Finish();
+				}
+				else {
+					mLastTime = Time.time;
+				}
 			}
 			else {
 				Finish();
@@ -37,7 +44,10 @@ namespace Game.Actions {
 		
 		public override void OnLateUpdate ()
 		{
-			DoCheck();
+			if(Time.time - mLastTime >= delay) {
+				mLastTime = Time.time;
+				DoCheck();
+			}
 		}
 		
 		void DoCheck() {
