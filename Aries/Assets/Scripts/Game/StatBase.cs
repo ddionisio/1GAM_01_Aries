@@ -2,13 +2,12 @@ using UnityEngine;
 using System.Collections;
 
 public class StatBase : MonoBehaviour {
-	public delegate void OnStatChange(StatBase stat, float delta);
+	public delegate void OnStatChange(StatBase stat);
 	
-	public event OnStatChange hpChangeCallback;
+	public event OnStatChange statChangeCallback;
 	
 	[SerializeField] protected StatHUD hud; //the hud associated with the stat
 	
-	[SerializeField] bool _hudAutoHide = true;
 	[SerializeField] float _damage = 1.0f;
 	[SerializeField] float _maxHP = 1.0f;
 	
@@ -40,20 +39,13 @@ public class StatBase : MonoBehaviour {
 		
 		set {
 			if(mCurHP != value) {
-				float prevHP = mCurHP;
 				mCurHP = value;
 				
 				if(mCurHP < 0) {
 					mCurHP = 0;
 				}
 				
-				if(hud != null) {
-					hud.StatsRefresh(this, true);
-				}
-				
-				if(hpChangeCallback != null) {
-					hpChangeCallback(this, value - prevHP);
-				}
+				StatChanged(true);
 			}
 		}
 	}
@@ -63,26 +55,33 @@ public class StatBase : MonoBehaviour {
 	}
 	
 	public virtual void Refresh() {
-		if(hud != null) {
-			hud.StatsRefresh(this, false);
-		}
-		
-		if(hpChangeCallback != null) {
-			hpChangeCallback(this, 0);
-		}
+		StatChanged(false);
 	}
 	
 	public virtual void ResetStats() {
 		mCurHP = _maxHP;
 		invulnerable = false;
 		
-		if(_hudAutoHide && hud != null) {
+		if(hud != null && hud.isAutoHide) {
 			hud.show = false;
 		}
 	}
 	
+	protected void StatChanged(bool showHUD) {
+		if(statChangeCallback != null) {
+			statChangeCallback(this);
+		}
+		
+		if(hud != null) {
+			hud.StatsRefresh(this);
+			
+			if(showHUD)
+				hud.show = true;
+		}
+	}
+	
 	protected virtual void OnDestroy() {
-		hpChangeCallback = null;
+		statChangeCallback = null;
 	}
 	
 	protected virtual void Awake() {

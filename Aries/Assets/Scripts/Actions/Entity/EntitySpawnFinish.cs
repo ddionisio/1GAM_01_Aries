@@ -3,8 +3,8 @@ using HutongGames.PlayMaker;
 
 namespace Game.Actions {
 	[ActionCategory("Game")]
-	[Tooltip("Removes entity and returns it to the manager")]
-	public class EntityRelease : FSMActionComponentBase<EntityBase>
+	[Tooltip("Let entity know that we have finished spawning.")]
+	public class EntitySpawnFinish : FSMActionComponentBase<EntityBase>
 	{
 		// Code that runs on entering the state.
 		public override void OnEnter()
@@ -12,7 +12,7 @@ namespace Game.Actions {
 			base.OnEnter();
 			
 			if(mComp != null)
-				mComp.Release();
+				mComp.SpawnFinish();
 			
 			Finish();
 		}

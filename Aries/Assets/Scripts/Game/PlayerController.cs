@@ -276,18 +276,9 @@ public class PlayerController : MotionBase {
 		}
 		
 		UnitEntity ent = unit.GetComponent<UnitEntity>();
-		if(ent != null) {
+		if(mCurSummonUnit == ent) {
 			//check summoning
-			if(ent.prevState == EntityState.spawning) {
-				mPlayer.stats.curResource -= ent.stats.love;
-			}
-			
-			if(mCurSummonUnit == ent) {
-				mCurSummonUnit = null;
-			}
-		}
-		else {
-			Debug.LogWarning("no unit entity?");
+			mCurSummonUnit = null;
 		}
 	}
 	
@@ -301,12 +292,10 @@ public class PlayerController : MotionBase {
 		UnitEntity ent = unit.GetComponent<UnitEntity>();
 		if(ent != null) {
 			//check unsummoning
-			if(ent.state == EntityState.unsummon) {
+			if(mCurActMode == ActMode.UnSummon && mCurSummonUnit == ent) {
 				//refund based on hp percent
 				mPlayer.stats.curResource += ent.stats.loveHPScale;
-			}
-			
-			if(mCurSummonUnit == ent) {
+				
 				mCurSummonUnit = null;
 			}
 		}
@@ -337,8 +326,8 @@ public class PlayerController : MotionBase {
 		if(mCurActMode != toMode) {
 			//revert currently selected unsummon
 			if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
-				if(mCurSummonUnit.state == EntityState.unsummon) {
-					mCurSummonUnit.state = EntityState.normal;
+				if(mCurActMode == ActMode.UnSummon) {
+					mCurSummonUnit.FSM.SendEvent(EntityEvent.Resume);
 				}
 				
 				mCurSummonUnit = null;
@@ -373,7 +362,8 @@ public class PlayerController : MotionBase {
 			//TODO: user feedback
 			UnitType unitType = mTypeSummons[mCurSummonInd];
 			if(grp.count < mPlayer.stats.maxSummon) {
-				if(mPlayer.stats.curResource >= UnitConfig.instance.GetUnitResourceCost(unitType)) {
+				float love = UnitConfig.instance.GetUnitResourceCost(unitType);
+				if(mPlayer.stats.curResource >= love) {
 					//check if it's safe to summon on the spot
 					if(!cursor.CheckArea(summonLayerCheck.value)) {
 						string typeName = unitType.ToString();
@@ -382,6 +372,9 @@ public class PlayerController : MotionBase {
 						if(mCurSummonUnit != null) {
 							Vector2 pos = cursor.transform.position;
 							mCurSummonUnit.transform.position = pos;
+							
+							//subtract from player resource
+							mPlayer.stats.curResource -= love;
 						}
 					}
 				}
@@ -393,7 +386,7 @@ public class PlayerController : MotionBase {
 			
 			mCurSummonUnit = grp.GrabUnit(mTypeSummons[mCurSummonInd], ActionTarget.Priority.High);
 			if(mCurSummonUnit != null) {
-				mCurSummonUnit.state = EntityState.unsummon;
+				mCurSummonUnit.FSM.SendEvent(EntityEvent.Remove);
 			}
 			break;
 		}

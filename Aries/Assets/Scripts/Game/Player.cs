@@ -19,7 +19,7 @@ public class Player : EntityBase {
 	}
 	
 	protected override void OnDestroy () {
-		mPlayerStats.hpChangeCallback -= OnHPChange;
+		mPlayerStats.statChangeCallback -= OnStatChange;
 		
 		base.OnDestroy();
 	}
@@ -31,7 +31,7 @@ public class Player : EntityBase {
 		mPlayerStats = GetComponentInChildren<PlayerStat>();
 		mSprite = GetComponentInChildren<UnitSpriteController>();
 		
-		mPlayerStats.hpChangeCallback += OnHPChange;
+		mPlayerStats.statChangeCallback += OnStatChange;
 		//hoook to hud
 	}
 
@@ -52,25 +52,30 @@ public class Player : EntityBase {
 			break;
 			
 		case EntityState.normal:
-			mSprite.state = UnitSpriteState.Move;
+			if(mSprite != null)
+				mSprite.state = UnitSpriteState.Move;
 			break;
 			
 		case EntityState.castSummon:
 			//start fx
-			mSprite.state = UnitSpriteState.Casting;
+			if(mSprite != null)
+				mSprite.state = UnitSpriteState.Casting;
 			break;
 			
 		case EntityState.castUnSummon:
 			//start fx
-			mSprite.state = UnitSpriteState.Casting;
+			if(mSprite != null)
+				mSprite.state = UnitSpriteState.Casting;
 			break;
 			
 		case EntityState.attacking:
-			mSprite.state = UnitSpriteState.AttackPursue;
+			if(mSprite != null)
+				mSprite.state = UnitSpriteState.AttackPursue;
 			break;
 					
 		case EntityState.dying:
-			mSprite.state = UnitSpriteState.Die;
+			if(mSprite != null)
+				mSprite.state = UnitSpriteState.Die;
 			
 			//gameover
 			break;
@@ -85,7 +90,7 @@ public class Player : EntityBase {
 	
 	}
 	
-	void OnHPChange(StatBase stat, float delta) {
+	void OnStatChange(StatBase stat) {
 		if(stat.curHP == 0.0f) {
 			state = EntityState.dying;
 		}

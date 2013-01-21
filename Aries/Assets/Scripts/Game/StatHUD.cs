@@ -7,6 +7,10 @@ public class StatHUD : MonoBehaviour {
 	
 	private bool mShow = true;
 	
+	public bool isAutoHide {
+		get { return decayDelay > 0.0f; }
+	}
+	
 	public bool show {
 		get { return mShow; }
 		
@@ -25,10 +29,9 @@ public class StatHUD : MonoBehaviour {
 	}
 	
 	//changed = when a stat value was changed
-	public virtual void StatsRefresh(StatBase stat, bool changed) {
+	public virtual void StatsRefresh(StatBase stat) {
 		//refresh values
 		
-		//possibly show display if changed is true
 	}
 	
 	protected virtual void OnActivate() {
@@ -42,7 +45,8 @@ public class StatHUD : MonoBehaviour {
 		
 		OnActivate();
 		
-		Invoke("DoHide", decayDelay);
+		if(isAutoHide)
+			Invoke("DoHide", decayDelay);
 	}
 	
 	private void DoHide() {

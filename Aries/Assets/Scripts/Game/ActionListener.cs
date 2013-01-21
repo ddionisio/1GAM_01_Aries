@@ -20,6 +20,14 @@ public class ActionListener : MonoBehaviour {
 	private Collider mCurActionCollider = null;
 	private ActionTarget mDefaultActionTarget = null;
 	private bool mLockAction = false;
+	private ContactPoint mLastHitInfo;
+	
+	/// <summary>
+	/// This is the contact point when we collided with the target
+	/// </summary>
+	public ContactPoint lastHitInfo {
+		get { return mLastHitInfo; }
+	}
 	
 	///<summary> lock action, preventing action being set </summary>
 	public bool lockAction {
@@ -173,12 +181,12 @@ public class ActionListener : MonoBehaviour {
 	void OnCollisionEnter(Collision collision) {
 		if(collision.collider == mCurActionCollider) {
 			//TODO: first contact guaranteed to be collision?
-			ContactPoint info = collision.contacts[0];
+			mLastHitInfo = collision.contacts[0];
 			
-			OnActionHitEnter(info);
+			OnActionHitEnter(mLastHitInfo);
 			
 			if(hitEnterCallback != null) {
-				hitEnterCallback(this, info);
+				hitEnterCallback(this, mLastHitInfo);
 			}
 		}
 	}

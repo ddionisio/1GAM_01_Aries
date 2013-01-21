@@ -21,9 +21,7 @@ public class Obstacle : EntityBase {
 		mActTarget = GetComponentInChildren<ActionTarget>();
 		
 		//hook calls up
-		if(mStats != null) {
-			mStats.hpChangeCallback += OnHPChange;
-		}
+		
 	}
 	
 	// Use this for initialization
@@ -75,10 +73,6 @@ public class Obstacle : EntityBase {
 	protected override void OnDestroy() {
 		ClearData();
 		
-		if(mStats != null) {
-			mStats.hpChangeCallback -= OnHPChange;
-		}
-		
 		base.OnDestroy();
 	}
 	
@@ -88,13 +82,6 @@ public class Obstacle : EntityBase {
 		}
 	}*/
 	
-	
-	void OnHPChange(StatBase stat, float delta) {
-		Debug.Log("ouch");
-		if(stat.curHP == 0.0f) {
-			state = EntityState.dying;
-		}
-	}
 			
 	private void ClearData() {
 		if(mActTarget != null) {

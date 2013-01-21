@@ -13,6 +13,7 @@ public class EntityBase : MonoBehaviour {
 	
 	public event OnSetState setStateCallback;
 	public event OnSetBool setBlinkCallback;
+	public event OnFinish spawnCallback;
 	public event OnFinish releaseCallback;
 	
 	private EntityState mState = EntityState.NumState;
@@ -25,6 +26,10 @@ public class EntityBase : MonoBehaviour {
 	private float mBlinkDelay = 0;
 	
 	private bool mDoSpawn = false;
+	
+	public bool doSpawn {
+		get { return mDoSpawn; }
+	}
 	
 	public PlayMakerFSM FSM {
 		get { return mFSM; }
@@ -103,6 +108,12 @@ public class EntityBase : MonoBehaviour {
 		}
 	}
 	
+	/// <summary>
+	/// This is to tell the entity that spawning has finished. Use this to start any motion, etc.
+	/// </summary>
+	public virtual void SpawnFinish() {
+	}
+	
 	public virtual void Release() {
 		if(mFSM != null) {
 			mFSM.enabled = false;
@@ -145,6 +156,7 @@ public class EntityBase : MonoBehaviour {
 		
 		setStateCallback = null;
 		setBlinkCallback = null;
+		spawnCallback = null;
 		releaseCallback = null;
 	}
 	
@@ -168,8 +180,10 @@ public class EntityBase : MonoBehaviour {
 		BroadcastMessage("EntityStart", this, SendMessageOptions.DontRequireReceiver);
 		
 		//for when putting entities on scene, skip the spawning state
-		if(activateOnStart && mFSM != null) {
-			mFSM.enabled = true;
+		if(activateOnStart) {
+			if(mFSM != null)
+				mFSM.enabled = true;
+			
 			StartCoroutine(DoStart());
 		}
 	}
@@ -207,7 +221,7 @@ public class EntityBase : MonoBehaviour {
 		SpawnStart();
 		
 		if(mFSM != null) {
-			mFSM.SendEvent("EntityStart");
+			mFSM.SendEvent(EntityEvent.Start);
 		}
 		
 		yield break;
@@ -221,11 +235,18 @@ public class EntityBase : MonoBehaviour {
 		
 		SpawnStart();
 		
+		if(spawnCallback != null) {
+			spawnCallback(this);
+		}
+		
 		//start up
 		if(mFSM != null) {
 			mFSM.Fsm.Reinitialize();
 			mFSM.enabled = true;
-			mFSM.SendEvent("EntitySpawn");
+			
+			yield return new WaitForFixedUpdate();
+			
+			mFSM.SendEvent(EntityEvent.Spawn);
 		}
 		else {
 			yield return new WaitForSeconds(spawnDelay);

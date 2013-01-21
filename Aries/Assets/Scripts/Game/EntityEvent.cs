@@ -13,4 +13,7 @@ public struct EntityEvent {
 	public const string Spawn = "EntitySpawn";
 	public const string Start = "EntityStart";
 	public const string Wake = "EntityWake";
+	public const string StatChanged = "EntityStatChanged";
+	public const string SpriteAnimComplete = "EntitySpriteAnimComplete";
+	public const string SpriteAnimEvent = "EntitySpriteAnimEvent";
 }

@@ -6,7 +6,7 @@ namespace Game.Actions {
 	public class StatCheckHealth : StatCheckBase<StatBase>
 	{
 		protected override float GetStat() {
-			return stats.curHP;
+			return mComp.curHP;
 		}
 	}
 }
