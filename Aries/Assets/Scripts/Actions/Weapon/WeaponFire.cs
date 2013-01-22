@@ -25,8 +25,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				mComp.Shoot(dir.Value, seek.Value != null ? seek.Value.transform : null);
+			Weapon w = mComp;
+			if(w != null) {
+				w.Shoot(dir.Value, seek.Value != null ? seek.Value.transform : null);
 			}
 			
 			Finish();

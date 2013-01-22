@@ -11,6 +11,10 @@ public class SpriteColorPulse : MonoBehaviour {
 	private Color mDestColor;
 	private float mCurPulseTime = 0;
 	
+	void OnEnable() {
+		mCurPulseTime = 0;
+	}
+	
 	void Awake() {
 		mSprite = GetComponent<tk2dBaseSprite>();
 	}

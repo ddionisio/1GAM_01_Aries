@@ -201,10 +201,8 @@ public class ActionListener : MonoBehaviour {
 	
 	//if we are a rigid body and so is the target, these are called
 	void OnCollisionEnter(Collision collision) {
-		if(collision.collider == mCurActionCollider) {
-			//TODO: first contact guaranteed to be collision?
-			mLastHitInfo = collision.contacts[0];
-			
+		mLastHitInfo = collision.contacts[0];
+		if(mLastHitInfo.otherCollider == mCurActionCollider) {
 			OnActionHitEnter(mLastHitInfo);
 			
 			if(hitEnterCallback != null) {
@@ -215,7 +213,7 @@ public class ActionListener : MonoBehaviour {
 	
 	//if we are a rigid body and so is the target, these are called
 	void OnCollisionExit(Collision collision) {
-		if(collision.collider == mCurActionCollider) {
+		if(collision.contacts[0].otherCollider == mCurActionCollider) {
 			OnActionHitExit();
 			
 			if(hitExitCallback != null) {

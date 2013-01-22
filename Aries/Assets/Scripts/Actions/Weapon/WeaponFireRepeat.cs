@@ -30,12 +30,14 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
+			Weapon w = mComp;
+			if(w != null) {
 				mParam.seek = seek.Value != null ? seek.Value.transform : null;
 				mParam.dir = dir.Value;
-				mParam.source = useOwnerPosition.Value && mOwnerGO != null ? mOwnerGO.transform : null;
+				GameObject go = mOwnerGO;
+				mParam.source = useOwnerPosition.Value && go != null ? go.transform : null;
 				
-				mComp.Repeat(mParam);
+				w.Repeat(mParam);
 			}
 			
 			Finish();

@@ -28,17 +28,12 @@ namespace Game.Actions {
 		{
 			base.OnEnter ();
 			
-			if(mComp != null) {
-				if(!everyFrame) {
-					DoCheck();
-					Finish();
-				}
-				else {
-					mLastTime = Time.time;
-				}
+			if(!everyFrame) {
+				DoCheck();
+				Finish();
 			}
 			else {
-				Finish();
+				mLastTime = Time.time;
 			}
 		}
 		
@@ -51,10 +46,13 @@ namespace Game.Actions {
 		}
 		
 		void DoCheck() {
-			if(mComp.CheckRange())
+			ActionListener c = mComp;
+			if(c != null && c.CheckRange()) {
 				Fsm.Event(isTrue);
-			else
+			}
+			else {
 				Fsm.Event(isFalse);
+			}
 		}
 		
 		public override string ErrorCheck()

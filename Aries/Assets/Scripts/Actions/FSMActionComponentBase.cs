@@ -9,8 +9,18 @@ namespace Game.Actions {
 		
 		public bool checkChildren;
 		
-		protected T mComp;
-		protected GameObject mOwnerGO;
+		protected GameObject mOwnerGO {
+			get {
+				return Fsm.GetOwnerDefaultTarget(owner);
+			}
+		}
+		
+		protected T mComp {
+			get {
+				GameObject go = mOwnerGO;
+				return go == null ? null : checkChildren ? go.GetComponentInChildren<T>() : go.GetComponent<T>();
+			}
+		}
 		
 		public override void Reset()
 		{
@@ -18,15 +28,5 @@ namespace Game.Actions {
 			checkChildren = false;
 		}
 		
-		public override void OnEnter ()
-		{
-			mOwnerGO = Fsm.GetOwnerDefaultTarget(owner);
-			mComp = mOwnerGO == null ? null : checkChildren ? mOwnerGO.GetComponentInChildren<T>() : mOwnerGO.GetComponent<T>();
-#if UNITY_EDITOR
-			if(mComp == null) {
-				LogWarning("Component: "+typeof(T)+" not found for "+mOwnerGO.name);
-			}
-#endif
-		}
 	}
 }

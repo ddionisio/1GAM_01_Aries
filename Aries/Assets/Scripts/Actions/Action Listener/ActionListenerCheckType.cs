@@ -25,8 +25,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				if(mComp.type == type)
+			ActionListener l = mComp;
+			if(l != null) {
+				if(l.type == type)
 					Fsm.Event(isTrue);
 				else
 					Fsm.Event(isFalse);

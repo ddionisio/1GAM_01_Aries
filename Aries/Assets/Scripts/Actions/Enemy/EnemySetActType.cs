@@ -23,11 +23,12 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
+			EnemyActionController c = mComp;
+			if(c != null) {
 				if(toDefault)
-					mComp.RevertActToDefault();
+					c.RevertActToDefault();
 				else
-					mComp.type = toType;
+					c.type = toType;
 			}
 			
 			Finish();

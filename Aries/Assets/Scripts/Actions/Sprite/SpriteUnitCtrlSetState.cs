@@ -20,8 +20,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null && mComp.HasState(spriteState))
-				mComp.state = spriteState;
+			UnitSpriteController c = mComp;
+			if(c != null && c.HasState(spriteState))
+				c.state = spriteState;
 			
 			Finish();
 		}

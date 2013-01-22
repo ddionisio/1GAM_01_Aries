@@ -33,16 +33,11 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				if(everyFrame) {
-					mPrevTime = Time.time;
-				}
-				else {
-					DoGetTarget();
-					Finish();
-				}
+			if(everyFrame) {
+				mPrevTime = Time.time;
 			}
 			else {
+				DoGetTarget();
 				Finish();
 			}
 		}
@@ -56,13 +51,14 @@ namespace Game.Actions {
 		}
 		
 		void DoGetTarget() {
-			if(mComp.SetTargetToNearest(ignorePriority))
+			EnemyActionController c = mComp;
+			if(c != null && c.SetTargetToNearest(ignorePriority))
 				Fsm.Event(isSet);
 			else
 				Fsm.Event(isNotSet);
 		}
 		
-		/*public override string ErrorCheck ()
+		public override string ErrorCheck ()
 		{
 			if(everyFrame &&
 				FsmEvent.IsNullOrEmpty(isSet) &&
@@ -71,6 +67,6 @@ namespace Game.Actions {
 			}
 			
 			return "";
-		}*/
+		}
 	}
 }

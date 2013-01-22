@@ -28,11 +28,12 @@ namespace Game.Actions {
 		{
 			base.OnEnter ();
 			
-			if(mComp != null) {
+			UnitEntity u = mComp;
+			if(u != null) {
 				if(storeInt != null)
-					storeInt.Value = mComp.lastSpriteEventData.valI;
-					storeString.Value = mComp.lastSpriteEventData.valS;
-					storeFloat.Value = mComp.lastSpriteEventData.valF;
+					storeInt.Value = u.lastSpriteEventData.valI;
+					storeString.Value = u.lastSpriteEventData.valS;
+					storeFloat.Value = u.lastSpriteEventData.valF;
 			}
 			
 			Finish();

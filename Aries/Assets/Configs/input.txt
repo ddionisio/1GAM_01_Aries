@@ -75,5 +75,12 @@
 		"keys" : [
 			{ "input":"UnSummon" }
 		]
+	},
+	{
+		"action":"Recall",
+		"control":"Button",
+		"keys" : [
+			{ "input":"Recall" }
+		]
 	}
 ]

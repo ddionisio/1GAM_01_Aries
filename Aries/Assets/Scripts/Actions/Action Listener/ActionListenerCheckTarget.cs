@@ -11,6 +11,8 @@ namespace Game.Actions {
 		[Tooltip("Optional: If target is set to its assigned default.")]
 		public FsmEvent isDefault;
 		
+		public bool everyFrame;
+		
 		public override void Reset()
 		{
 			base.Reset();
@@ -18,27 +20,46 @@ namespace Game.Actions {
 			isTrue = null;
 			isFalse = null;
 			isDefault = null;
+			everyFrame = false;
 		}
 		
 		public override void OnEnter()
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				if(mComp.currentTarget != null) {
-					if(!FsmEvent.IsNullOrEmpty(isDefault) && mComp.currentTarget == mComp.defaultTarget) {
-						Fsm.Event(isDefault);
-					}
-					else {
-						Fsm.Event(isTrue);
-					}
+			DoCheck();
+			if(!everyFrame)
+				Finish();
+		}
+		
+		public override void OnUpdate ()
+		{
+			DoCheck();
+		}
+		
+		void DoCheck() {
+			ActionListener l = mComp;
+			if(l != null && l.currentTarget != null) {
+				if(!FsmEvent.IsNullOrEmpty(isDefault) && l.currentTarget == l.defaultTarget) {
+					Fsm.Event(isDefault);
 				}
 				else {
-					Fsm.Event(isFalse);
+					Fsm.Event(isTrue);
 				}
 			}
-			
-			Finish();
+			else {
+				Fsm.Event(isFalse);
+			}
+		}
+		
+		public override string ErrorCheck()
+		{
+			if (everyFrame &&
+				FsmEvent.IsNullOrEmpty(isDefault) &&
+				FsmEvent.IsNullOrEmpty(isTrue) &&
+				FsmEvent.IsNullOrEmpty(isFalse))
+				return "Action sends no events!";
+			return "";
 		}
 	}
 }

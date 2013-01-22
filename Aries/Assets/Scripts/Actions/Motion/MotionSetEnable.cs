@@ -19,8 +19,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null)
-				mComp.enabled = val.Value;
+			MotionBase m = mComp;
+			if(m != null)
+				m.enabled = val.Value;
 			
 			Finish();
 		}

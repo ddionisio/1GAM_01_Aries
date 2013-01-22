@@ -33,15 +33,10 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				DoCompare();
+			DoCompare();
 				
-				if (!everyFrame)
-					Finish();
-			}
-			else {
+			if (!everyFrame)
 				Finish();
-			}
 		}
 		
 		public override void OnLateUpdate()
@@ -49,29 +44,34 @@ namespace Game.Actions {
 			DoCompare();
 		}
 		
-		protected abstract float GetStat();
+		protected abstract float GetStat(T s);
 		
 		void DoCompare()
 		{
-			float stat = GetStat();
-			
-			if (Mathf.Abs(stat - val.Value) <= tolerance.Value)
-			{
-				Fsm.Event(equal);
-				return;
+			T s = mComp;
+			if(s != null) {
+				float stat = GetStat(s);
+				
+				if (Mathf.Abs(stat - val.Value) <= tolerance.Value)
+				{
+					Fsm.Event(equal);
+					return;
+				}
+		
+				if (stat < val.Value)
+				{
+					Fsm.Event(lessThan);
+					return;
+				}
+		
+				if (stat > val.Value)
+				{
+					Fsm.Event(greaterThan);
+				}
 			}
-	
-			if (stat < val.Value)
-			{
-				Fsm.Event(lessThan);
-				return;
+			else {
+				Finish();
 			}
-	
-			if (stat > val.Value)
-			{
-				Fsm.Event(greaterThan);
-			}
-	
 		}
 	
 		public override string ErrorCheck()

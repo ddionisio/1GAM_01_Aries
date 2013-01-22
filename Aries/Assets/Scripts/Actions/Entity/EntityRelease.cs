@@ -11,8 +11,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null)
-				mComp.Release();
+			EntityBase e = mComp;
+			if(e != null)
+				e.Release();
 			
 			Finish();
 		}

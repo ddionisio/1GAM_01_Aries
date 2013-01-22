@@ -80,7 +80,7 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	}
 	
 	void CleanUp() {
-		mUnits.RemoveWhere(delegate(T unit) {return unit == null;});
+		mUnits.RemoveWhere(delegate(T unit) {return unit == null || !unit.gameObject.activeInHierarchy;});
 	}
 	
 	void OnDrawGizmosSelected() {

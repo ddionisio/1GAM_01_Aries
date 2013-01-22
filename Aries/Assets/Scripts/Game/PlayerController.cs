@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PlayerController : MotionBase {
 	public float force;
@@ -11,6 +12,8 @@ public class PlayerController : MotionBase {
 	public LayerMask recallLayerCheck;
 	
 	public LayerMask summonLayerCheck;
+	
+	public GameObject recallSprite;
 			
 	private enum ActMode {
 		Normal,
@@ -32,6 +35,8 @@ public class PlayerController : MotionBase {
 	private PlayerCursor mCursor;
 	
 	private UnitEntity mCurSummonUnit = null;
+	
+	private List<ActionTarget> mTargetHolder = new List<ActionTarget>(10);
 	
 	public Player player {
 		get { return mPlayer; }
@@ -76,6 +81,7 @@ public class PlayerController : MotionBase {
 			Main.instance.input.RemoveButtonCall(InputAction.SummonSelectPrev, InputSummonSelectPrev);
 			Main.instance.input.RemoveButtonCall(InputAction.Summon, InputSummon);
 			Main.instance.input.RemoveButtonCall(InputAction.UnSummon, InputUnSummon);
+			Main.instance.input.RemoveButtonCall(InputAction.Recall, InputRecall);
 		}
 		
 		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayer.stats.flockGroup);
@@ -96,6 +102,9 @@ public class PlayerController : MotionBase {
 		mWeaponParam.source = transform;
 		
 		mPlayer = GetComponentInChildren<Player>();
+		
+		if(recallSprite != null)
+			recallSprite.SetActive(false);
 	}
 	
 	// Use this for initialization
@@ -108,6 +117,7 @@ public class PlayerController : MotionBase {
 		Main.instance.input.AddButtonCall(InputAction.SummonSelectPrev, InputSummonSelectPrev);
 		Main.instance.input.AddButtonCall(InputAction.Summon, InputSummon);
 		Main.instance.input.AddButtonCall(InputAction.UnSummon, InputUnSummon);
+		Main.instance.input.AddButtonCall(InputAction.Recall, InputRecall);
 		
 		FlockGroup playerGroup = FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 		if(playerGroup != null) {
@@ -172,25 +182,69 @@ public class PlayerController : MotionBase {
 			//do something amazing
 			Debug.Log("act");
 			
-			if(cursor.contextSensor.units.Count > 0) {
-				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
-				
+			HashSet<ActionTarget> contexts = cursor.contextSensor.units;
+			HashSet<ActionTarget> attacks = cursor.attackSensor.units;
+			
+			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
+			
+			if(contexts.Count > 0) {
 				//do something
-				Debug.Log("context found: "+cursor.contextSensor.units.Count);
-				
+				Debug.Log("context found: "+contexts.Count);
 				
 				ActionTarget target = cursor.contextSensor.GetSingleUnit();
 				
-				foreach(UnitEntity unit in grp.GetTargetFilter(mTypeSummons[mCurSummonInd], target)) {
+				foreach(UnitEntity unit in grp.GetTargetFilter(target)) {
 					unit.listener.currentTarget = target;
 				}
 			}
-			else if(cursor.attackSensor.units.Count > 0) {
-				//attack
-			}
-			else {
-				//recall sheeps
-				RecallUnits();
+			
+			if(attacks.Count > 0) {
+				Vector2 pos = transform.position;
+				
+				//get entities and sort to nearest
+				mTargetHolder.Clear();
+				foreach(ActionTarget attack in attacks) {
+					//only grab what can be targetted
+					//TODO: other things beyond attack?
+					if(attack.vacancy && attack.type == ActionType.Attack) {
+						Vector2 entPos = attack.transform.position;
+						attack.distSqrHolder = (entPos - pos).sqrMagnitude;
+						mTargetHolder.Add(attack);
+					}
+				}
+				
+				if(mTargetHolder.Count > 0) {
+					mTargetHolder.Sort((x, y) => (int)(x.distSqrHolder - y.distSqrHolder));
+					
+					int curTargetInd = 0;
+					
+					ActionTarget target = mTargetHolder[curTargetInd];
+					
+					//go through all units
+					//TODO: check distance of unit to target?
+					foreach(UnitEntity unit in grp.GetUnits()) {
+						ActionListener listener = unit.listener;
+						
+						//check if unit can attack target
+						if(!listener.lockAction && listener.currentPriority <= target.priority) {
+							StatBase targetStats = target.GetComponentInChildren<StatBase>();
+							if(targetStats == null || unit.stats.CanDamage(targetStats)) {
+								unit.listener.currentTarget = target;
+								
+								//get next target once vacancy is full
+								if(!target.vacancy) {
+									curTargetInd++;
+									if(curTargetInd < mTargetHolder.Count) {
+										target = mTargetHolder[curTargetInd];
+									}
+									else { //done with setting targets
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -265,6 +319,12 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
+	void InputRecall(InputManager.Info data) {
+		if(data.state == InputManager.State.Pressed) {
+			RecallUnits();
+		}
+	}
+	
 	//at this point, unit is fully spawned
 	void OnGroupUnitAdd(FlockUnit unit) {
 		ActionListener actionListen = unit.GetComponent<ActionListener>();
@@ -307,6 +367,10 @@ public class PlayerController : MotionBase {
 	}
 	
 	private void RecallUnits() {
+		if(recallSprite != null && !recallSprite.activeSelf) {
+			recallSprite.SetActive(true);
+		}
+		
 		UnitType type = mCurSummonInd == -1 ? UnitType.NumTypes : mTypeSummons[mCurSummonInd];
 		
 		Collider[] collides = Physics.OverlapSphere(transform.position, recallRadius, recallLayerCheck.value);

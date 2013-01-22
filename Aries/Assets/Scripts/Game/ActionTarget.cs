@@ -16,6 +16,9 @@ public class ActionTarget : MonoBehaviour {
 	public Priority priority = Priority.Normal;
 	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	
+	///<summary>used for sorting based on distance square</summary>
+	[System.NonSerializedAttribute] public float distSqrHolder;
+	
 	private HashSet<ActionListener> mListeners = new HashSet<ActionListener>();
 	
 	[SerializeField] GameObject indicator; //starts as turned off
@@ -46,6 +49,8 @@ public class ActionTarget : MonoBehaviour {
 	
 	//when we want to finish action
 	public void StopAction() {
+		Debug.Log("stopping action of: "+gameObject.name);
+		
 		//remove listeners
 		if(mListeners.Count > 0) {
 			//call exit for each
@@ -57,7 +62,7 @@ public class ActionTarget : MonoBehaviour {
 					listeners[i].defaultTarget = null;
 				}
 				else if(listeners[i].currentTarget == this) {
-					listeners[i].currentTarget = null;
+					listeners[i].StopAction(Priority.Highest, true);
 				}
 			}
 			
@@ -67,11 +72,15 @@ public class ActionTarget : MonoBehaviour {
 	
 	//called by ActionListener during OnTriggerEnter if we are valide
 	public void AddListener(ActionListener listener) {
+		Debug.Log("listener added: "+listener.gameObject.name);
+		
 		mListeners.Add(listener);
 	}
 	
 	//called by ActionListener when we stop action
 	public void RemoveListener(ActionListener listener) {
+		Debug.Log("listener removed: "+listener.gameObject.name);
+		
 		mListeners.Remove(listener);
 	}
 	

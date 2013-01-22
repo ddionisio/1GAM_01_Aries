@@ -5,7 +5,7 @@ public class UnitEntity : EntityBase {
 	public UnitAttackType attackType;
 	
 	public float unSummonDelay = 0.5f;
-	
+			
 	private UnitStat mStats;
 	private FlockUnit mFlockUnit;
 	private ActionListener mListener;

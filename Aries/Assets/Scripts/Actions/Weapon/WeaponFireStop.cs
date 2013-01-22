@@ -11,8 +11,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				mComp.RepeatStop();
+			Weapon w = mComp;
+			if(w != null) {
+				w.RepeatStop();
 			}
 			
 			Finish();

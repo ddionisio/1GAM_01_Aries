@@ -32,12 +32,10 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				DoStop();
-				
-				if(!everyFrame) {
-					Finish();
-				}
+			DoStop();
+			
+			if(!everyFrame) {
+				Finish();
 			}
 		}
 		
@@ -46,15 +44,26 @@ namespace Game.Actions {
 		}
 		
 		void DoStop() {
-			if(mComp.StopAction(priority, resumeDefault)) {
+			ActionListener l = mComp;
+			if(l != null && l.StopAction(priority, resumeDefault)) {
 				//check if we reverted to default, if there's no default, then call success
 				//going back to default guarantees our FSM state will change via EntityActionEnter
-				if(resumeDefault || mComp.currentTarget == null || mComp.currentTarget != mComp.defaultTarget)
+				if(resumeDefault || l.currentTarget == null || l.currentTarget != l.defaultTarget) {
 					Fsm.Event(stopSucceed);
+				}
 			}
 			else {
 				Fsm.Event(stopFailed);
 			}
+		}
+		
+		public override string ErrorCheck()
+		{
+			if (everyFrame &&
+				FsmEvent.IsNullOrEmpty(stopSucceed) &&
+				FsmEvent.IsNullOrEmpty(stopFailed))
+				return "Action sends no events!";
+			return "";
 		}
 	}
 }

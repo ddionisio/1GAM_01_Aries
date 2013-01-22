@@ -20,7 +20,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			toGameObject.Value = mComp.currentTarget != null ? mComp.currentTarget.gameObject : null;
+			ActionListener l = mComp;
+			toGameObject.Value = l != null && l.currentTarget != null ? l.currentTarget.gameObject : null;
 			
 			Finish();
 		}

@@ -216,15 +216,16 @@ public class FlockUnit : MotionBase {
 						Vector2 _dir = dest - pos;
 						mMoveTargetDist = _dir.magnitude;
 						
-						//catch up?
-						float factor = catchUpEnabled 
-							&& (!groupMoveEnabled || sensor == null || sensor.units.Count == 0) 
-							&& mMoveTargetDist > catchUpMinDistance ? 
-								catchUpFactor : moveToFactor;
-						
-						sumForce = groupMoveEnabled ? ComputeMovement() : ComputeSeparate();
+						int numFollow = 0;
+						sumForce = groupMoveEnabled ? ComputeMovement(out numFollow) : ComputeSeparate();
 						
 						if(mMoveTargetDist > 0) {
+							//catch up?
+							float factor = catchUpEnabled 
+								&& (sensor == null || numFollow == 0) 
+								&& mMoveTargetDist > catchUpMinDistance ? 
+									catchUpFactor : moveToFactor;
+							
 							//determine direction if distance is too close
 							_dir /= mMoveTargetDist < minMoveTargetDistance ? -mMoveTargetDist : mMoveTargetDist;
 							
@@ -373,7 +374,7 @@ public class FlockUnit : MotionBase {
 						numAvoid++;
 					}
 				}
-				else {
+				else if(mFilter.type == unit.type) {
 					//separate	
 					if(dist < separateDistance) {
 						dPos /= dist;
@@ -411,8 +412,10 @@ public class FlockUnit : MotionBase {
 		return forceRet;
 	}
 	
-	private Vector2 ComputeMovement() {
+	private Vector2 ComputeMovement(out int numFollow) {
 		Vector2 forceRet = Vector2.zero;
+		
+		numFollow = 0;
 		
 		if(sensor != null && sensor.units.Count > 0) {
 			Vector2 separate = Vector2.zero;
@@ -425,7 +428,6 @@ public class FlockUnit : MotionBase {
 			Vector2 dPos;
 			float dist;
 			
-			int numFollow = 0;
 			int numSeparate = 0;
 			int numAvoid = 0;
 			

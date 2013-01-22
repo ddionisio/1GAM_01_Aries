@@ -22,10 +22,11 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null) {
-				mComp.catchUpEnabled = catchUp.Value;
-				mComp.groupMoveEnabled = groupMove.Value;
-				mComp.wanderEnabled = wander.Value;
+			FlockUnit f = mComp;
+			if(f != null) {
+				f.catchUpEnabled = catchUp.Value;
+				f.groupMoveEnabled = groupMove.Value;
+				f.wanderEnabled = wander.Value;
 			}
 			
 			Finish();

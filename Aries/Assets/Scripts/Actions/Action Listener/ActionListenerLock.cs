@@ -19,8 +19,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			if(mComp != null)
-				mComp.lockAction = val.Value;
+			ActionListener l = mComp;
+			if(l != null)
+				l.lockAction = val.Value;
 			
 			Finish();
 		}
