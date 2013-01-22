@@ -186,6 +186,7 @@ public class UnitEntity : EntityBase {
 		
 		if(mActTarget != null) {
 			mActTarget.StopAction();
+			mActTarget.indicatorOn = false;
 		}
 		
 		FlockUnitRelease();

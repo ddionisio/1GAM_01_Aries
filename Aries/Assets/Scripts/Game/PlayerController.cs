@@ -96,11 +96,6 @@ public class PlayerController : MotionBase {
 		mWeaponParam.source = transform;
 		
 		mPlayer = GetComponentInChildren<Player>();
-		
-		mCursor = GameObject.FindObjectOfType(typeof(PlayerCursor)) as PlayerCursor;
-		if(mCursor != null) {
-			mCursor.origin = transform;
-		}
 	}
 	
 	// Use this for initialization
@@ -118,6 +113,11 @@ public class PlayerController : MotionBase {
 		if(playerGroup != null) {
 			playerGroup.addCallback += OnGroupUnitAdd;
 			playerGroup.removeCallback += OnGroupUnitRemove;
+		}
+		
+		mCursor = PlayerCursor.GetByType(mPlayer.stats.flockGroup);
+		if(mCursor != null) {
+			mCursor.origin = transform;
 		}
 	}
 	

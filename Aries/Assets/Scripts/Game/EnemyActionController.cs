@@ -61,7 +61,7 @@ public class EnemyActionController : FlockActionController {
 		
 		if(nearestTarget != null) {
 			//stop high priority target if ignorePriority == true
-			if(currentTarget.priority > nearestTarget.priority && ignorePriority) {
+			if(ignorePriority) {
 				StopAction(ActionTarget.Priority.Highest, false);
 			}
 			

@@ -43,7 +43,7 @@ public class FlockActionController : ActionListener {
 			break;
 			
 		case ActionType.Attack:
-			flockUnit.moveTarget = currentTarget.target;
+			flockUnit.moveTarget = currentTarget.transform;
 			flockUnit.minMoveTargetDistance = attackMinRange;
 			break;
 			

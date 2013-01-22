@@ -7,23 +7,28 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	public float radius;
 	
 	public float delay = 0.1f;
-
-	public HashSet<T> units = new HashSet<T>();
-	
+		
+	private HashSet<T> mUnits = new HashSet<T>();
 	private HashSet<T> mGatherUnits = new HashSet<T>();
+	
+	public HashSet<T> units {
+		get { CleanUp(); return mUnits; }
+	}
 	
 	protected abstract bool UnitVerify(T unit);
 	protected abstract void UnitAdded(T unit);
 	protected abstract void UnitRemoved(T unit);
-	
+			
 	/// <summary>
 	/// Grabs one unit in the set
 	/// </summary>
 	public T GetSingleUnit() {
+		CleanUp();
+		
 		T ret = null;
 		
-		if(units.Count > 0) {
-			HashSet<T>.Enumerator e = units.GetEnumerator();
+		if(mUnits.Count > 0) {
+			HashSet<T>.Enumerator e = mUnits.GetEnumerator();
 			if(e.MoveNext()) {
 				ret = e.Current;
 			}
@@ -41,6 +46,8 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	}
 	
 	void Check() {
+		CleanUp();
+		
 		//get units in area
 		mGatherUnits.Clear();
 		
@@ -51,25 +58,29 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 				mGatherUnits.Add(unit);
 				
 				//check if not in current units
-				if(!units.Contains(unit)) {
+				if(!mUnits.Contains(unit)) {
 					//enter
 					UnitAdded(unit);
 				}
 				else {
-					units.Remove(unit);
+					mUnits.Remove(unit);
 				}
 			}
 		}
 		
 		//what remains should be removed
-		foreach(T other in units) {
+		foreach(T other in mUnits) {
 			UnitRemoved(other);
 		}
 		
 		//swap
-		HashSet<T> prevSet = units;
-		units = mGatherUnits;
+		HashSet<T> prevSet = mUnits;
+		mUnits = mGatherUnits;
 		mGatherUnits = prevSet;
+	}
+	
+	void CleanUp() {
+		mUnits.RemoveWhere(delegate(T unit) {return unit == null;});
 	}
 	
 	void OnDrawGizmosSelected() {

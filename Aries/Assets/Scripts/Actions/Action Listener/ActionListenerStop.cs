@@ -9,10 +9,10 @@ namespace Game.Actions {
 		public bool resumeDefault = true;
 		
 		[Tooltip("If we are able to stop the action, then go to this state")]
-		public FsmEvent stopSucceed = FsmEvent.Finished;
+		public FsmEvent stopSucceed;
 		
 		[Tooltip("If we fail to stop the action, then go to this state. Usually this is when our priority is lower.")]
-		public FsmEvent stopFailed = FsmEvent.Finished;
+		public FsmEvent stopFailed;
 		
 		public bool everyFrame = false;
 		
@@ -47,7 +47,10 @@ namespace Game.Actions {
 		
 		void DoStop() {
 			if(mComp.StopAction(priority, resumeDefault)) {
-				Fsm.Event(stopSucceed);
+				//check if we reverted to default, if there's no default, then call success
+				//going back to default guarantees our FSM state will change via EntityActionEnter
+				if(resumeDefault || mComp.currentTarget == null || mComp.currentTarget != mComp.defaultTarget)
+					Fsm.Event(stopSucceed);
 			}
 			else {
 				Fsm.Event(stopFailed);
