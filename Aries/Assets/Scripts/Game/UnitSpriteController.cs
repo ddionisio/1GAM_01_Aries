@@ -109,9 +109,13 @@ public class UnitSpriteController : MonoBehaviour {
 		return mAnim[(int)checkState] != null;
 	}
 	
-	void OnDestroy() {
+	public void ClearCallbacks() {
 		stateFinishCallback = null;
 		stateEventCallback = null;
+	}
+	
+	void OnDestroy() {
+		ClearCallbacks();
 		
 		sprite.animationCompleteDelegate -= OnSpriteAnimComplete;
 		sprite.animationEventDelegate -= OnSpriteAnimFrameEvent;

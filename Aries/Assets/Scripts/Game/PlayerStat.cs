@@ -22,8 +22,11 @@ public class PlayerStat : StatBase {
 				
 				if(resource != value) {
 					Main.instance.userData.resources = value;
+					if(Main.instance.userData.resources < 0)
+						Main.instance.userData.resources = 0;
 					
-					StatChanged(true);
+					if(Main.instance.userData.resources != resource)
+						StatChanged(true);
 				}
 			}
 		}

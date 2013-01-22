@@ -85,8 +85,7 @@ public class Player : EntityBase {
 	protected override void SpawnStart () {
 		state = EntityState.normal;
 		
-		if(mControl != null && mControl.recallSprite != null)
-			mControl.recallSprite.SetActive(false);
+		mControl.SpawnStart();
 	}
 	
 	void LateUpdate () {

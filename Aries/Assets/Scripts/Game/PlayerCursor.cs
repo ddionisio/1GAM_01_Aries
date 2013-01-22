@@ -6,12 +6,10 @@ public class PlayerCursor : MonoBehaviour {
 	public FlockType type = FlockType.PlayerOneUnits;
 	
 	public tk2dBaseSprite cursorSprite;
-	public GameObject attackSprite;
 	public GameObject contextSprite;
 	
-	public Color neutralColor;
-	public Color attackColor;
 	public Color contextColor;
+	public Color neutralColor;
 	
 	public float radius;
 	
@@ -19,7 +17,6 @@ public class PlayerCursor : MonoBehaviour {
 	
 	public LayerMask checkMask;
 	
-	public ActionSensor attackSensor; //for all hostile enemies
 	public ActionSensor contextSensor; //anything non-combat related (or sub target for bosses)
 			
 	private static Dictionary<FlockType, PlayerCursor> mCursors = new Dictionary<FlockType, PlayerCursor>();
@@ -50,6 +47,28 @@ public class PlayerCursor : MonoBehaviour {
 		return Physics.CheckSphere(transform.position, radius, layerMask);
 	}
 	
+	public void RevertToNeutral() {
+		contextSprite.SetActive(false);
+		cursorSprite.color = neutralColor;
+	}
+	
+	//call this in controller if no attack or other crap
+	public void UpdateIndicator(bool updateColor) {
+		//determine colors based on contents of attack and context
+		if(contextSensor.units.Count > 0) {
+			contextSprite.SetActive(true);
+			
+			if(updateColor)
+				cursorSprite.color = contextColor;
+		}
+		else {
+			contextSprite.SetActive(false);
+			
+			if(updateColor)
+				cursorSprite.color = neutralColor;
+		}
+	}
+	
 	void OnDestroy() {
 		mCursors.Remove(type);
 	}
@@ -57,7 +76,6 @@ public class PlayerCursor : MonoBehaviour {
 	void Awake() {
 		mCursors.Add(type, this);
 		
-		attackSprite.SetActive(false);
 		contextSprite.SetActive(false);
 	}
 	
@@ -80,20 +98,6 @@ public class PlayerCursor : MonoBehaviour {
 				transform.position = start + delta;
 			}
 		}
-		
-		//determine colors based on contents of attack and context
-		int numAttack = attackSensor.units.Count;
-		int numContext = contextSensor.units.Count;
-		
-		attackSprite.SetActive(numAttack > 0);
-		contextSprite.SetActive(numContext > 0);
-		
-		if(numAttack > 0)
-			cursorSprite.color = attackColor;
-		else if(numContext > 0)
-			cursorSprite.color = contextColor;
-		else
-			cursorSprite.color = neutralColor;
 	}
 		
 	void OnDrawGizmosSelected() {

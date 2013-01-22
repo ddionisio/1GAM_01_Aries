@@ -39,13 +39,15 @@ public class StatBase : MonoBehaviour {
 		
 		set {
 			if(mCurHP != value) {
+				float prev = mCurHP;
 				mCurHP = value;
 				
 				if(mCurHP < 0) {
 					mCurHP = 0;
 				}
 				
-				StatChanged(true);
+				if(mCurHP != prev)
+					StatChanged(true);
 			}
 		}
 	}
@@ -67,15 +69,15 @@ public class StatBase : MonoBehaviour {
 		}
 	}
 	
-	protected void StatChanged(bool showHUD) {
-		if(statChangeCallback != null) {
+	protected void StatChanged(bool doUpdate) {
+		if(doUpdate && statChangeCallback != null) {
 			statChangeCallback(this);
 		}
 		
 		if(hud != null) {
 			hud.StatsRefresh(this);
 			
-			if(showHUD)
+			if(doUpdate)
 				hud.show = true;
 		}
 	}

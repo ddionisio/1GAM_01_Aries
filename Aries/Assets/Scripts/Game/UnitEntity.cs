@@ -49,11 +49,6 @@ public class UnitEntity : EntityBase {
 			mWeaponParam.source = transform;
 		}
 		
-		if(mSpriteControl != null) {
-			mSpriteControl.stateFinishCallback += OnSpriteAnimationComplete;
-			mSpriteControl.stateEventCallback += OnSpriteAnimationEvent;
-		}
-		
 		if(mListener != null) {
 			mListener.enterCallback += OnActionEnter;
 			mListener.exitCallback += OnActionExit;
@@ -81,6 +76,11 @@ public class UnitEntity : EntityBase {
 		
 		if(mListener != null) {
 			mListener.SetActive(true);
+		}
+		
+		if(mSpriteControl != null) {
+			mSpriteControl.stateFinishCallback += OnSpriteAnimationComplete;
+			mSpriteControl.stateEventCallback += OnSpriteAnimationEvent;
 		}
 	}
 	
@@ -114,11 +114,6 @@ public class UnitEntity : EntityBase {
 		
 		if(mStats != null) {
 			mStats.statChangeCallback -= OnStatChange;
-		}
-		
-		if(mSpriteControl != null) {
-			mSpriteControl.stateFinishCallback -= OnSpriteAnimationComplete;
-			mSpriteControl.stateEventCallback -= OnSpriteAnimationEvent;
 		}
 		
 		base.OnDestroy();
@@ -157,17 +152,10 @@ public class UnitEntity : EntityBase {
 	}
 	
 	protected virtual void OnSpriteAnimationComplete(UnitSpriteState animState, UnitSpriteController.Dir animDir) {
-		if(FSM != null) {
-			FSM.SendEvent(EntityEvent.SpriteAnimComplete);
-		}
 	}
 	
 	protected virtual void OnSpriteAnimationEvent(UnitSpriteState animState, UnitSpriteController.Dir animDir, UnitSpriteController.EventData animDat) {
 		mLastSpriteEventData = animDat;
-		
-		if(FSM != null) {
-			FSM.SendEvent(EntityEvent.SpriteAnimEvent);
-		}
 	}
 	
 	void OnStatChange(StatBase stat) {
@@ -187,6 +175,10 @@ public class UnitEntity : EntityBase {
 		if(mActTarget != null) {
 			mActTarget.StopAction();
 			mActTarget.indicatorOn = false;
+		}
+		
+		if(mSpriteControl != null) {
+			mSpriteControl.ClearCallbacks();
 		}
 		
 		FlockUnitRelease();

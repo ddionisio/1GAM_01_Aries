@@ -8,23 +8,12 @@ namespace Game.Actions {
 		public ActionTarget.Priority priority = ActionTarget.Priority.Highest;
 		public bool resumeDefault = true;
 		
-		[Tooltip("If we are able to stop the action, then go to this state")]
-		public FsmEvent stopSucceed;
-		
-		[Tooltip("If we fail to stop the action, then go to this state. Usually this is when our priority is lower.")]
-		public FsmEvent stopFailed;
-		
-		public bool everyFrame = false;
-		
 		public override void Reset ()
 		{
 			base.Reset();
 			
 			priority = ActionTarget.Priority.Highest;
 			resumeDefault = true;
-			everyFrame = false;
-			stopSucceed = FsmEvent.Finished;
-			stopFailed = FsmEvent.Finished;
 		}
 		
 		// Code that runs on entering the state.
@@ -33,37 +22,13 @@ namespace Game.Actions {
 			base.OnEnter();
 			
 			DoStop();
-			
-			if(!everyFrame) {
-				Finish();
-			}
-		}
-		
-		public override void OnLateUpdate() {
-			DoStop();
+			Finish();
 		}
 		
 		void DoStop() {
 			ActionListener l = mComp;
-			if(l != null && l.StopAction(priority, resumeDefault)) {
-				//check if we reverted to default, if there's no default, then call success
-				//going back to default guarantees our FSM state will change via EntityActionEnter
-				if(resumeDefault || l.currentTarget == null || l.currentTarget != l.defaultTarget) {
-					Fsm.Event(stopSucceed);
-				}
-			}
-			else {
-				Fsm.Event(stopFailed);
-			}
-		}
-		
-		public override string ErrorCheck()
-		{
-			if (everyFrame &&
-				FsmEvent.IsNullOrEmpty(stopSucceed) &&
-				FsmEvent.IsNullOrEmpty(stopFailed))
-				return "Action sends no events!";
-			return "";
+			if(l != null)
+				l.StopAction(priority, resumeDefault);
 		}
 	}
 }

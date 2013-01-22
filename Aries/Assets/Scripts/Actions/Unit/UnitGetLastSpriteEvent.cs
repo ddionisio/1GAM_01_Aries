@@ -30,10 +30,9 @@ namespace Game.Actions {
 			
 			UnitEntity u = mComp;
 			if(u != null) {
-				if(storeInt != null)
-					storeInt.Value = u.lastSpriteEventData.valI;
-					storeString.Value = u.lastSpriteEventData.valS;
-					storeFloat.Value = u.lastSpriteEventData.valF;
+				storeInt.Value = u.lastSpriteEventData.valI;
+				storeString.Value = u.lastSpriteEventData.valS;
+				storeFloat.Value = u.lastSpriteEventData.valF;
 			}
 			
 			Finish();

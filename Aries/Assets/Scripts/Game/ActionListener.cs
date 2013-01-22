@@ -121,6 +121,10 @@ public class ActionListener : MonoBehaviour {
 	//true if stopped or there was no action target
 	public bool StopAction(ActionTarget.Priority priority, bool resumeDefault) {
 		if(mCurActionTarget == null) {
+			if(resumeDefault && mDefaultActionTarget != null) {
+				ApplyToCurTarget(mDefaultActionTarget);
+			}
+			
 			return true;
 		}
 		else if(mCurActionTarget == mDefaultActionTarget || mCurActionTarget.priority <= priority) {

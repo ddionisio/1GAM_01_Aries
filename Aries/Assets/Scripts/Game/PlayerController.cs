@@ -14,6 +14,10 @@ public class PlayerController : MotionBase {
 	public LayerMask summonLayerCheck;
 	
 	public GameObject recallSprite;
+	
+	public GameObject attackSprite;
+	public Color attackColor;
+	public ActionSensor attackSensor; //for all hostile enemies
 			
 	private enum ActMode {
 		Normal,
@@ -71,6 +75,15 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
+	public void SpawnStart() {
+		recallSprite.SetActive(false);
+		attackSprite.SetActive(false);
+		
+		if(mCursor != null) {
+			mCursor.RevertToNeutral();
+		}
+	}
+	
 	void OnDestroy() {
 		if(Main.instance != null) {
 			Main.instance.input.RemoveButtonCall(InputAction.Act, InputAct);
@@ -103,8 +116,7 @@ public class PlayerController : MotionBase {
 		
 		mPlayer = GetComponentInChildren<Player>();
 		
-		if(recallSprite != null)
-			recallSprite.SetActive(false);
+		SpawnStart();
 	}
 	
 	// Use this for initialization
@@ -144,6 +156,15 @@ public class PlayerController : MotionBase {
 	void Update() {
 		switch(mCurActMode) {
 		case ActMode.Normal:
+			if(attackSensor.units.Count > 0) {
+				attackSprite.SetActive(true);
+				cursor.cursorSprite.color = attackColor;
+				cursor.UpdateIndicator(false);
+			}
+			else {
+				attackSprite.SetActive(false);
+				cursor.UpdateIndicator(true);
+			}
 			break;
 			
 		case ActMode.Summon:
@@ -183,7 +204,7 @@ public class PlayerController : MotionBase {
 			Debug.Log("act");
 			
 			HashSet<ActionTarget> contexts = cursor.contextSensor.units;
-			HashSet<ActionTarget> attacks = cursor.attackSensor.units;
+			HashSet<ActionTarget> attacks = attackSensor.units;
 			
 			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 			
@@ -388,15 +409,26 @@ public class PlayerController : MotionBase {
 	//for both summon/unsummon
 	private void ApplySummon(ActMode toMode) {
 		if(mCurActMode != toMode) {
-			//revert currently selected unsummon
-			if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
-				if(mCurActMode == ActMode.UnSummon) {
-					mCurSummonUnit.FSM.SendEvent(EntityEvent.Resume);
-				}
+			//revert previous
+			switch(mCurActMode) {
+			case ActMode.Normal:
+				attackSprite.SetActive(false);
+				mCursor.RevertToNeutral();
+				break;
 				
+			case ActMode.Summon:
 				mCurSummonUnit = null;
+				break;
+				
+			case ActMode.UnSummon:
+				//revert currently selected unsummon
+				if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
+					mCurSummonUnit.FSM.SendEvent(EntityEvent.Resume);
+					mCurSummonUnit = null;
+				}
+				break;
 			}
-									
+			
 			mCurActMode = toMode;
 			
 			switch(mCurActMode) {
