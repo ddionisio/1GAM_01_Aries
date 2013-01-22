@@ -3,7 +3,7 @@ using HutongGames.PlayMaker;
 
 namespace Game.Actions {
 	[ActionCategory("Game")]
-	[Tooltip("Get listener's target to see if it is available.")]
+	[Tooltip("Get listener's target and store its game object.")]
 	public class ActionListenerGetTarget : FSMActionComponentBase<ActionListener> {
 		[Tooltip("The game object the target belongs to.")]
 		[UIHint(UIHint.FsmGameObject)]

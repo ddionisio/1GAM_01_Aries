@@ -1,10 +1,11 @@
+using UnityEngine;
+using System.Collections;
 using HutongGames.PlayMaker;
 
 namespace Game.Actions {
 	[ActionCategory("Game")]
-	[Tooltip("Stops the action, this will clear out any listeners currently set on the target")]
-	public class ActionTargetCheckType : FSMActionComponentBase<ActionTarget> {
-		
+	[Tooltip("Check the action type of the action listener.")]
+	public class ActionListenerCheckType : FSMActionComponentBase<ActionListener> {
 		public ActionType type;
 		
 		public FsmEvent isTrue;

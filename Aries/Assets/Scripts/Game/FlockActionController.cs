@@ -20,7 +20,7 @@ public class FlockActionController : ActionListener {
 	// Use this to determine if we can attack in range
 	public override bool CheckRange() {
 		if(currentTarget != null) {
-			switch(currentTarget.type) {
+			switch(type) {
 			case ActionType.Attack:
 				return flockUnit.enabled 
 					&& flockUnit.moveTargetDistance >= attackMinRange
@@ -38,7 +38,7 @@ public class FlockActionController : ActionListener {
 	protected override void OnActionEnter() {
 		mTargetMotion = currentTarget.GetComponent<MotionBase>();
 		
-		switch(currentTarget.type) {
+		switch(type) {
 		case ActionType.Disperse:
 			break;
 			
@@ -50,7 +50,7 @@ public class FlockActionController : ActionListener {
 		case ActionType.Follow:
 			flockUnit.moveTarget = currentTarget.target;
 			
-			StartCoroutine(FollowStop());
+			StartCoroutine("FollowStop");
 			break;
 			
 		default:
@@ -69,10 +69,10 @@ public class FlockActionController : ActionListener {
 		
 		mTargetMotion = null;
 		
-		StopAllCoroutines();
+		StopCoroutine("FollowStop");
 	}
 	
-	void Awake() {
+	protected virtual void Awake() {
 		mAttackCosTheta = Mathf.Cos(attackAngle*Mathf.Deg2Rad);
 	}
 	
@@ -80,7 +80,7 @@ public class FlockActionController : ActionListener {
 		while(currentTarget != null && mTargetMotion != null) {
 			yield return new WaitForSeconds(followStopDelay);
 			
-			switch(currentTarget.type) {
+			switch(type) {
 			case ActionType.Follow:
 				if(mTargetMotion.curSpeed < followStopSpeed) {
 					if(flockUnit.moveTarget != null && flockUnit.moveTargetDistance <= followStopRadius)

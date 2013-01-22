@@ -16,8 +16,6 @@ public class ActionTarget : MonoBehaviour {
 	public Priority priority = Priority.Normal;
 	public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 	
-	public bool stopOnExit = false;
-			
 	private HashSet<ActionListener> mListeners = new HashSet<ActionListener>();
 	
 	[SerializeField] GameObject indicator; //starts as turned off

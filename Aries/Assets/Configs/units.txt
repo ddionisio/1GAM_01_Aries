@@ -14,5 +14,14 @@
 	{
 		"label":"hexer",
 		"resource":20
+	},
+	
+	{
+		"label":"enemy melee",
+		"resource":5
+	},
+	{
+		"label":"enemy range",
+		"resource":10
 	}
 ]

@@ -10,6 +10,8 @@ public class ActionListener : MonoBehaviour {
 	//for false: if you want to assign target manually
 	public bool triggerCheckEnable = false;
 	
+	public bool stopOnExit = false;
+	
 	public event Callback enterCallback;
 	public event Callback exitCallback;
 	public event CollisionCallback hitEnterCallback;
@@ -99,6 +101,22 @@ public class ActionListener : MonoBehaviour {
 			}
 		}
 	}
+	
+	//get the action type, default: target's type
+	public virtual ActionType type {
+		get { return mCurActionTarget != null ? mCurActionTarget.type : ActionType.NumType; }
+		set { }
+	}
+	
+	//call this for spawning/release and activator wake-up/sleep
+	public virtual void SetActive(bool activate) {
+		if(activate) {
+		}
+		else {
+			lockAction = false;
+			currentTarget = null;
+		}
+	}
 			
 	//true if stopped or there was no action target
 	public bool StopAction(ActionTarget.Priority priority, bool resumeDefault) {
@@ -146,7 +164,7 @@ public class ActionListener : MonoBehaviour {
 	protected virtual void OnActionFinish() {
 	}
 	
-	void OnDestroy() {
+	protected virtual void OnDestroy() {
 		defaultTarget = null;
 		currentTarget = null;
 		
@@ -168,7 +186,7 @@ public class ActionListener : MonoBehaviour {
 	
 	void OnTriggerExit(Collider other) {
 		if(triggerCheckEnable && other == mCurActionCollider) {
-			if(mCurActionTarget.stopOnExit) {
+			if(stopOnExit) {
 				StopAction(ActionTarget.Priority.Highest, true);
 			}
 			else {

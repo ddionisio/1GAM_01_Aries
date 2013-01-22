@@ -78,15 +78,18 @@ public class UnitEntity : EntityBase {
 	
 	public override void SpawnFinish() {
 		FlockUnitInit();
+		
+		if(mListener != null) {
+			mListener.SetActive(true);
+		}
 	}
 	
 	protected override void ActivatorWakeUp() {
 		if(!doSpawnOnWake) {
-			FlockUnitInit();
+			SpawnFinish();
 		}
 		
 		base.ActivatorWakeUp();
-		//FlockUnitInit();
 	}
 	
 	protected override void ActivatorSleep() {
@@ -178,8 +181,7 @@ public class UnitEntity : EntityBase {
 		}
 		
 		if(mListener != null) {
-			mListener.lockAction = false;
-			mListener.currentTarget = null;
+			mListener.SetActive(false);
 		}
 		
 		if(mActTarget != null) {

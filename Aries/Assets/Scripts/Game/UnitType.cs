@@ -5,5 +5,8 @@ public enum UnitType {
 	sheepCarrier,
 	sheepHexer,
 	
+	enemyMelee,
+	enemyRange,
+	
 	NumTypes
 }
