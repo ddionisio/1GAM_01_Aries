@@ -1,19 +1,38 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(Collider))]
 public abstract class SensorSingle<T> : MonoBehaviour where T : Component {
 	public delegate void Callback(T unit);
 	
 	public event Callback enterCallback;
+	public event Callback stayCallback;
 	public event Callback exitCallback;
 	
 	protected abstract bool UnitVerify(T unit);
+	
+	void OnEnable() {
+		collider.enabled = true;
+	}
+	
+	void OnDisable() {
+		collider.enabled = false;
+	}
 	
 	void OnTriggerEnter(Collider other) {
 		if(enterCallback != null) {
 			T unit = other.GetComponent<T>();
 			if(unit != null && UnitVerify(unit)) {
 				enterCallback(unit);
+			}
+		}
+	}
+	
+	void OnTriggerStay(Collider other) {
+		if(stayCallback != null) {
+			T unit = other.GetComponent<T>();
+			if(unit != null && UnitVerify(unit)) {
+				stayCallback(unit);
 			}
 		}
 	}
@@ -29,6 +48,7 @@ public abstract class SensorSingle<T> : MonoBehaviour where T : Component {
 	
 	void OnDestroy() {
 		enterCallback = null;
+		stayCallback = null;
 		exitCallback = null;
 	}
 }

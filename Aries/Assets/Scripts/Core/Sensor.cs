@@ -13,6 +13,14 @@ public abstract class Sensor<T> : MonoBehaviour where T : Component {
 			return mUnits;
 		}
 	}
+	
+	void OnEnable() {
+		collider.enabled = true;
+	}
+	
+	void OnDisable() {
+		collider.enabled = false;
+	}
 			
 	void OnTriggerEnter(Collider other) {
 		CleanUp();

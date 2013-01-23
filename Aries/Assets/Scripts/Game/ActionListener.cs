@@ -43,13 +43,6 @@ public class ActionListener : MonoBehaviour {
 		}
 	}
 	
-	public ActionType currentActType {
-		get {
-			return mCurActionTarget != null ? mCurActionTarget.type : 
-				   mDefaultActionTarget != null ? mDefaultActionTarget.type : ActionType.NumType;
-		}
-	}
-	
 	public Collider currentTargetCollider {
 		get { return mCurActionCollider; }
 	}
@@ -106,7 +99,8 @@ public class ActionListener : MonoBehaviour {
 	
 	//get the action type, default: target's type
 	public virtual ActionType type {
-		get { return mCurActionTarget != null ? mCurActionTarget.type : ActionType.NumType; }
+		get { return mCurActionTarget != null ? mCurActionTarget.type : 
+				   mDefaultActionTarget != null ? mDefaultActionTarget.type : ActionType.NumType; }
 		set { }
 	}
 	

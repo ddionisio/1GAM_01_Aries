@@ -86,6 +86,11 @@ public class FlockActionController : ActionListener {
 			flockUnit.minMoveTargetDistance = attackMinRange;
 			
 			StartCoroutine("ReturnToLeader");
+			
+			//no need to constantly check
+			if(attackSensor != null) {
+				attackSensor.enabled = false;
+			}
 			break;
 			
 		case ActionType.Retreat:
@@ -111,6 +116,10 @@ public class FlockActionController : ActionListener {
 		
 		mTargetMotion = null;
 		
+		if(attackSensor != null) { //renabled after attack
+			attackSensor.enabled = true;
+		}
+		
 		StopCoroutine("FollowStop");
 		StopCoroutine("ReturnToLeader");
 	}
@@ -118,8 +127,7 @@ public class FlockActionController : ActionListener {
 	protected override void OnDestroy ()
 	{
 		if(attackSensor != null) {
-			attackSensor.enterCallback -= AutoAttackEnter;
-			attackSensor.exitCallback -= AutoAttackExit;
+			attackSensor.stayCallback -= AutoAttackStay;
 		}
 		
 		base.OnDestroy ();
@@ -131,21 +139,17 @@ public class FlockActionController : ActionListener {
 		ResetAutoAttack();
 		
 		if(attackSensor != null) {
-			attackSensor.enterCallback += AutoAttackEnter;
-			attackSensor.exitCallback += AutoAttackExit;
+			attackSensor.stayCallback += AutoAttackStay;
 		}
 	}
 	
-	protected virtual void AutoAttackEnter(UnitEntity unit) {
-		ActionTarget target = unit.actionTarget;
-		if(!(currentActType == ActionType.Attack || currentActType == ActionType.Retreat)
-			&& target != null 
-			&& target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
-			currentTarget = target;
+	protected virtual void AutoAttackStay(UnitEntity unit) {
+		if(!(type == ActionType.Attack || type == ActionType.Retreat)) {
+			ActionTarget target = unit.actionTarget;
+			if(target != null && target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
+				currentTarget = target;
+			}
 		}
-	}
-	
-	protected virtual void AutoAttackExit(UnitEntity unit) {
 	}
 	
 	IEnumerator ReturnToLeader() {
@@ -200,8 +204,10 @@ public class FlockActionController : ActionListener {
 	}
 	
 	void ResetAutoAttack() {
-		if(attackSensor != null)
+		if(attackSensor != null) {
 			attackSensor.gameObject.SetActive(attackStartEnable);
+			attackSensor.enabled = true;
+		}
 	}
 			
 	void OnDrawGizmosSelected() {

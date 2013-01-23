@@ -23,7 +23,7 @@ public class StatBase : MonoBehaviour {
 	/// Determines whether this instance can damage the specified target.
 	/// </summary>
 	public bool CanDamage(StatBase target) {
-		return !invulnerable && (target.immuneFlags & damageType) == (UnitDamageType)0;
+		return target == null || target.invulnerable || (target.immuneFlags & damageType) == (UnitDamageType)0;
 	}
 		
 	public virtual float damage {
