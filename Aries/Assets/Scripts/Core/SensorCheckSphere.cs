@@ -2,6 +2,10 @@ using UnityEngine;
 using System.Collections.Generic;
 
 public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
+	public delegate void OnUnitChange();
+	
+	public event OnUnitChange unitAddRemoveCallback;
+	
 	public LayerMask mask;
 	
 	public float radius;
@@ -46,6 +50,8 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	}
 	
 	void Check() {
+		int prevCount = mUnits.Count;
+		
 		CleanUp();
 		
 		//get units in area
@@ -68,15 +74,18 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 			}
 		}
 		
-		//what remains should be removed
-		foreach(T other in mUnits) {
-			UnitRemoved(other);
-		}
-		
 		//swap
 		HashSet<T> prevSet = mUnits;
 		mUnits = mGatherUnits;
 		mGatherUnits = prevSet;
+		
+		//what remains should be removed
+		foreach(T other in prevSet) {
+			UnitRemoved(other);
+		}
+		
+		if(unitAddRemoveCallback != null && prevCount != mUnits.Count)
+			unitAddRemoveCallback();
 	}
 	
 	void CleanUp() {

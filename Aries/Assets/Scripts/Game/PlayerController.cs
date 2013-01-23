@@ -11,6 +11,7 @@ public class PlayerController : MotionBase {
 	public float recallRadius = 8.0f;
 	public LayerMask recallLayerCheck;
 	
+	public float summonRadius = 5.0f;
 	public LayerMask summonLayerCheck;
 	
 	public GameObject recallSprite;
@@ -106,6 +107,8 @@ public class PlayerController : MotionBase {
 		if(mCursor != null) {
 			mCursor.origin = null;
 		}
+		
+		attackSensor.unitAddRemoveCallback -= OnAttackSensorUnitChange;
 	}
 	
 	protected override void Awake() {
@@ -115,6 +118,8 @@ public class PlayerController : MotionBase {
 		mWeaponParam.source = transform;
 		
 		mPlayer = GetComponentInChildren<Player>();
+		
+		attackSensor.unitAddRemoveCallback += OnAttackSensorUnitChange;
 		
 		SpawnStart();
 	}
@@ -145,28 +150,12 @@ public class PlayerController : MotionBase {
 	
 	void OnApplicationFocus(bool focus) {
 		if(!focus) {
-			ApplySummon(ActMode.Normal);
-			
-			if(mWeapon != null) {
-				mWeapon.RepeatStop();
-			}
+			CancelActions();
 		}
 	}
 	
 	void Update() {
 		switch(mCurActMode) {
-		case ActMode.Normal:
-			if(attackSensor.units.Count > 0) {
-				attackSprite.SetActive(true);
-				cursor.cursorSprite.color = attackColor;
-				cursor.UpdateIndicator(false);
-			}
-			else {
-				attackSprite.SetActive(false);
-				cursor.UpdateIndicator(true);
-			}
-			break;
-			
 		case ActMode.Summon:
 		case ActMode.UnSummon:
 			if(mCurSummonInd != -1 && mCurSummonUnit == null) {
@@ -198,13 +187,57 @@ public class PlayerController : MotionBase {
 		base.FixedUpdate();
 	}
 	
+	void UpdateAttackSensorDisplay() {
+		if(attackSensor.units.Count > 0) {
+			if(!attackSprite.activeSelf) {
+				attackSprite.SetActive(true);
+				cursor.cursorSprite.color = attackColor;
+			}
+		}
+		else if(attackSprite.activeSelf) {
+			attackSprite.SetActive(false);
+			cursor.cursorSprite.color = cursor.neutralColor;
+		}
+	}
+	
+	void OnAttackSensorUnitChange() {
+		switch(mCurActMode) {
+		case ActMode.Normal:
+			UpdateAttackSensorDisplay();
+			break;
+		}
+	}
+	
+	//fill mTargetHolder and sort to nearest
+	void UpdateAttackTargetHolder() {
+		mTargetHolder.Clear();
+		
+		HashSet<ActionTarget> attacks = attackSensor.units;
+		if(attacks.Count > 0) {
+			Vector2 pos = transform.position;
+			
+			//get entities and sort to nearest
+			
+			foreach(ActionTarget attack in attacks) {
+				//only grab what can be targetted
+				//TODO: other things beyond attack?
+				if(attack.vacancy && attack.type == ActionType.Attack) {
+					Vector2 entPos = attack.transform.position;
+					attack.distSqrHolder = (entPos - pos).sqrMagnitude;
+					mTargetHolder.Add(attack);
+				}
+			}
+			
+			mTargetHolder.Sort((x, y) => (int)(x.distSqrHolder - y.distSqrHolder));
+		}
+	}
+	
 	void InputAct(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
 			//do something amazing
 			Debug.Log("act");
 			
 			HashSet<ActionTarget> contexts = cursor.contextSensor.units;
-			HashSet<ActionTarget> attacks = attackSensor.units;
 			
 			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 			
@@ -219,48 +252,31 @@ public class PlayerController : MotionBase {
 				}
 			}
 			
-			if(attacks.Count > 0) {
-				Vector2 pos = transform.position;
+			UpdateAttackTargetHolder();
+			if(mTargetHolder.Count > 0) {
+				int curTargetInd = 0;
 				
-				//get entities and sort to nearest
-				mTargetHolder.Clear();
-				foreach(ActionTarget attack in attacks) {
-					//only grab what can be targetted
-					//TODO: other things beyond attack?
-					if(attack.vacancy && attack.type == ActionType.Attack) {
-						Vector2 entPos = attack.transform.position;
-						attack.distSqrHolder = (entPos - pos).sqrMagnitude;
-						mTargetHolder.Add(attack);
-					}
-				}
+				ActionTarget target = mTargetHolder[curTargetInd];
 				
-				if(mTargetHolder.Count > 0) {
-					mTargetHolder.Sort((x, y) => (int)(x.distSqrHolder - y.distSqrHolder));
+				//go through all units
+				//TODO: check distance of unit to target?
+				foreach(UnitEntity unit in grp.GetUnits()) {
+					ActionListener listener = unit.listener;
 					
-					int curTargetInd = 0;
-					
-					ActionTarget target = mTargetHolder[curTargetInd];
-					
-					//go through all units
-					//TODO: check distance of unit to target?
-					foreach(UnitEntity unit in grp.GetUnits()) {
-						ActionListener listener = unit.listener;
-						
-						//check if unit can attack target
-						if(!listener.lockAction && listener.currentPriority <= target.priority) {
-							StatBase targetStats = target.GetComponentInChildren<StatBase>();
-							if(targetStats == null || unit.stats.CanDamage(targetStats)) {
-								unit.listener.currentTarget = target;
-								
-								//get next target once vacancy is full
-								if(!target.vacancy) {
-									curTargetInd++;
-									if(curTargetInd < mTargetHolder.Count) {
-										target = mTargetHolder[curTargetInd];
-									}
-									else { //done with setting targets
-										break;
-									}
+					//check if unit can attack target
+					if(!listener.lockAction && listener.currentPriority <= target.priority) {
+						StatBase targetStats = target.GetComponentInChildren<StatBase>();
+						if(targetStats == null || unit.stats.CanDamage(targetStats)) {
+							unit.listener.currentTarget = target;
+							
+							//get next target once vacancy is full
+							if(!target.vacancy) {
+								curTargetInd++;
+								if(curTargetInd < mTargetHolder.Count) {
+									target = mTargetHolder[curTargetInd];
+								}
+								else { //done with setting targets
+									break;
 								}
 							}
 						}
@@ -347,17 +363,39 @@ public class PlayerController : MotionBase {
 	}
 	
 	//at this point, unit is fully spawned
-	void OnGroupUnitAdd(FlockUnit unit) {
-		FlockActionController actionListen = unit.GetComponent<FlockActionController>();
-		if(actionListen != null) {
-			actionListen.defaultTarget = followAction;
-			actionListen.leader = transform;
+	void OnGroupUnitAdd(FlockUnit flockUnit) {
+		UnitEntity unit = flockUnit.GetComponent<UnitEntity>();
+		if(unit != null) {
+			FlockActionController actionListen = unit.listener as FlockActionController;
+			
+			//auto attack if there's an enemy nearby
+			if(actionListen != null) {
+				UpdateAttackTargetHolder();
+				if(mTargetHolder.Count > 0) {
+					foreach(ActionTarget target in mTargetHolder) {
+						//check if unit can attack target
+						if(!actionListen.lockAction && actionListen.currentPriority <= target.priority) {
+							//can damage? then target this
+							StatBase targetStats = target.GetComponentInChildren<StatBase>();
+							if(targetStats == null || unit.stats.CanDamage(targetStats)) {
+								actionListen.currentTarget = target;
+								break;
+							}
+						}
+					}
+				}
+				
+				actionListen.defaultTarget = followAction;
+				actionListen.leader = transform;
+			} else {
+				Debug.LogWarning("no action listener?");
+			}
 		}
 		else {
-			Debug.LogWarning("no action listener?");
+			Debug.LogWarning("no unit?");
 		}
 		
-		UnitEntity ent = unit.GetComponent<UnitEntity>();
+		UnitEntity ent = flockUnit.GetComponent<UnitEntity>();
 		if(mCurSummonUnit == ent) {
 			//check summoning
 			mCurSummonUnit = null;
@@ -387,6 +425,9 @@ public class PlayerController : MotionBase {
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.yellow;
 		Gizmos.DrawWireSphere(transform.position, recallRadius);
+		
+		Gizmos.color *= 0.65f;
+		Gizmos.DrawWireSphere(transform.position, summonRadius);
 	}
 			
 	private void RecallUnits() {
@@ -432,6 +473,7 @@ public class PlayerController : MotionBase {
 			switch(mCurActMode) {
 			case ActMode.Normal:
 				player.state = EntityState.normal;
+				UpdateAttackSensorDisplay();
 				break;
 				
 			case ActMode.Summon:
@@ -459,12 +501,14 @@ public class PlayerController : MotionBase {
 				float love = UnitConfig.instance.GetUnitResourceCost(unitType);
 				if(mPlayer.stats.curResource >= love) {
 					//check if it's safe to summon on the spot
-					if(!cursor.CheckArea(summonLayerCheck.value)) {
+					//summonRadius Physics.CheckSphere(transform.position, radius, layerMask)
+					Vector2 pos = transform.position;
+					pos += Random.insideUnitCircle*summonRadius;
+					if(!Physics.CheckSphere(pos, cursor.radius, summonLayerCheck.value)) {
 						string typeName = unitType.ToString();
 						EntityManager entMgr = EntityManager.instance;
 						mCurSummonUnit = entMgr.Spawn<UnitEntity>(typeName, typeName, null, null);
 						if(mCurSummonUnit != null) {
-							Vector2 pos = cursor.transform.position;
 							mCurSummonUnit.transform.position = pos;
 							
 							//subtract from player resource

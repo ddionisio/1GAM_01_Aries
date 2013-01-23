@@ -22,6 +22,8 @@ public class ActionTarget : MonoBehaviour {
 	private HashSet<ActionListener> mListeners = new HashSet<ActionListener>();
 	
 	[SerializeField] GameObject indicator; //starts as turned off
+	[SerializeField] GameObject targetted; //starts as turned off, on when there are listeners
+	
 	[SerializeField] Transform targetTo;
 	
 	public Transform target {
@@ -68,6 +70,10 @@ public class ActionTarget : MonoBehaviour {
 			
 			mListeners.Clear();
 		}
+		
+		if(targetted != null) {
+			targetted.SetActive(false);
+		}
 	}
 	
 	//called by ActionListener during OnTriggerEnter if we are valide
@@ -75,6 +81,10 @@ public class ActionTarget : MonoBehaviour {
 		//Debug.Log("listener added: "+listener.gameObject.name);
 		
 		mListeners.Add(listener);
+		
+		if(targetted != null && !targetted.activeSelf) {
+			targetted.SetActive(true);
+		}
 	}
 	
 	//called by ActionListener when we stop action
@@ -82,6 +92,10 @@ public class ActionTarget : MonoBehaviour {
 		//Debug.Log("listener removed: "+listener.gameObject.name);
 		
 		mListeners.Remove(listener);
+		
+		if(targetted != null) {
+			targetted.SetActive(mListeners.Count > 0);
+		}
 	}
 	
 	void OnDestroy() {
@@ -91,6 +105,10 @@ public class ActionTarget : MonoBehaviour {
 	void Awake() {
 		if(indicator != null) {
 			indicator.SetActive(false);
+		}
+		
+		if(targetted != null) {
+			targetted.SetActive(false);
 		}
 	}
 	

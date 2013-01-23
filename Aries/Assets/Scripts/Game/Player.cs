@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections;
 
 public class Player : EntityBase {
+	public GameObject summonDisplay;
+	public GameObject unsummonDisplay;
 	
 	private const int playerIndOfs = (int)FlockType.PlayerOneUnits;
 	private static Player[] mPlayers = new Player[(int)(FlockType.PlayerFourUnits-FlockType.PlayerOneUnits)+1];
@@ -48,6 +50,9 @@ public class Player : EntityBase {
 		//hoook to hud
 		
 		mPlayers[(int)mPlayerStats.flockGroup - playerIndOfs] = this;
+		
+		if(summonDisplay != null) summonDisplay.SetActive(false);
+		if(unsummonDisplay != null) unsummonDisplay.SetActive(false);
 	}
 
 	// Use this for initialization
@@ -61,6 +66,17 @@ public class Player : EntityBase {
 	}
 	
 	protected override void StateChanged() {
+		switch(prevState) {
+		case EntityState.castSummon:
+			if(summonDisplay != null) summonDisplay.SetActive(false);
+			break;
+			
+		case EntityState.castUnSummon:
+			
+			if(unsummonDisplay != null) unsummonDisplay.SetActive(false);
+			break;
+		}
+		
 		switch(state) {
 		case EntityState.spawning:
 			mPlayerStats.InitResource();
@@ -77,12 +93,16 @@ public class Player : EntityBase {
 			//start fx
 			if(mSprite != null)
 				mSprite.state = UnitSpriteState.Casting;
+			
+			if(summonDisplay != null) summonDisplay.SetActive(true);
 			break;
 			
 		case EntityState.castUnSummon:
 			//start fx
 			if(mSprite != null)
 				mSprite.state = UnitSpriteState.Casting;
+			
+			if(unsummonDisplay != null) unsummonDisplay.SetActive(true);
 			break;
 			
 		case EntityState.attacking:
@@ -103,6 +123,9 @@ public class Player : EntityBase {
 		state = EntityState.normal;
 		
 		mControl.SpawnStart();
+		
+		if(summonDisplay != null) summonDisplay.SetActive(false);
+		if(unsummonDisplay != null) unsummonDisplay.SetActive(false);
 	}
 	
 	void LateUpdate () {

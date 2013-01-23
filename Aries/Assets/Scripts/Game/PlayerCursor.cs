@@ -8,7 +8,6 @@ public class PlayerCursor : MonoBehaviour {
 	public tk2dBaseSprite cursorSprite;
 	public GameObject contextSprite;
 	
-	public Color contextColor;
 	public Color neutralColor;
 	
 	public float radius;
@@ -48,35 +47,22 @@ public class PlayerCursor : MonoBehaviour {
 	}
 	
 	public void RevertToNeutral() {
-		contextSprite.SetActive(false);
 		cursorSprite.color = neutralColor;
-	}
-	
-	//call this in controller if no attack or other crap
-	public void UpdateIndicator(bool updateColor) {
-		//determine colors based on contents of attack and context
-		if(contextSensor.units.Count > 0) {
-			contextSprite.SetActive(true);
-			
-			if(updateColor)
-				cursorSprite.color = contextColor;
-		}
-		else {
-			contextSprite.SetActive(false);
-			
-			if(updateColor)
-				cursorSprite.color = neutralColor;
-		}
+		contextSprite.SetActive(contextSensor.units.Count > 0);
 	}
 	
 	void OnDestroy() {
 		mCursors.Remove(type);
+		
+		contextSensor.unitAddRemoveCallback -= OnContextSensorUnitChange;
 	}
 	
 	void Awake() {
 		mCursors.Add(type, this);
 		
 		contextSprite.SetActive(false);
+		
+		contextSensor.unitAddRemoveCallback += OnContextSensorUnitChange;
 	}
 	
 	// Use this for initialization
@@ -98,6 +84,10 @@ public class PlayerCursor : MonoBehaviour {
 				transform.position = start + delta;
 			}
 		}
+	}
+	
+	void OnContextSensorUnitChange() {
+		contextSprite.SetActive(contextSensor.units.Count > 0);
 	}
 		
 	void OnDrawGizmosSelected() {
