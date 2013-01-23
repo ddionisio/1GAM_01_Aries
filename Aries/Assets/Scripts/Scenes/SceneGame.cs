@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using HutongGames.PlayMaker;
 
 public class SceneGame : SceneController {
 	public tk2dTileMap map;
@@ -11,8 +12,14 @@ public class SceneGame : SceneController {
 	private float mOrderYOfs;
 	private float mOrderYMax;
 	
+	private PlayMakerFSM mFSM;
+	
 	public static SceneGame instance {
 		get { return mInstance; }
+	}
+	
+	public PlayMakerFSM FSM {
+		get { return mFSM; }
 	}
 	
 	public float ComputeZOrder(float y) {
@@ -34,6 +41,9 @@ public class SceneGame : SceneController {
 		
 		mInstance = this;
 		
+		mFSM = GetComponent<PlayMakerFSM>();
+		
+		//FsmVariables.GlobalVariables.GetFsmString("fuck").Value
 		mOrderYOfs = -map.data.tileOrigin.y;
 		mOrderYMax = map.height*map.data.tileSize.y;
 	}

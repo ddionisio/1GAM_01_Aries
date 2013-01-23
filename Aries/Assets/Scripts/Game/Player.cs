@@ -3,12 +3,23 @@ using System.Collections;
 
 public class Player : EntityBase {
 	
+	private const int playerIndOfs = (int)FlockType.PlayerOneUnits;
+	private static Player[] mPlayers = new Player[(int)(FlockType.PlayerFourUnits-FlockType.PlayerOneUnits)+1];
+	
 	private PlayerController mControl;
 	private UnitSpriteController mSprite;
 	private PlayerStat mPlayerStats;
 	
+	public Player GetPlayer(int index) {
+		return mPlayers[index];
+	}
+	
 	public PlayerStat stats {
 		get { return mPlayerStats; }
+	}
+	
+	public PlayerController control {
+		get { return mControl; }
 	}
 	
 	public override void Release() {
@@ -19,6 +30,8 @@ public class Player : EntityBase {
 	}
 	
 	protected override void OnDestroy () {
+		mPlayers[(int)mPlayerStats.flockGroup - playerIndOfs] = null;
+		
 		mPlayerStats.statChangeCallback -= OnStatChange;
 		
 		base.OnDestroy();
@@ -33,6 +46,8 @@ public class Player : EntityBase {
 		
 		mPlayerStats.statChangeCallback += OnStatChange;
 		//hoook to hud
+		
+		mPlayers[(int)mPlayerStats.flockGroup - playerIndOfs] = this;
 	}
 
 	// Use this for initialization
@@ -52,6 +67,8 @@ public class Player : EntityBase {
 			break;
 			
 		case EntityState.normal:
+			EnableControls();
+			
 			if(mSprite != null)
 				mSprite.state = UnitSpriteState.Move;
 			break;
@@ -94,7 +111,29 @@ public class Player : EntityBase {
 	
 	void OnStatChange(StatBase stat) {
 		if(stat.curHP == 0.0f) {
+			DisableControls();
 			state = EntityState.dying;
+			Debug.Log("dead");
 		}
+	}
+	
+	void OnUIModalActive() {
+		DisableControls();
+	}
+	
+	void OnUIModalInactive() {
+		if(state != EntityState.dying) {
+			EnableControls();
+		}
+	}
+	
+	private void DisableControls() {
+		mControl.CancelActions();
+		mControl.body.velocity = Vector3.zero;
+		mControl.enabled = false;
+	}
+	
+	private void EnableControls() {
+		mControl.enabled = true;
 	}
 }

@@ -14,4 +14,6 @@ public struct EntityEvent {
 	public const string Start = "EntityStart";
 	public const string Wake = "EntityWake";
 	public const string StatChanged = "EntityStatChanged";
+	public const string UnitTriggerEnter = "UnitTriggerEnter";
+	public const string UnitTriggerExit = "UnitTriggerExit";
 }

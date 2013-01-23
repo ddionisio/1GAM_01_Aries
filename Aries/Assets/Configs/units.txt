@@ -1,27 +1,27 @@
 [
 	{
-		"label":"melee",
+		"type":"sheepMelee",
 		"resource":10
 	},
 	{
-		"label":"range",
+		"type":"sheepRange",
 		"resource":15
 	},
 	{
-		"label":"carrier",
+		"type":"sheepCarrier",
 		"resource":20
 	},
 	{
-		"label":"hexer",
+		"type":"sheepHexer",
 		"resource":20
 	},
 	
 	{
-		"label":"enemy melee",
+		"type":"enemyMelee",
 		"resource":5
 	},
 	{
-		"label":"enemy range",
+		"type":"enemyRange",
 		"resource":10
 	}
 ]

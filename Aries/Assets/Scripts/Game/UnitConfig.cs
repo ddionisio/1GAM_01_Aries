@@ -5,8 +5,12 @@ using System.Collections.Generic;
 //put this in core game object
 //only use this after awake
 public class UnitConfig : MonoBehaviour {
-	public class UnitConfigData {
-		public string label; //just to make it easy to refer in the config when editing
+	public class UnitConfigFile {
+		public UnitType type;
+		public float resource;
+	}
+	
+	public struct Data {
 		public float resource;
 	}
 	
@@ -14,7 +18,7 @@ public class UnitConfig : MonoBehaviour {
 	
 	private static UnitConfig mInstance = null;
 	
-	private List<UnitConfigData> mUnitsData = null;
+	private Data[] mUnitsData = new Data[(int)UnitType.NumTypes];
 	
 	public static UnitConfig instance {
 		get { return mInstance; }
@@ -30,11 +34,17 @@ public class UnitConfig : MonoBehaviour {
 		//load file
 		if(config != null) {
 			fastJSON.JSON.Instance.Parameters.UseExtensions = false;
-			mUnitsData = fastJSON.JSON.Instance.ToObject<List<UnitConfigData>>(config.text);
+			List<UnitConfigFile> fileData = fastJSON.JSON.Instance.ToObject<List<UnitConfigFile>>(config.text);
+			
+			foreach(UnitConfigFile configDat in fileData) {
+				if(configDat != null) {
+					mUnitsData[(int)configDat.type].resource = configDat.resource;
+				}
+			}
 		}
 	}
 	
 	public float GetUnitResourceCost(UnitType type) {
-		return mUnitsData != null && mUnitsData[(int)type] != null ? mUnitsData[(int)type].resource : 0.0f;
+		return mUnitsData[(int)type].resource;
 	}
 }

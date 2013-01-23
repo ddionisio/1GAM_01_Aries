@@ -49,7 +49,7 @@ public class ActionTarget : MonoBehaviour {
 	
 	//when we want to finish action
 	public void StopAction() {
-		Debug.Log("stopping action of: "+gameObject.name);
+		//Debug.Log("stopping action of: "+gameObject.name);
 		
 		//remove listeners
 		if(mListeners.Count > 0) {
@@ -72,14 +72,14 @@ public class ActionTarget : MonoBehaviour {
 	
 	//called by ActionListener during OnTriggerEnter if we are valide
 	public void AddListener(ActionListener listener) {
-		Debug.Log("listener added: "+listener.gameObject.name);
+		//Debug.Log("listener added: "+listener.gameObject.name);
 		
 		mListeners.Add(listener);
 	}
 	
 	//called by ActionListener when we stop action
 	public void RemoveListener(ActionListener listener) {
-		Debug.Log("listener removed: "+listener.gameObject.name);
+		//Debug.Log("listener removed: "+listener.gameObject.name);
 		
 		mListeners.Remove(listener);
 	}

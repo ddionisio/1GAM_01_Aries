@@ -8,5 +8,7 @@ public enum UnitType {
 	enemyMelee,
 	enemyRange,
 	
+	objective,
+	
 	NumTypes
 }

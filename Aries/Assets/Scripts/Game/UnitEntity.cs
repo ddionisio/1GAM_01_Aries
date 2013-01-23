@@ -15,11 +15,8 @@ public class UnitEntity : EntityBase {
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam;
 	
-	private UnitSpriteController.EventData mLastSpriteEventData;
-	
 	private float mAttackCosTheta;
 	
-	public UnitSpriteController.EventData lastSpriteEventData { get { return mLastSpriteEventData; } }
 	public UnitStat stats { get { return mStats; } }
 	public FlockUnit flockUnit { get { return mFlockUnit; } }
 	public ActionListener listener { get { return mListener; } }
@@ -76,11 +73,6 @@ public class UnitEntity : EntityBase {
 		
 		if(mListener != null) {
 			mListener.SetActive(true);
-		}
-		
-		if(mSpriteControl != null) {
-			mSpriteControl.stateFinishCallback += OnSpriteAnimationComplete;
-			mSpriteControl.stateEventCallback += OnSpriteAnimationEvent;
 		}
 	}
 	
@@ -149,13 +141,6 @@ public class UnitEntity : EntityBase {
 		if(FSM != null) {
 			FSM.SendEvent(EntityEvent.ActionHitExit);
 		}
-	}
-	
-	protected virtual void OnSpriteAnimationComplete(UnitSpriteState animState, UnitSpriteController.Dir animDir) {
-	}
-	
-	protected virtual void OnSpriteAnimationEvent(UnitSpriteState animState, UnitSpriteController.Dir animDir, UnitSpriteController.EventData animDat) {
-		mLastSpriteEventData = animDat;
 	}
 	
 	void OnStatChange(StatBase stat) {

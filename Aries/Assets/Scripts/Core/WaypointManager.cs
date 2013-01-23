@@ -2,8 +2,13 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+public class WaypointData : Object {
+	public int curInd;
+	public List<Transform> waypoints;
+}
+
 public class WaypointManager : MonoBehaviour {
-	
+		
 	private static WaypointManager mInstance = null;
 	private Dictionary<string, List<Transform>> mWaypoints;
 	
@@ -11,6 +16,18 @@ public class WaypointManager : MonoBehaviour {
 		get {
 			return mInstance;
 		}
+	}
+	
+	public WaypointData CreateWaypointData(string name) {
+		List<Transform> wps = GetWaypoints(name);
+		if(wps != null) {
+			WaypointData newWaypoint = new WaypointData();
+			newWaypoint.curInd = 0;
+			newWaypoint.waypoints = wps;
+			return newWaypoint;
+		}
+		
+		return null;
 	}
 	
 	public List<Transform> GetWaypoints(string name) {
