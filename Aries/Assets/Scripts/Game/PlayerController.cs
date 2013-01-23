@@ -348,9 +348,10 @@ public class PlayerController : MotionBase {
 	
 	//at this point, unit is fully spawned
 	void OnGroupUnitAdd(FlockUnit unit) {
-		ActionListener actionListen = unit.GetComponent<ActionListener>();
+		FlockActionController actionListen = unit.GetComponent<FlockActionController>();
 		if(actionListen != null) {
 			actionListen.defaultTarget = followAction;
+			actionListen.leader = transform;
 		}
 		else {
 			Debug.LogWarning("no action listener?");
@@ -365,9 +366,10 @@ public class PlayerController : MotionBase {
 	
 	//unit is also about to be destroyed or released to entity manager
 	void OnGroupUnitRemove(FlockUnit unit) {
-		ActionListener actionListen = unit.GetComponent<ActionListener>();
+		FlockActionController actionListen = unit.GetComponent<FlockActionController>();
 		if(actionListen != null) {
 			actionListen.defaultTarget = null;
+			actionListen.leader = null;
 		}
 		
 		UnitEntity ent = unit.GetComponent<UnitEntity>();
@@ -386,22 +388,18 @@ public class PlayerController : MotionBase {
 		Gizmos.color = Color.yellow;
 		Gizmos.DrawWireSphere(transform.position, recallRadius);
 	}
-	
+			
 	private void RecallUnits() {
 		if(recallSprite != null && !recallSprite.activeSelf) {
 			recallSprite.SetActive(true);
 		}
-		
-		UnitType type = mCurSummonInd == -1 ? UnitType.NumTypes : mTypeSummons[mCurSummonInd];
 		
 		Collider[] collides = Physics.OverlapSphere(transform.position, recallRadius, recallLayerCheck.value);
 		foreach(Collider col in collides) {
 			UnitEntity unit = col.GetComponentInChildren<UnitEntity>();
 			if(unit != null) {
 				//check type
-				if(type == UnitType.NumTypes || unit.stats.type == type) {
-					unit.listener.StopAction(ActionTarget.Priority.High, true);
-				}
+				unit.listener.StopAction(ActionTarget.Priority.High, true);
 			}
 		}
 	}
