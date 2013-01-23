@@ -9,12 +9,13 @@ public class PlayerController : MotionBase {
 	public Transform followInputRotate;
 	
 	public float recallRadius = 8.0f;
-	public LayerMask recallLayerCheck;
 	
 	public float summonRadius = 5.0f;
 	public LayerMask summonLayerCheck;
 	
 	public GameObject recallSprite;
+	public float recallDelay = 2.0f;
+	public LayerMask recallLayerCheck;
 	
 	public GameObject attackSprite;
 	public Color attackColor;
@@ -90,12 +91,18 @@ public class PlayerController : MotionBase {
 	}
 	
 	public void CancelActions() {
-		CancelInvoke();
-		
 		ApplySummon(ActMode.Normal);
 		
 		if(mWeapon != null) {
 			mWeapon.Release();
+		}
+	}
+	
+	public void CancelRecall() {
+		if(followAction.type == ActionType.Retreat) {
+			followAction.type = ActionType.Follow;
+			recallSprite.SetActive(false);
+			StopCoroutine("RecallDelay");
 		}
 	}
 	
@@ -270,6 +277,7 @@ public class PlayerController : MotionBase {
 				//do something
 				Debug.Log("context found: "+contexts.Count);
 				
+				//only interact with one context...
 				ActionTarget target = cursor.contextSensor.GetSingleUnit();
 				
 				foreach(UnitEntity unit in grp.GetTargetFilter(target)) {
@@ -280,6 +288,9 @@ public class PlayerController : MotionBase {
 			
 			UpdateAttackTargetHolder();
 			if(mTargetHolder.Count > 0) {
+				//cancel retreat
+				CancelRecall();
+				
 				int curTargetInd = 0;
 				
 				ActionTarget target = mTargetHolder[curTargetInd];
@@ -384,8 +395,8 @@ public class PlayerController : MotionBase {
 	
 	void InputRecall(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
-			autoAttack = !autoAttack;
-			//TODO: show FX
+			//autoAttack = !autoAttack;
+			RecallUnits();
 		}
 	}
 	
@@ -396,22 +407,6 @@ public class PlayerController : MotionBase {
 			FlockActionController actionListen = unit.listener as FlockActionController;
 			
 			if(actionListen != null) {
-				/*
-				//auto attack if there's an enemy nearby
-				UpdateAttackTargetHolder();
-				if(mTargetHolder.Count > 0) {
-					foreach(ActionTarget target in mTargetHolder) {
-						//check if unit can attack target
-						if(!actionListen.lockAction && actionListen.currentPriority <= target.priority) {
-							//can damage? then target this
-							StatBase targetStats = target.GetComponentInChildren<StatBase>();
-							if(targetStats == null || unit.stats.CanDamage(targetStats)) {
-								actionListen.currentTarget = target;
-								break;
-							}
-						}
-					}
-				}*/
 				actionListen.autoAttack = autoAttack;
 				
 				actionListen.defaultTarget = followAction;
@@ -460,10 +455,9 @@ public class PlayerController : MotionBase {
 	}
 			
 	private void RecallUnits() {
-		if(recallSprite != null && !recallSprite.activeSelf) {
-			recallSprite.SetActive(true);
-		}
-		
+		//set to retreat to avoid auto attack
+		CancelRecall();
+						
 		Collider[] collides = Physics.OverlapSphere(transform.position, recallRadius, recallLayerCheck.value);
 		foreach(Collider col in collides) {
 			UnitEntity unit = col.GetComponentInChildren<UnitEntity>();
@@ -472,6 +466,26 @@ public class PlayerController : MotionBase {
 				unit.listener.StopAction(ActionTarget.Priority.High, true);
 			}
 		}
+		
+		StartCoroutine("RecallDelay");
+	}
+	
+	private IEnumerator RecallDelay() {
+		if(recallSprite != null) {
+			recallSprite.SetActive(true);
+		}
+		
+		followAction.type = ActionType.Retreat;
+		
+		yield return new WaitForSeconds(recallDelay);
+		
+		if(recallSprite != null) {
+			recallSprite.SetActive(false);
+		}
+		
+		followAction.type = ActionType.Follow;
+		
+		yield break;
 	}
 		
 	//for both summon/unsummon

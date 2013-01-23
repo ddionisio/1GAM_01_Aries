@@ -88,6 +88,7 @@ public class FlockActionController : ActionListener {
 			StartCoroutine("ReturnToLeader");
 			break;
 			
+		case ActionType.Retreat:
 		case ActionType.Follow:
 			flockUnit.moveTarget = currentTarget.target;
 			
@@ -137,7 +138,8 @@ public class FlockActionController : ActionListener {
 	
 	protected virtual void AutoAttackEnter(UnitEntity unit) {
 		ActionTarget target = unit.actionTarget;
-		if(currentActType != ActionType.Attack && target != null 
+		if(!(currentActType == ActionType.Attack || currentActType == ActionType.Retreat)
+			&& target != null 
 			&& target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
 			currentTarget = target;
 		}
@@ -176,6 +178,7 @@ public class FlockActionController : ActionListener {
 			yield return new WaitForSeconds(followStopDelay);
 			
 			switch(type) {
+			case ActionType.Retreat:
 			case ActionType.Follow:
 				if(mTargetMotion.curSpeed < followStopSpeed) {
 					if(flockUnit.moveTarget != null && flockUnit.moveTargetDistance <= followStopRadius)

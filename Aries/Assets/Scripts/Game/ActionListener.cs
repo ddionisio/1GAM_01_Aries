@@ -45,7 +45,8 @@ public class ActionListener : MonoBehaviour {
 	
 	public ActionType currentActType {
 		get {
-			return mCurActionTarget != null ? mCurActionTarget.type : ActionType.NumType;
+			return mCurActionTarget != null ? mCurActionTarget.type : 
+				   mDefaultActionTarget != null ? mDefaultActionTarget.type : ActionType.NumType;
 		}
 	}
 	

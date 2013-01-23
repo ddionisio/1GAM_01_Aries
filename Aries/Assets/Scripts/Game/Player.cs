@@ -26,6 +26,7 @@ public class Player : EntityBase {
 	
 	public override void Release() {
 		mControl.CancelActions();
+		mControl.CancelRecall();
 		mControl.followAction.StopAction();
 		
 		base.Release();
