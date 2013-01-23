@@ -189,7 +189,7 @@ public class UnitEntity : EntityBase {
 			mFlockUnit.body.velocity = Vector3.zero;
 			mFlockUnit.moveTarget = null;
 			mFlockUnit.sensor.collider.enabled = false;
-			mFlockUnit.sensor.units.Clear();
+			mFlockUnit.sensor.items.Clear();
 		}
 	}
 }

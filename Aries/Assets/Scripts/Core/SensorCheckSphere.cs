@@ -15,8 +15,8 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	private HashSet<T> mUnits = new HashSet<T>();
 	private HashSet<T> mGatherUnits = new HashSet<T>();
 	
-	public HashSet<T> units {
-		get { CleanUp(); return mUnits; }
+	public HashSet<T> items {
+		get { return mUnits; }
 	}
 	
 	protected abstract bool UnitVerify(T unit);
@@ -27,14 +27,14 @@ public abstract class SensorCheckSphere<T> : MonoBehaviour where T : Component {
 	/// Grabs one unit in the set
 	/// </summary>
 	public T GetSingleUnit() {
-		CleanUp();
-		
 		T ret = null;
 		
 		if(mUnits.Count > 0) {
-			HashSet<T>.Enumerator e = mUnits.GetEnumerator();
-			if(e.MoveNext()) {
-				ret = e.Current;
+			foreach(T unit in mUnits) {
+				if(unit != null) {
+					ret = unit;
+					break;
+				}
 			}
 		}
 		

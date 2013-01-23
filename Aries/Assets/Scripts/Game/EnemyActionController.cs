@@ -40,7 +40,7 @@ public class EnemyActionController : FlockActionController {
 			
 			Vector2 pos = transform.position;
 			
-			foreach(EntityBase ent in sensor.units) {
+			foreach(EntityBase ent in sensor.items) {
 				ActionTarget target = ent.GetComponent<ActionTarget>();
 				
 				if(target != null) {

@@ -348,7 +348,7 @@ public class FlockUnit : MotionBase {
 	private Vector2 ComputeSeparate() {
 		Vector2 forceRet = Vector2.zero;
 		
-		if(sensor != null && sensor.units.Count > 0) {
+		if(sensor != null && sensor.items.Count > 0) {
 			Vector2 separate = Vector2.zero;
 			Vector2 avoid = Vector2.zero;
 			
@@ -360,26 +360,28 @@ public class FlockUnit : MotionBase {
 			int numSeparate = 0;
 			int numAvoid = 0;
 			
-			foreach(FlockFilter unit in sensor.units) {
-				Vector2 otherPos = unit.transform.position;
-				
-				dPos = pos - otherPos;
-				dist = dPos.magnitude;
-				
-				if(mFilter.CheckAvoid(unit.type)) {
-					//avoid
-					if(dist < avoidDistance) {
-						dPos /= dist;
-						avoid += dPos;
-						numAvoid++;
+			foreach(FlockFilter unit in sensor.items) {
+				if(unit != null) {
+					Vector2 otherPos = unit.transform.position;
+					
+					dPos = pos - otherPos;
+					dist = dPos.magnitude;
+					
+					if(mFilter.CheckAvoid(unit.type)) {
+						//avoid
+						if(dist < avoidDistance) {
+							dPos /= dist;
+							avoid += dPos;
+							numAvoid++;
+						}
 					}
-				}
-				else if(mFilter.type == unit.type) {
-					//separate	
-					if(dist < separateDistance) {
-						dPos /= dist;
-						separate += dPos;
-						numSeparate++;
+					else if(mFilter.type == unit.type) {
+						//separate	
+						if(dist < separateDistance) {
+							dPos /= dist;
+							separate += dPos;
+							numSeparate++;
+						}
 					}
 				}
 			}
@@ -417,7 +419,7 @@ public class FlockUnit : MotionBase {
 		
 		numFollow = 0;
 		
-		if(sensor != null && sensor.units.Count > 0) {
+		if(sensor != null && sensor.items.Count > 0) {
 			Vector2 separate = Vector2.zero;
 			Vector2 align = Vector2.zero;
 			Vector2 cohesion = Vector2.zero;
@@ -431,40 +433,42 @@ public class FlockUnit : MotionBase {
 			int numSeparate = 0;
 			int numAvoid = 0;
 			
-			foreach(FlockFilter unit in sensor.units) {
-				Vector2 otherPos = unit.transform.position;
-				
-				dPos = pos - otherPos;
-				dist = dPos.magnitude;
-				
-				if(mFilter.CheckAvoid(unit.type)) {
-					//avoid
-					if(dist < avoidDistance) {
-						dPos /= dist;
-						avoid += dPos;
-						numAvoid++;
-					}
-				}
-				else if(mFilter.type == unit.type) {
-					//separate	
-					if(dist < separateDistance) {
-						dPos /= dist;
-						separate += dPos;
-						numSeparate++;
-					}
+			foreach(FlockFilter unit in sensor.items) {
+				if(unit != null) {
+					Vector2 otherPos = unit.transform.position;
 					
-					//only follow if it has a legit body
-					if(unit.isLegit) {
-						Rigidbody otherBody = unit.rigidbody;
-						if(otherBody != null && !otherBody.isKinematic) {
-							//align speed
-							Vector2 vel = otherBody.velocity;
-							align += vel;
-							
-							//cohesion
-							cohesion += otherPos;
+					dPos = pos - otherPos;
+					dist = dPos.magnitude;
+					
+					if(mFilter.CheckAvoid(unit.type)) {
+						//avoid
+						if(dist < avoidDistance) {
+							dPos /= dist;
+							avoid += dPos;
+							numAvoid++;
+						}
+					}
+					else if(mFilter.type == unit.type) {
+						//separate	
+						if(dist < separateDistance) {
+							dPos /= dist;
+							separate += dPos;
+							numSeparate++;
+						}
 						
-							numFollow++;
+						//only follow if it has a legit body
+						if(unit.isLegit) {
+							Rigidbody otherBody = unit.rigidbody;
+							if(otherBody != null && !otherBody.isKinematic) {
+								//align speed
+								Vector2 vel = otherBody.velocity;
+								align += vel;
+								
+								//cohesion
+								cohesion += otherPos;
+							
+								numFollow++;
+							}
 						}
 					}
 				}

@@ -43,6 +43,8 @@ public class PlayerController : MotionBase {
 	
 	private List<ActionTarget> mTargetHolder = new List<ActionTarget>(10);
 	
+	private bool mAutoAttack = true;
+	
 	public Player player {
 		get { return mPlayer; }
 	}
@@ -66,6 +68,27 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
+	public bool autoAttack {
+		get { return mAutoAttack; }
+		set {
+			if(mAutoAttack != value) {
+				mAutoAttack = value;
+				
+				//attack/clear currently
+				//go through and (de)activate attack sensors
+				PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
+				foreach(UnitEntity unit in grp.GetUnits()) {
+					if(unit != null && unit.listener != null) {
+						FlockActionController listener = unit.listener as FlockActionController;
+						if(listener != null) {
+							listener.autoAttack = mAutoAttack;
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	public void CancelActions() {
 		CancelInvoke();
 		
@@ -83,6 +106,8 @@ public class PlayerController : MotionBase {
 		if(mCursor != null) {
 			mCursor.RevertToNeutral();
 		}
+		
+		mAutoAttack = true;
 	}
 	
 	void OnDestroy() {
@@ -188,7 +213,7 @@ public class PlayerController : MotionBase {
 	}
 	
 	void UpdateAttackSensorDisplay() {
-		if(attackSensor.units.Count > 0) {
+		if(attackSensor.items.Count > 0) {
 			if(!attackSprite.activeSelf) {
 				attackSprite.SetActive(true);
 				cursor.cursorSprite.color = attackColor;
@@ -212,7 +237,7 @@ public class PlayerController : MotionBase {
 	void UpdateAttackTargetHolder() {
 		mTargetHolder.Clear();
 		
-		HashSet<ActionTarget> attacks = attackSensor.units;
+		HashSet<ActionTarget> attacks = attackSensor.items;
 		if(attacks.Count > 0) {
 			Vector2 pos = transform.position;
 			
@@ -221,7 +246,7 @@ public class PlayerController : MotionBase {
 			foreach(ActionTarget attack in attacks) {
 				//only grab what can be targetted
 				//TODO: other things beyond attack?
-				if(attack.vacancy && attack.type == ActionType.Attack) {
+				if(attack != null && attack.vacancy && attack.type == ActionType.Attack) {
 					Vector2 entPos = attack.transform.position;
 					attack.distSqrHolder = (entPos - pos).sqrMagnitude;
 					mTargetHolder.Add(attack);
@@ -237,7 +262,7 @@ public class PlayerController : MotionBase {
 			//do something amazing
 			Debug.Log("act");
 			
-			HashSet<ActionTarget> contexts = cursor.contextSensor.units;
+			HashSet<ActionTarget> contexts = cursor.contextSensor.items;
 			
 			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
 			
@@ -248,7 +273,8 @@ public class PlayerController : MotionBase {
 				ActionTarget target = cursor.contextSensor.GetSingleUnit();
 				
 				foreach(UnitEntity unit in grp.GetTargetFilter(target)) {
-					unit.listener.currentTarget = target;
+					if(unit != null)
+						unit.listener.currentTarget = target;
 				}
 			}
 			
@@ -358,7 +384,8 @@ public class PlayerController : MotionBase {
 	
 	void InputRecall(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
-			RecallUnits();
+			autoAttack = !autoAttack;
+			//TODO: show FX
 		}
 	}
 	
@@ -368,8 +395,9 @@ public class PlayerController : MotionBase {
 		if(unit != null) {
 			FlockActionController actionListen = unit.listener as FlockActionController;
 			
-			//auto attack if there's an enemy nearby
 			if(actionListen != null) {
+				/*
+				//auto attack if there's an enemy nearby
 				UpdateAttackTargetHolder();
 				if(mTargetHolder.Count > 0) {
 					foreach(ActionTarget target in mTargetHolder) {
@@ -383,7 +411,8 @@ public class PlayerController : MotionBase {
 							}
 						}
 					}
-				}
+				}*/
+				actionListen.autoAttack = autoAttack;
 				
 				actionListen.defaultTarget = followAction;
 				actionListen.leader = transform;

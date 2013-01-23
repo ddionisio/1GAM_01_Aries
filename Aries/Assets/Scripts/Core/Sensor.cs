@@ -8,14 +8,14 @@ public abstract class Sensor<T> : MonoBehaviour where T : Component {
 	
 	private HashSet<T> mUnits = new HashSet<T>();
 	
-	public HashSet<T> units {
+	public HashSet<T> items {
 		get {
-			CleanUp();
 			return mUnits;
 		}
 	}
 			
 	void OnTriggerEnter(Collider other) {
+		CleanUp();
 		T unit = other.GetComponent<T>();
 		if(unit != null && UnitVerify(unit)) {
 			if(mUnits.Add(unit)) {
@@ -25,6 +25,7 @@ public abstract class Sensor<T> : MonoBehaviour where T : Component {
 	}
 	
 	void OnTriggerExit(Collider other) {
+		CleanUp();
 		T unit = other.GetComponent<T>();
 		if(unit != null && mUnits.Remove(unit)) {
 			UnitRemoved(unit);

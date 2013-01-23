@@ -43,6 +43,12 @@ public class ActionListener : MonoBehaviour {
 		}
 	}
 	
+	public ActionType currentActType {
+		get {
+			return mCurActionTarget != null ? mCurActionTarget.type : ActionType.NumType;
+		}
+	}
+	
 	public Collider currentTargetCollider {
 		get { return mCurActionCollider; }
 	}

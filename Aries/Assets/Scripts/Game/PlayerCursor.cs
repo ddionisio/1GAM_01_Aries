@@ -48,7 +48,7 @@ public class PlayerCursor : MonoBehaviour {
 	
 	public void RevertToNeutral() {
 		cursorSprite.color = neutralColor;
-		contextSprite.SetActive(contextSensor.units.Count > 0);
+		contextSprite.SetActive(contextSensor.items.Count > 0);
 	}
 	
 	void OnDestroy() {
@@ -87,7 +87,7 @@ public class PlayerCursor : MonoBehaviour {
 	}
 	
 	void OnContextSensorUnitChange() {
-		contextSprite.SetActive(contextSensor.units.Count > 0);
+		contextSprite.SetActive(contextSensor.items.Count > 0);
 	}
 		
 	void OnDrawGizmosSelected() {
