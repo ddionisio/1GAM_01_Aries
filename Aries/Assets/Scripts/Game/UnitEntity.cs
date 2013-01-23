@@ -48,7 +48,6 @@ public class UnitEntity : EntityBase {
 		
 		if(mListener != null) {
 			mListener.enterCallback += OnActionEnter;
-			mListener.exitCallback += OnActionExit;
 			mListener.hitEnterCallback += OnActionHitEnter;
 			mListener.hitExitCallback += OnActionHitExit;
 			mListener.finishCallback += OnActionFinish;
@@ -98,7 +97,6 @@ public class UnitEntity : EntityBase {
 		
 		if(mListener != null) {
 			mListener.enterCallback -= OnActionEnter;
-			mListener.exitCallback -= OnActionExit;
 			mListener.hitEnterCallback -= OnActionHitEnter;
 			mListener.hitExitCallback -= OnActionHitExit;
 			mListener.finishCallback -= OnActionFinish;
@@ -116,12 +114,6 @@ public class UnitEntity : EntityBase {
 	protected virtual void OnActionEnter(ActionListener listen) {
 		if(FSM != null) {
 			FSM.SendEvent(EntityEvent.ActionEnter);
-		}
-	}
-	
-	protected virtual void OnActionExit(ActionListener listen) {
-		if(FSM != null) {
-			FSM.SendEvent(EntityEvent.ActionExit);
 		}
 	}
 	

@@ -6,14 +6,9 @@ public class ActionListener : MonoBehaviour {
 	public delegate void Callback(ActionListener listen);
 	public delegate void CollisionCallback(ActionListener listen, ContactPoint info);
 	
-	//for true: make sure you have a trigger collider
-	//for false: if you want to assign target manually
-	public bool triggerCheckEnable = false;
-	
 	public bool stopOnExit = false;
 	
 	public event Callback enterCallback;
-	public event Callback exitCallback;
 	public event CollisionCallback hitEnterCallback;
 	public event Callback hitExitCallback;
 	public event Callback finishCallback;
@@ -173,36 +168,11 @@ public class ActionListener : MonoBehaviour {
 		currentTarget = null;
 		
 		enterCallback = null;
-		exitCallback = null;
 		hitEnterCallback = null;
 		hitExitCallback = null;
 		finishCallback = null;
 	}
-	
-	void OnTriggerEnter(Collider other) {
-		if(triggerCheckEnable && !mLockAction) {
-			ActionTarget target = other.GetComponent<ActionTarget>();
-			if(target != null) {
-				SetTarget(target);
-			}
-		}
-	}
-	
-	void OnTriggerExit(Collider other) {
-		if(triggerCheckEnable && other == mCurActionCollider) {
-			if(stopOnExit) {
-				StopAction(ActionTarget.Priority.Highest, true);
-			}
-			else {
-				OnActionExit();
-				
-				if(exitCallback != null) {
-					exitCallback(this);
-				}
-			}
-		}
-	}
-	
+		
 	//if we are a rigid body and so is the target, these are called
 	void OnCollisionEnter(Collision collision) {
 		mLastHitInfo = collision.contacts[0];
