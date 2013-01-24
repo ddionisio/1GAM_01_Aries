@@ -155,6 +155,7 @@ public class UnitEntity : EntityBase {
 		}
 		
 		if(mSpriteControl != null) {
+			mSpriteControl.reverse = false;
 			mSpriteControl.ClearCallbacks();
 		}
 		

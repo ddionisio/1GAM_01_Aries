@@ -3,6 +3,7 @@ using System.Collections;
 
 public class UnitSpriteController : MonoBehaviour {
 	public enum Dir { E, N, W, S, NumDir }
+	public enum ReverseDir { W, S, E, N, NumDir }
 	
 	public delegate void OnStateAnimComplete(UnitSpriteState state, Dir dir);
 	public delegate void OnStateAnimEvent(UnitSpriteState state, Dir dir, EventData data);
@@ -95,11 +96,24 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	private int mDefaultStateId = 0;
 	
+	private bool mReverse = false;
+	
 	public UnitSpriteState state {
 		get { return mCurState; }
 		set {
 			if(mCurState != value) {
 				mCurState = value;
+				ApplyCurState();
+			}
+		}
+	}
+	
+	public bool reverse {
+		get { return mReverse; }
+		set {
+			if(mReverse != value) {
+				mReverse = value;
+				sprite.ClipFps = mReverse ? Mathf.Abs(sprite.ClipFps)*-1.0f : Mathf.Abs(sprite.ClipFps);
 				ApplyCurState();
 			}
 		}
@@ -206,6 +220,10 @@ public class UnitSpriteController : MonoBehaviour {
 				|| (mover.curSpeed > stopThreshold && mCurStopped)) {
 				ApplyCurState();
 			}
+			
+			//determine animation speed based on move
+			//if(mReverse) {
+			//}
 		}
 	}
 	
@@ -223,7 +241,21 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	private AnimData GetCurAnimData() {
 		AnimData[] animDirs = mCurState != UnitSpriteState.NumState ? mAnim[(int)mCurState] : null;
-		return animDirs == null ? null : animDirs.Length == 1 ? animDirs[0] : animDirs[(int)mCurDir];
+		if(animDirs != null) {
+			if(animDirs.Length == 1) {
+				return animDirs[0];
+			}
+			else {
+				if(mReverse) {
+					return animDirs[(int)((ReverseDir)mCurDir)];
+				}
+				else {
+					return animDirs[(int)mCurDir];
+				}
+			}
+		}
+		
+		return null;
 	}
 	
 	private void ApplyCurState() {
