@@ -1,21 +1,18 @@
 using UnityEngine;
 using System.Collections;
 
-public class SpriteColorPulse : MonoBehaviour {
+public class TransAnimWave : MonoBehaviour {
 	public float pulsePerSecond;
-	public Color startColor;
-	public Color endColor = Color.white;
 	
-	private tk2dBaseSprite mSprite;
+	public Vector2 start;
+	public Vector2 end;
+	
+	public bool isWorld = false;
 	
 	private float mCurPulseTime = 0;
 	
 	void OnEnable() {
 		mCurPulseTime = 0;
-	}
-	
-	void Awake() {
-		mSprite = GetComponent<tk2dBaseSprite>();
 	}
 	
 	// Use this for initialization
@@ -27,8 +24,14 @@ public class SpriteColorPulse : MonoBehaviour {
 		mCurPulseTime += Time.deltaTime;
 		
 		float t = Mathf.Sin(Mathf.PI*mCurPulseTime*pulsePerSecond);
-		t *= t;
 		
-		mSprite.color = Color.Lerp(startColor, endColor, t);
+		Vector2 newPos = Vector2.Lerp(start, end, t*t);
+		
+		if(isWorld) {
+			transform.position = new Vector3(newPos.x, newPos.y, transform.position.z);
+		}
+		else {
+			transform.localPosition = new Vector3(newPos.x, newPos.y, transform.localPosition.z);
+		}
 	}
 }

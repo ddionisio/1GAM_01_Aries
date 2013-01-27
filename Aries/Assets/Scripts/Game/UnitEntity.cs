@@ -4,8 +4,8 @@ using System.Collections;
 public class UnitEntity : EntityBase {
 	public UnitAttackType attackType;
 	
-	public float unSummonDelay = 0.5f;
-			
+	public UnitStatusIndicator statusIndicator;
+	
 	private UnitStat mStats;
 	private FlockUnit mFlockUnit;
 	private ActionListener mListener;
@@ -160,6 +160,10 @@ public class UnitEntity : EntityBase {
 		}
 		
 		FlockUnitRelease();
+		
+		if(statusIndicator != null) {
+			statusIndicator.Hide();
+		}
 	}
 	
 	private void FlockUnitInit() {

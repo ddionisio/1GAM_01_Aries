@@ -23,6 +23,7 @@ public class SceneGame : SceneController {
 	}
 	
 	public float ComputeZOrder(float y) {
+		//0.000001f
 		return orderZMin + ((y+mOrderYOfs)/mOrderYMax)*(orderZMax-orderZMin);
 	}
 	
