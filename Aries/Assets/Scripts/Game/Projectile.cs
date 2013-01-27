@@ -45,12 +45,14 @@ public class Projectile : EntityBase {
 	//private Vector2 mOscillateDir;
 	//private bool mOscillateSwitch;
 	
-	public static Projectile Create(string typeName, Vector2 startPos, Vector2 dir, Transform toParent = null) {
+	public static Projectile Create(string typeName, Vector2 startPos, Vector2 dir, Transform seek, Transform toParent = null) {
 		Projectile ret = EntityManager.instance.Spawn<Projectile>(typeName, typeName, toParent, null);
 		
 		if(ret != null) {
 			ret.mStartDir = dir;
 			ret.transform.position = startPos;
+			
+			ret.seek = seek;
 		}
 		
 		return ret;
@@ -105,7 +107,8 @@ public class Projectile : EntityBase {
 		}
 		
 		if(applyDirToUp) {
-			InvokeRepeating("OnUpUpdate", 0.0f, 0.1f);
+			transform.up = mStartDir;
+			InvokeRepeating("OnUpUpdate", 0.1f, 0.1f);
 		}
 	}
 	

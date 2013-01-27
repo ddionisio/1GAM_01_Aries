@@ -13,7 +13,7 @@ public class WeaponShoot : Weapon {
 		dir = M8.Math.Rotate(dir, Random.Range(-rad, rad));
 		pos += dir*startDistance;
 		
-		Projectile.Create(projectile, pos, dir);
+		Projectile.Create(projectile, pos, dir, seek);
 	}
 	
 	void OnDrawGizmosSelected() {
