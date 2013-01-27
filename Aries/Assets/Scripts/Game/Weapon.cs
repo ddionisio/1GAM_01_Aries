@@ -4,6 +4,7 @@ using System.Collections;
 public abstract class Weapon : MonoBehaviour {
 	public class RepeatParam {
 		public Transform source = null;
+		public Vector2 ofs = Vector2.zero;
 		public Vector2 dir = Vector2.right;
 		public Transform seek = null;
 	}
@@ -21,12 +22,17 @@ public abstract class Weapon : MonoBehaviour {
 	/// </summary>
 	public abstract void Shoot(Vector2 pos, Vector2 dir, Transform seek);
 	
-	public void Shoot(Vector2 dir, Transform seek) {
-		Shoot(transform.position, dir, seek);
+	/// <summary>
+	/// Shoot from weapon's position and given offset (ofs).
+	/// </summary>
+	public void ShootOfs(Vector2 ofs, Vector2 dir, Transform seek) {
+		Vector2 p = transform.position;
+		Shoot(p+ofs, dir, seek);
 	}
 	
-	public void ShootUp(Transform seek) {
-		Shoot(transform.position, transform.up, seek);
+	public void ShootUpDir(Vector2 ofs, Transform seek) {
+		Vector2 p = transform.position;
+		Shoot(p+ofs, transform.up, seek);
 	}
 	
 	public void Repeat(RepeatParam param) {
@@ -53,11 +59,14 @@ public abstract class Weapon : MonoBehaviour {
 	
 	private IEnumerator DoShoot(RepeatParam param) {
 		while(mIsFiring) {
+			Vector2 p = param.source != null ? param.source.position : transform.position;
+			p += param.ofs;
+			
 			if(useUpVector) {
-				Shoot(param.source != null ? param.source.position : transform.position, transform.up, param.seek);
+				Shoot(p, transform.up, param.seek);
 			}
 			else {
-				Shoot(param.source != null ? param.source.position : transform.position, param.dir, param.seek);
+				Shoot(p, param.dir, param.seek);
 			}
 									
 			yield return new WaitForSeconds(delayPerShot);

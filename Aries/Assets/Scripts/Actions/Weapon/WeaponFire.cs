@@ -11,6 +11,9 @@ namespace Game.Actions {
 		
 		[Tooltip("Direction")]
 		public FsmVector2 dir;
+		
+		[Tooltip("Offset")]
+		public FsmVector2 ofs;
 				
 		public override void Reset() {
 			base.Reset();
@@ -18,6 +21,7 @@ namespace Game.Actions {
 			checkChildren = true;
 			seek = null;
 			dir = Vector2.zero;
+			ofs = Vector2.zero;
 		}
 		
 		// Code that runs on entering the state.
@@ -27,7 +31,7 @@ namespace Game.Actions {
 			
 			Weapon w = mComp;
 			if(w != null) {
-				w.Shoot(dir.Value, seek.Value != null ? seek.Value.transform : null);
+				w.ShootOfs(ofs.Value, dir.Value, seek.Value != null ? seek.Value.transform : null);
 			}
 			
 			Finish();

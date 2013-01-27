@@ -46,6 +46,10 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	public string defaultState; //state to change to if state is not found in states
 	
+	//local space
+	[SerializeField] float hotspotEastX;
+	[SerializeField] float hotspotEastY;
+	
 	public event OnStateAnimComplete stateFinishCallback;
 	public event OnStateAnimEvent stateEventCallback;
 	
@@ -115,6 +119,28 @@ public class UnitSpriteController : MonoBehaviour {
 				mReverse = value;
 				sprite.ClipFps = mReverse ? Mathf.Abs(sprite.ClipFps)*-1.0f : Mathf.Abs(sprite.ClipFps);
 				ApplyCurState();
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Gets the hotspot in local space based on Dir.
+	/// </summary>
+	public Vector2 hotspot {
+		get { 
+			//figure out based on direction
+			switch(mCurDir) {
+			case Dir.N:
+				return new Vector2(-hotspotEastY, hotspotEastX);
+				
+			case Dir.S:
+				return new Vector2(hotspotEastY, hotspotEastX);
+				
+			case Dir.W:
+				return new Vector2(-hotspotEastX, hotspotEastY);
+				
+			default:
+				return new Vector2(hotspotEastX, hotspotEastY);
 			}
 		}
 	}
@@ -239,6 +265,13 @@ public class UnitSpriteController : MonoBehaviour {
 		}
 	}
 	
+	void OnDrawGizmos() {
+		Vector2 pos = transform.position;
+		pos.x += hotspotEastX;
+		pos.y += hotspotEastY;
+		Gizmos.DrawIcon(pos, "hotspot_east", true);
+	}
+	
 	private AnimData GetCurAnimData() {
 		AnimData[] animDirs = mCurState != UnitSpriteState.NumState ? mAnim[(int)mCurState] : null;
 		if(animDirs != null) {
@@ -268,14 +301,15 @@ public class UnitSpriteController : MonoBehaviour {
 			
 			sprite.Play(mCurStopped ? dat.stopId : dat.moveId);
 			
-			//flip
-			hFlip = dat.horzFlipped;
+			//flip, if only 1 dir, assume animation is facing right
+			hFlip = mAnim[(int)mCurState].Length == 1 && mCurMoveDir.x < 0.0f ? !dat.horzFlipped : dat.horzFlipped;
 			vFlip = dat.vertFlipped;
 		}
 		else {
 			sprite.Play(mDefaultStateId);
 			
-			hFlip = false;
+			//assume animation is facing right
+			hFlip = mCurMoveDir.x < 0.0f;
 			vFlip = false;
 		}
 		

@@ -35,8 +35,15 @@ public class Projectile : EntityBase {
 	
 	public bool applyDirToUp;
 	
+	/*public bool oscillate;
+	public float oscillateForce;
+	public float oscillateDelay;*/
+	
 	private Vector2 mStartDir = Vector2.zero;
 	private Transform mSeek = null;
+	
+	//private Vector2 mOscillateDir;
+	//private bool mOscillateSwitch;
 	
 	public static Projectile Create(string typeName, Vector2 startPos, Vector2 dir, Transform toParent = null) {
 		Projectile ret = EntityManager.instance.Spawn<Projectile>(typeName, typeName, toParent, null);
