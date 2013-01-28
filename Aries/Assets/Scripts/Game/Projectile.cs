@@ -68,9 +68,11 @@ public class Projectile : EntityBase {
 	public override void Release() {
 		CancelInvoke();
 		
-		mover.body.velocity = Vector3.zero;
+		if(mover != null)
+			mover.body.velocity = Vector3.zero;
 		
-		collider.enabled = false;
+		if(collider != null)
+			collider.enabled = false;
 		
 		base.Release();
 	}
@@ -78,7 +80,8 @@ public class Projectile : EntityBase {
 	protected override void Awake() {
 		base.Awake();
 		
-		collider.enabled = false;
+		if(collider != null)
+			collider.enabled = false;
 	}
 
 	// Use this for initialization
@@ -89,26 +92,32 @@ public class Projectile : EntityBase {
 	
 	public override void SpawnFinish ()
 	{
-		Invoke("OnDecayEnd", decayDelay);
-	
-		collider.enabled = true;
-		
-		if(seekDelay > 0.0f) {
-			Invoke("OnSeekStart", seekDelay);
+		if(decayDelay == 0) {
+			OnDecayEnd();
 		}
 		else {
-			state = EntityState.normal;
-		}
-		
-		//starting direction and force
-		if(mStartDir != Vector2.zero) {
-			//set force
-			rigidbody.AddForce(mStartDir*startForce);
-		}
-		
-		if(applyDirToUp) {
-			transform.up = mStartDir;
-			InvokeRepeating("OnUpUpdate", 0.1f, 0.1f);
+			Invoke("OnDecayEnd", decayDelay);
+			
+			if(collider != null)
+				collider.enabled = true;
+			
+			if(seekDelay > 0.0f) {
+				Invoke("OnSeekStart", seekDelay);
+			}
+			else {
+				state = EntityState.normal;
+			}
+			
+			//starting direction and force
+			if(rigidbody != null && mStartDir != Vector2.zero) {
+				//set force
+				rigidbody.AddForce(mStartDir*startForce);
+			}
+			
+			if(applyDirToUp) {
+				transform.up = mStartDir;
+				InvokeRepeating("OnUpUpdate", 0.1f, 0.1f);
+			}
 		}
 	}
 	
@@ -128,9 +137,10 @@ public class Projectile : EntityBase {
 		case EntityState.dying:
 			CancelInvoke();
 			
-			mover.body.velocity = Vector3.zero;
+			if(mover != null)
+				mover.body.velocity = Vector3.zero;
 			
-			if(explodeOnDeath) {
+			if(explodeOnDeath && explodeRadius > 0.0f) {
 				DoExplode();
 			}
 			
@@ -146,11 +156,12 @@ public class Projectile : EntityBase {
 			break;
 			
 		case ContactType.Stop:
-			mover.body.velocity = Vector3.zero;
+			if(mover != null)
+				mover.body.velocity = Vector3.zero;
 			break;
 			
 		case ContactType.Bounce:
-			if(collision.contacts.Length > 0) {
+			if(mover != null && collision.contacts.Length > 0) {
 				Vector2 normal = collision.contacts[0].normal;
 				Vector2 reflect = M8.Math.Reflect(mover.dir, normal);
 				Vector2 vel = mover.body.velocity;
@@ -178,7 +189,7 @@ public class Projectile : EntityBase {
 	}
 	
 	void OnUpUpdate() {
-		if(mover.dir != Vector2.zero) {
+		if(mover != null && mover.dir != Vector2.zero) {
 			transform.up = mover.dir;
 		}
 	}
@@ -186,7 +197,7 @@ public class Projectile : EntityBase {
 	void FixedUpdate() {
 		switch(state) {
 		case EntityState.seek:
-			if(mSeek != null) {
+			if(mover != null && mSeek != null) {
 				//steer torwards seek
 				Vector2 pos = transform.position;
 				Vector2 dest = mSeek.position;
@@ -209,8 +220,15 @@ public class Projectile : EntityBase {
 		}
 	}
 	
+	void OnDrawGizmos() {
+		Gizmos.color = Color.red;
+		Gizmos.DrawWireSphere(transform.position, explodeRadius);
+	}
+	
 	private void DoExplode() {
 		Vector3 pos = transform.position;
+		float explodeRadiusSqr = explodeRadius*explodeRadius;
+		float damageRange = maxDamage-minDamage;
 		
 		//TODO: spawn fx
 		
@@ -219,6 +237,13 @@ public class Projectile : EntityBase {
 		foreach(Collider col in cols) {
 			if(col != null && col.rigidbody != null) {
 				col.rigidbody.AddExplosionForce(explodeForce, pos, explodeRadius, 0.0f, ForceMode.Force);
+				
+				//hurt?
+				UnitEntity unit = col.GetComponent<UnitEntity>();
+				if(unit != null && unit.stats != null && unit.stats.CanBeHurtBy(damageType)) {
+					float distSqr = (col.transform.position - pos).sqrMagnitude;
+					unit.stats.curHP -= minDamage + damageRange*(1.0f - distSqr/explodeRadiusSqr);
+				}
 			}
 		}
 	}

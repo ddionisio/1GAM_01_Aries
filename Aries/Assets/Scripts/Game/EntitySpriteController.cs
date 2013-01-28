@@ -3,6 +3,7 @@ using System.Collections;
 
 public class EntitySpriteController : MonoBehaviour {
 	public float blinkDelay = 0.05f;
+	public bool disableOnAnimationEnd = false;
 	
 	protected tk2dBaseSprite mSprite;
 	protected tk2dAnimatedSprite mSpriteAnim;
@@ -24,6 +25,8 @@ public class EntitySpriteController : MonoBehaviour {
 	
 	protected void PlayAnim(EntityState s) {
 		if(mSpriteAnim != null) {
+			renderer.enabled = true;
+			
 			if(mStateAnimIds == null) {
 				mStateAnimIds = new int[(int)EntityState.NumState];
 				for(int i = 0; i < mStateAnimIds.Length; i++) {
@@ -44,10 +47,21 @@ public class EntitySpriteController : MonoBehaviour {
 		ent.releaseCallback += OnRelease;
 	}
 	
+	void OnDestroy() {
+		if(mSpriteAnim != null) {
+			mSpriteAnim.animationCompleteDelegate -= OnSpriteAnimComplete;
+		}
+	}
+	
 	void Awake() {
 		mSpriteBatcher = GetComponent<tk2dStaticSpriteBatcher>();
 		mSprite = GetComponent<tk2dBaseSprite>();
+		
 		mSpriteAnim = mSprite != null ? mSprite as tk2dAnimatedSprite : null;
+		
+		if(mSpriteAnim != null) {
+			mSpriteAnim.animationCompleteDelegate += OnSpriteAnimComplete;
+		}
 	}
 	
 	// Use this for initialization
@@ -87,6 +101,9 @@ public class EntitySpriteController : MonoBehaviour {
 			
 			mIsBlink = false;
 		}
+		
+		if(renderer != null)
+			renderer.enabled = true;
 	}
 	
 	void OnSetState(EntityBase ent, EntityState state) {
@@ -112,5 +129,10 @@ public class EntitySpriteController : MonoBehaviour {
 				mSprite.color = clr;
 			}
 		}
+	}
+	
+	void OnSpriteAnimComplete(tk2dAnimatedSprite spr, int clipId) {
+		if(disableOnAnimationEnd)
+			renderer.enabled = false;
 	}
 }

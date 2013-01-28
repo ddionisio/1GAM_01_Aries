@@ -25,6 +25,10 @@ public class StatBase : MonoBehaviour {
 	public bool CanDamage(StatBase target) {
 		return target == null || target.invulnerable || (target.immuneFlags & damageType) == (UnitDamageType)0;
 	}
+	
+	public bool CanBeHurtBy(UnitDamageType aType) {
+		return !invulnerable && (immuneFlags & aType) == (UnitDamageType)0;
+	}
 		
 	public virtual float damage {
 		get { return _damage; }
