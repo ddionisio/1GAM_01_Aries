@@ -6,5 +6,6 @@ public enum UnitDamageType {
 	Melee = 0x4,
 	Explosive = 0x8,
 	Curse = 0x10,
-	Heal = 0x20
+	Heal = 0x20,
+	Siege = 0x40
 }

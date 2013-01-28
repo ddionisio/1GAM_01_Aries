@@ -4,10 +4,11 @@ using System.Collections;
 public class MotionBase : MonoBehaviour {
 	public float maxSpeed = 20.0f; //meters/sec
 	
-	private Vector2 mDir = Vector2.right;
-	private Rigidbody mBody;
-	private float mCurSpeed;
+	protected Vector2 mDir = Vector2.right;
+	protected float mCurSpeed;
 	
+	private Rigidbody mBody;
+		
 	public Vector2 dir {
 		get { return mDir; }
 	}
@@ -18,6 +19,10 @@ public class MotionBase : MonoBehaviour {
 	
 	public float curSpeed {
 		get { return mCurSpeed; }
+	}
+	
+	public virtual void ResetData() {
+		mBody.velocity = Vector3.zero;
 	}
 	
 	protected virtual void Awake() {

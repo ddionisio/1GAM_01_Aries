@@ -23,6 +23,19 @@ public class UnitEntity : EntityBase {
 	public ActionTarget actionTarget { get { return mActTarget; } }
 	public UnitSpriteController spriteControl { get { return mSpriteControl; } }
 	public Weapon weapon { get { return mWeapon; } }
+	
+	public Player owner {
+		get {
+			if(mFlockUnit != null) {
+				int index = ((int)mFlockUnit.type) - Player.playerIndOfs;
+				if(index >= 0 && index < Player.playerCount) {
+					return Player.GetPlayer(index);
+				}
+			}
+			
+			return null;
+		}
+	}
 			
 	protected override void Awake() {
 		base.Awake();
@@ -170,12 +183,6 @@ public class UnitEntity : EntityBase {
 		//add to group
 		//remove from group if it still exists
 		if(mFlockUnit != null) {
-			mFlockUnit.enabled = true;
-			mFlockUnit.groupMoveEnabled = true;
-			mFlockUnit.catchUpEnabled = true;
-			mFlockUnit.minMoveTargetDistance = 0.0f;
-			mFlockUnit.sensor.collider.enabled = true;
-			
 			FlockGroup grp = FlockGroup.GetGroup(mFlockUnit.type);
 			if(grp != null) {
 				grp.AddUnit(mFlockUnit);
@@ -191,10 +198,7 @@ public class UnitEntity : EntityBase {
 				grp.RemoveUnit(mFlockUnit, null);
 			}
 			
-			mFlockUnit.body.velocity = Vector3.zero;
-			mFlockUnit.moveTarget = null;
-			mFlockUnit.sensor.collider.enabled = false;
-			mFlockUnit.sensor.items.Clear();
+			mFlockUnit.ResetData();
 		}
 	}
 }

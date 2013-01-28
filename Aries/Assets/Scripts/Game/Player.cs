@@ -5,17 +5,18 @@ public class Player : EntityBase {
 	public GameObject summonDisplay;
 	public GameObject unsummonDisplay;
 	
-	private const int playerIndOfs = (int)FlockType.PlayerOneUnits;
-	private static Player[] mPlayers = new Player[(int)(FlockType.PlayerFourUnits-FlockType.PlayerOneUnits)+1];
+	public const int playerIndOfs = (int)FlockType.PlayerOneUnits;
+	public const int playerCount = (int)(FlockType.PlayerFourUnits-FlockType.PlayerOneUnits)+1;
+	private static Player[] mPlayers = new Player[playerCount];
 	
 	private PlayerController mControl;
 	private UnitSpriteController mSprite;
 	private PlayerStat mPlayerStats;
 	
-	public Player GetPlayer(int index) {
+	public static Player GetPlayer(int index) {
 		return mPlayers[index];
 	}
-	
+			
 	public PlayerStat stats {
 		get { return mPlayerStats; }
 	}

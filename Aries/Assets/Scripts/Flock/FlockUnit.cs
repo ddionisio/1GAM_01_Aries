@@ -99,7 +99,22 @@ public class FlockUnit : MotionBase {
 		get { return mMoveTargetDir; }
 	}
 	
-	void OnDestroy() {
+	public override void ResetData() {
+		enabled = true;
+		
+		wanderEnabled = false;
+		groupMoveEnabled = true;
+		catchUpEnabled = true;
+		minMoveTargetDistance = 0.0f;
+		moveTarget = null;
+		
+		sensor.enabled = true;
+		sensor.items.Clear();
+		
+		base.ResetData();
+	}
+	
+	protected virtual void OnDestroy() {
 		mSeek.pathCallback -= OnSeekPathComplete;
 	}
 		
@@ -119,7 +134,7 @@ public class FlockUnit : MotionBase {
 		mPathRadiusSqr = pathRadius*pathRadius;
 	}
 	
-	void Update() {
+	protected virtual void Update() {
 		Vector3 pos = transform.position;
 		
 		//check current pathing
