@@ -83,6 +83,7 @@ public class PlayerController : MotionBase {
 						FlockActionController listener = unit.listener as FlockActionController;
 						if(listener != null) {
 							listener.autoAttack = mAutoAttack;
+							listener.autoSpell = mAutoAttack;
 						}
 					}
 				}
@@ -395,7 +396,6 @@ public class PlayerController : MotionBase {
 	
 	void InputRecall(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
-			//autoAttack = !autoAttack;
 			RecallUnits();
 		}
 	}
@@ -408,6 +408,7 @@ public class PlayerController : MotionBase {
 			
 			if(actionListen != null) {
 				actionListen.autoAttack = autoAttack;
+				actionListen.autoSpell = autoAttack;
 				
 				actionListen.defaultTarget = followAction;
 				actionListen.leader = transform;

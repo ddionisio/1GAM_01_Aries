@@ -15,7 +15,12 @@ public class UnitEntity : EntityBase {
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam;
 	
+	private SpellCaster mSpellCaster;
+	
 	private float mAttackCosTheta;
+	
+	//just one for now
+	protected SpellInstance mSpells;
 	
 	public UnitStat stats { get { return mStats; } }
 	public FlockUnit flockUnit { get { return mFlockUnit; } }
@@ -23,6 +28,7 @@ public class UnitEntity : EntityBase {
 	public ActionTarget actionTarget { get { return mActTarget; } }
 	public UnitSpriteController spriteControl { get { return mSpriteControl; } }
 	public Weapon weapon { get { return mWeapon; } }
+	public SpellCaster spellCaster { get { return mSpellCaster; } }
 	
 	public Player owner {
 		get {
@@ -36,6 +42,18 @@ public class UnitEntity : EntityBase {
 			return null;
 		}
 	}
+	
+	///<summary>check to see if this unit is suseptible to given spell</summary>
+	public bool SpellCheck(SpellBase spell) {
+		return (stats == null 
+			&& spell.harm ? (!stats.invulnerable && stats.CanBeHurtBy(UnitDamageType.Curse)) : stats.CanBeHurtBy(UnitDamageType.Miracle));
+	}
+	
+	public void SpellAdd(SpellBase spell) {
+		mSpells.Stop(this);
+		
+		mSpells = new SpellInstance(this, spell);
+	}
 			
 	protected override void Awake() {
 		base.Awake();
@@ -46,6 +64,7 @@ public class UnitEntity : EntityBase {
 		mActTarget = GetComponentInChildren<ActionTarget>();
 		mSpriteControl = GetComponentInChildren<UnitSpriteController>();
 		mWeapon = GetComponentInChildren<Weapon>();
+		mSpellCaster = GetComponentInChildren<SpellCaster>();
 		
 		//hook calls up
 		mStats.statChangeCallback += OnStatChange;
@@ -73,6 +92,9 @@ public class UnitEntity : EntityBase {
 	}
 	
 	public override void Release() {
+		//clear out debuffs
+		mSpells.Stop(this);
+		
 		ClearData();
 		
 		mStats.ResetStats();
@@ -92,6 +114,8 @@ public class UnitEntity : EntityBase {
 		if(!doSpawnOnWake) {
 			SpawnFinish();
 		}
+		
+		mSpells.Resume(this);
 		
 		base.ActivatorWakeUp();
 	}
@@ -156,6 +180,11 @@ public class UnitEntity : EntityBase {
 		if(mWeapon != null) {
 			mWeaponParam.seek = null;
 			mWeapon.Release();
+		}
+		
+		if(mSpellCaster != null) {
+			mSpellCaster.Cancel();
+			mSpellCaster.ClearCallbacks();
 		}
 		
 		if(mListener != null) {

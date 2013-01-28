@@ -1,0 +1,13 @@
+[
+	{
+		"name":"sheepSlow",
+		"cooldown":3,
+		"castDelay":1,
+		"data": {
+			"$type":"SpellSlow",
+			"duration":2.5,
+			"harm":true,
+			"icon":"Slow"
+		}
+	}
+]

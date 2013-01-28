@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class StatBase : MonoBehaviour {
 	public delegate void OnStatChange(StatBase stat);
@@ -18,6 +19,8 @@ public class StatBase : MonoBehaviour {
 	[System.NonSerialized] public bool invulnerable = false;
 	
 	protected float mCurHP;
+	
+	//TODO: stat modifier for debuffs and buffs
 	
 	/// <summary>
 	/// Determines whether this instance can damage the specified target.

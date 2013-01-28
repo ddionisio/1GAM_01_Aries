@@ -147,6 +147,10 @@ public class ActionListener : MonoBehaviour {
 		return true;
 	}
 	
+	public virtual bool CheckSpellRange() {
+		return true;
+	}
+	
 	protected virtual void OnActionEnter() {
 	}
 	
