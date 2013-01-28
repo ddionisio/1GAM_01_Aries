@@ -33,7 +33,7 @@ public class PlayerController : MotionBase {
 	private Player mPlayer;
 	
 	private UnitType[] mTypeSummons = {
-		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepCarrier, UnitType.sheepHexer };
+		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepAssault, UnitType.sheepHexer };
 	
 	private ActMode mCurActMode = ActMode.Normal;
 	private int mCurSummonInd = 0;

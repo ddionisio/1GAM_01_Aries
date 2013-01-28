@@ -24,6 +24,10 @@ public class Jump : FlockUnit {
 	private float mJumpDelay;
 	private float mSpriteStartY;
 	
+	public bool isJumping {
+		get { return mJumping; }
+	}
+	
 	public bool JumpToTarget() {
 		ActionListener listener = GetComponent<ActionListener>();
 		if(listener != null && listener.currentTarget != null) {
@@ -31,6 +35,12 @@ public class Jump : FlockUnit {
 		}
 		
 		return false;
+	}
+	
+	public override void Stop() {
+		JumpReset();
+		
+		base.Stop();
 	}
 	
 	public override void ResetData() {
@@ -55,12 +65,13 @@ public class Jump : FlockUnit {
 					spriteCtrl.state = jumpDownState;
 				}
 				
-				Vector3 sprPos = spriteCtrl.sprite.transform.position;
+				Vector3 sprPos = spriteCtrl.sprite.transform.localPosition;
 				sprPos.y = mSpriteStartY + Mathf.Sin(Mathf.PI*t)*height;
-				spriteCtrl.sprite.transform.position = sprPos;
+				spriteCtrl.sprite.transform.localPosition = sprPos;
 				
-				Vector2 pos = mDir*speed*Time.deltaTime;
-				transform.position = new Vector3(pos.x, pos.y, transform.position.z);
+				Vector3 pos = transform.position;
+				Vector2 dpos = mDir*speed*Time.deltaTime;
+				transform.position = new Vector3(pos.x+dpos.x, pos.y+dpos.y, pos.z);
 			}
 			else {
 				transform.position = new Vector3(mDest.x, mDest.y, transform.position.z);
@@ -94,10 +105,12 @@ public class Jump : FlockUnit {
 			float dist = mDir.magnitude;
 			
 			if(dist > 0.0f) {
+				body.velocity = Vector3.zero;
+				
 				mDir /= dist;
 				mCurSpeed = speed;
 				
-				mSpriteStartY = spriteCtrl.sprite.transform.position.y;
+				mSpriteStartY = spriteCtrl.sprite.transform.localPosition.y;
 				
 				mStartJumpTime = Time.time;
 				mJumpDelay = dist/speed;
@@ -119,9 +132,9 @@ public class Jump : FlockUnit {
 	
 	private void JumpReset() {
 		if(mJumping) {
-			Vector3 p = spriteCtrl.sprite.transform.position;
+			Vector3 p = spriteCtrl.sprite.transform.localPosition;
 			p.y = mSpriteStartY;
-			spriteCtrl.sprite.transform.position = p;
+			spriteCtrl.sprite.transform.localPosition = p;
 			
 			body.isKinematic = false;
 			collider.enabled = true;

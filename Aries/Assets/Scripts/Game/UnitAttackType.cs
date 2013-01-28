@@ -1,5 +1,8 @@
 public enum UnitAttackType {
 	Melee,
 	Range,
-	Siege
+	Siege,
+	Debuff,
+	Buff,
+	Heal
 }

@@ -99,6 +99,11 @@ public class FlockUnit : MotionBase {
 		get { return mMoveTargetDir; }
 	}
 	
+	public virtual void Stop() {
+		moveTarget = null;
+		minMoveTargetDistance = 0.0f;
+	}
+	
 	public override void ResetData() {
 		enabled = true;
 		

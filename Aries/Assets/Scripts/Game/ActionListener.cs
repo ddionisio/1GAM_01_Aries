@@ -6,8 +6,6 @@ public class ActionListener : MonoBehaviour {
 	public delegate void Callback(ActionListener listen);
 	public delegate void CollisionCallback(ActionListener listen, ContactPoint info);
 	
-	public bool stopOnExit = false;
-	
 	public event Callback enterCallback;
 	public event CollisionCallback hitEnterCallback;
 	public event Callback hitExitCallback;

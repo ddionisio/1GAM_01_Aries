@@ -85,7 +85,8 @@ public class FlockActionController : ActionListener {
 			flockUnit.moveTarget = currentTarget.transform;
 			flockUnit.minMoveTargetDistance = attackMinRange;
 			
-			StartCoroutine("ReturnToLeader");
+			if(gameObject.activeInHierarchy)
+				StartCoroutine("ReturnToLeader");
 			
 			//no need to constantly check
 			if(attackSensor != null) {
@@ -97,7 +98,8 @@ public class FlockActionController : ActionListener {
 		case ActionType.Follow:
 			flockUnit.moveTarget = currentTarget.target;
 			
-			StartCoroutine("FollowStop");
+			if(gameObject.activeInHierarchy)
+				StartCoroutine("FollowStop");
 			break;
 			
 		default:
@@ -111,8 +113,7 @@ public class FlockActionController : ActionListener {
 	
 	protected override void OnActionFinish() {
 		//do something
-		flockUnit.moveTarget = null;
-		flockUnit.minMoveTargetDistance = 0.0f;
+		flockUnit.Stop();
 		
 		mTargetMotion = null;
 		
@@ -158,7 +159,7 @@ public class FlockActionController : ActionListener {
 		float radiusMoveBackSqr = attackLeaderRadius*attackLeaderRadius;
 		
 		//attackCancelDelay
-		while(currentTarget != null && currentTarget != defaultTarget && leader != null) {
+		while(!lockAction && currentTarget != null && currentTarget != defaultTarget && leader != null) {
 			yield return new WaitForSeconds(attackCancelDelay);
 			
 			Vector2 pos = transform.position;
@@ -168,7 +169,7 @@ public class FlockActionController : ActionListener {
 			if(distSqr > radiusCancelSqr) {
 				StopAction(ActionTarget.Priority.High, true);
 			}
-			else if(distSqr > radiusMoveBackSqr) {
+			else if(distSqr > radiusMoveBackSqr && !lockAction) {
 				flockUnit.moveTarget = leader;
 			}
 			else {

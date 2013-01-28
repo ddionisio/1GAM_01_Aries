@@ -2,7 +2,7 @@
 public enum UnitType {
 	sheepMelee,
 	sheepRange,
-	sheepCarrier,
+	sheepAssault,
 	sheepHexer,
 	
 	enemyMelee,

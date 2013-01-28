@@ -8,7 +8,7 @@
 		"resource":15
 	},
 	{
-		"type":"sheepCarrier",
+		"type":"sheepAssault",
 		"resource":20
 	},
 	{

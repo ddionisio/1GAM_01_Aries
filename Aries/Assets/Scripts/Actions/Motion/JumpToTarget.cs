@@ -4,7 +4,7 @@ using HutongGames.PlayMaker;
 namespace Game.Actions {
 	[ActionCategory("Game")]
 	[Tooltip("Jump to target.")]
-	public class JumpEnable : FSMActionComponentBase<Jump>
+	public class JumpToTarget : FSMActionComponentBase<Jump>
 	{
 		public FsmEvent finish;
 		
@@ -21,11 +21,14 @@ namespace Game.Actions {
 			
 			Jump m = mComp;
 			if(m != null) {
-				if(m.JumpToTarget()) {
-					m.jumpFinishCallback += JumpFinish;
-				}
-				else {
-					JumpFinish();
+				m.jumpFinishCallback += JumpFinish;
+				
+				//we are already jumping, wait for it to finish
+				if(!m.isJumping) {
+					if(!m.JumpToTarget()) {
+						//failed to jump for some reason?
+						JumpFinish();
+					}
 				}
 			}
 			else {
