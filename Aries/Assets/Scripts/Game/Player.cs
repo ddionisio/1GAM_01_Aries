@@ -12,9 +12,35 @@ public class Player : EntityBase {
 	private PlayerController mControl;
 	private UnitSpriteController mSprite;
 	private PlayerStat mPlayerStats;
+	private HUDPlayer mHUD;
 	
 	public static Player GetPlayer(int index) {
 		return mPlayers[index];
+	}
+	
+	public static Player GetPlayer(FlockType grp) {
+		return mPlayers[GroupToIndex(grp)];
+	}
+	
+	public static int GroupToIndex(FlockType grp) {
+		return ((int)grp) - Player.playerIndOfs;
+	}
+	
+	public int index {
+		get { 
+			if(mPlayerStats != null) {
+				int index = GroupToIndex(mPlayerStats.flockGroup);
+				if(index >= 0 && index < Player.playerCount) {
+					return index;
+				}
+			}
+			
+			return -1;
+		}
+	}
+	
+	public HUDPlayer hud {
+		get { return mHUD; }
 	}
 			
 	public PlayerStat stats {
@@ -30,6 +56,11 @@ public class Player : EntityBase {
 		mControl.CancelRecall();
 		mControl.followAction.StopAction();
 		mControl.ClearSummonQueue();
+		
+		if(mHUD != null) {
+			mHUD.DeInit();
+			mHUD = null;
+		}
 		
 		base.Release();
 	}
@@ -133,6 +164,11 @@ public class Player : EntityBase {
 		
 		if(summonDisplay != null) summonDisplay.SetActive(false);
 		if(unsummonDisplay != null) unsummonDisplay.SetActive(false);
+		
+		mHUD = HUDInterface.instance.GetHUDPlayer(this);
+		if(mHUD != null) {
+			mHUD.Init(this);
+		}
 	}
 	
 	void LateUpdate () {

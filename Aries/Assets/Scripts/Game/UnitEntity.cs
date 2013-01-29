@@ -32,7 +32,7 @@ public class UnitEntity : EntityBase {
 	public Player owner {
 		get {
 			if(mFlockUnit != null) {
-				int index = ((int)mFlockUnit.type) - Player.playerIndOfs;
+				int index = Player.GroupToIndex(mFlockUnit.type);
 				if(index >= 0 && index < Player.playerCount) {
 					return Player.GetPlayer(index);
 				}

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class HUDInterface : MonoBehaviour {
+	public HUDPlayer[] playerHUDs;
 	
 	private static HUDInterface mInstance;
 	
@@ -9,6 +10,10 @@ public class HUDInterface : MonoBehaviour {
 		get { return mInstance; }
 	}
 	
+	public HUDPlayer GetHUDPlayer(Player player) {
+		return playerHUDs[player.index];
+	}
+		
 	void OnDestroy() {
 		mInstance = null;
 	}
@@ -21,10 +26,4 @@ public class HUDInterface : MonoBehaviour {
 	void Start () {
 		
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-	
 }

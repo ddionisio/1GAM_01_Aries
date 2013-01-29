@@ -30,6 +30,16 @@ public class PlayerStat : StatBase {
 		}
 	}
 	
+	public float curResourceScale {
+		get {
+			if(Main.instance != null) {
+				return Main.instance.userData.resources/maxResource;
+			}
+			
+			return 0.0f;
+		}
+	}
+	
 	public void InitResource() {
 		if(curResource < minResource) {
 			curResource = minResource;

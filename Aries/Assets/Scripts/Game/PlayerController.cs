@@ -2,6 +2,109 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+public struct SummonSlot {
+	public UnitConfig.Data data;
+	
+	private float curTime;
+	private int numQueueSummon;
+	
+	public bool isReady { get { return curTime >= data.summonCooldown; } }
+	
+	public float cooldownScale { get { return curTime >= data.summonCooldown ? 1.0f : curTime/data.summonCooldown; } }
+	
+	public int GetNumSummonable(FlockType flock) {
+		if(data != null) {
+			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(flock);
+			return data.summonMax - grp.GetUnitCountByType(data.type) - numQueueSummon;
+		}
+		
+		return 0;
+	}
+	
+	//call this to subtract 1 after being able to summon in queue
+	public void UpdateSummonQueueAmount(int amt) {
+		numQueueSummon += amt;
+		if(numQueueSummon < 0)
+			numQueueSummon = 0;
+	}
+	
+	public bool CanSummon(PlayerStat stat) {
+		int available = GetNumSummonable(stat.flockGroup);
+		
+		int numSummonable = available > data.summonAmount ? data.summonAmount : available;
+		
+		if(numSummonable > 0) {
+			float cost = data.resource*((float)numSummonable);
+			
+			//adjust cost and summon amount if too expensive
+			if(cost > stat.curResource) {
+				return Mathf.FloorToInt(stat.curResource/data.resource) > 0;
+			}
+			else {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/// <summary>
+	/// Computes number of summons to make and subtract the resource from stat. returns 0 if can't afford.
+	/// </summary>
+	public int ApplySummon(PlayerStat stat) {
+		if(isReady) {
+			int available = GetNumSummonable(stat.flockGroup);
+			
+			int numSummonable = available > data.summonAmount ? data.summonAmount : available;
+			
+			float cost = data.resource*((float)numSummonable);
+			
+			//adjust cost and summon amount if too expensive
+			if(cost > stat.curResource) {
+				numSummonable = Mathf.FloorToInt(stat.curResource/data.resource);
+				cost = data.resource*((float)numSummonable);
+			}
+			
+			if(numSummonable > 0) {
+				//assumes there's nothing that will cancel the summon queue while player is alive
+				stat.curResource -= cost;
+				
+				UpdateSummonQueueAmount(numSummonable);
+				
+				curTime = 0;
+				
+				return numSummonable;
+			}
+		}
+		
+		return 0;
+	}
+	
+	public void Update(PlayerStat stat, HUDUnitSlot hudSlot) {
+		if(curTime < data.summonCooldown) {
+			curTime += Time.deltaTime;
+			
+			hudSlot.UpdateCooldown(1.0f-cooldownScale);
+			
+			hudSlot.SetAvailable(false);
+		}
+		else {
+			hudSlot.SetAvailable(CanSummon(stat));
+		}
+	}
+	
+	public void Reset() {
+		curTime = data.summonCooldown;
+		numQueueSummon = 0;
+	}
+	
+	//call during start
+	public void Init(UnitType type) {
+		data = UnitConfig.GetData(type);
+		Reset();
+	}
+}
+
 public class PlayerController : MotionBase {
 	public const int numSlots = 4;
 	
@@ -29,77 +132,6 @@ public class PlayerController : MotionBase {
 		UnSummon
 	}
 	
-	private struct SummonSlot {
-		public UnitConfig.Data data;
-		
-		private float curTime;
-		private int numQueueSummon;
-		
-		public bool isReady { get { return curTime >= data.summonCooldown; } }
-		
-		public float cooldownScale { get { return curTime >= data.summonCooldown ? 1.0f : curTime/data.summonCooldown; } }
-		
-		public int GetNumSummonable(FlockType flock) {
-			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(flock);
-			return data.summonMax - grp.GetUnitCountByType(data.type) - numQueueSummon;
-		}
-		
-		//call this to subtract 1 after being able to summon in queue
-		public void UpdateSummonQueueAmount(int amt) {
-			numQueueSummon += amt;
-			if(numQueueSummon < 0)
-				numQueueSummon = 0;
-		}
-		
-		/// <summary>
-		/// Computes number of summons to make and subtract the resource from stat. returns 0 if can't afford.
-		/// </summary>
-		public int ApplySummon(PlayerStat stat) {
-			if(isReady) {
-				int available = GetNumSummonable(stat.flockGroup);
-				
-				int numSummonable = available > data.summonAmount ? data.summonAmount : available;
-				
-				float cost = data.resource*((float)numSummonable);
-				
-				//adjust cost and summon amount if too expensive
-				if(cost > stat.curResource) {
-					numSummonable = Mathf.FloorToInt(stat.curResource/data.resource);
-					cost = data.resource*((float)numSummonable);
-				}
-				
-				if(numSummonable > 0) {
-					//assumes there's nothing that will cancel the summon queue while player is alive
-					stat.curResource -= cost;
-					
-					UpdateSummonQueueAmount(numSummonable);
-					
-					curTime = 0;
-					
-					return numSummonable;
-				}
-			}
-			
-			return 0;
-		}
-		
-		public void Update() {
-			if(curTime < data.summonCooldown)
-				curTime += Time.deltaTime;
-		}
-		
-		public void Reset() {
-			curTime = data.summonCooldown;
-			numQueueSummon = 0;
-		}
-		
-		//call during start
-		public void Init(UnitType type) {
-			data = UnitConfig.GetData(type);
-			Reset();
-		}
-	}
-	
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam = new Weapon.RepeatParam();
 	
@@ -119,6 +151,10 @@ public class PlayerController : MotionBase {
 	private List<ActionTarget> mTargetHolder = new List<ActionTarget>(10);
 	
 	private bool mAutoAttack = true;
+	
+	public SummonSlot[] summonSlots {
+		get { return mTypeSummons; }
+	}
 	
 	public Player player {
 		get { return mPlayer; }
@@ -296,8 +332,8 @@ public class PlayerController : MotionBase {
 			}
 		}
 		
-		foreach(SummonSlot slot in mTypeSummons) {
-			slot.Update();
+		for(int i = 0; i < mTypeSummons.Length; i++) {
+			mTypeSummons[i].Update(mPlayer.stats, mPlayer.hud.unitSlots[i]);
 		}
 	}
 	
