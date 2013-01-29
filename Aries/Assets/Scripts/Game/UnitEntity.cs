@@ -53,9 +53,11 @@ public class UnitEntity : EntityBase {
 	
 	public void SpellAdd(SpellBase spell) {
 		SpellRemoveDead();
-		mSpells.Add(spell.Start(this));
-		if(mSpells.Count > 1)
-			Debug.LogWarning("more than one spell? spell count: "+mSpells.Count);
+		if(mSpells.FindIndex(x => x.IsSpellMatch(spell)) == -1) {
+			mSpells.Add(spell.Start(this));
+			if(mSpells.Count > 1)
+				Debug.LogWarning("more than one spell? spell count: "+mSpells.Count);
+		}
 	}
 	
 	public void SpellRemoveDead() {

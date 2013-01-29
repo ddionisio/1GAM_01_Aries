@@ -114,6 +114,8 @@ public class FlockActionController : ActionListener {
 			//no need to constantly check
 			if(attackSensor != null) {
 				attackSensor.enabled = false;
+				
+				flockUnit.minMoveTargetDistance = attackSensor.minRange;
 			}
 			
 			if(spellSensor != null) {
@@ -186,8 +188,6 @@ public class FlockActionController : ActionListener {
 			ActionTarget target = unit.actionTarget;
 			if(target != null && target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
 				currentTarget = target;
-				
-				flockUnit.minMoveTargetDistance = attackSensor.minRange;
 			}
 		}
 	}
@@ -197,8 +197,6 @@ public class FlockActionController : ActionListener {
 			ActionTarget target = unit.actionTarget;
 			if(target != null && target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
 				currentTarget = target;
-				
-				flockUnit.minMoveTargetDistance = 0.0f;
 			}
 		}
 	}

@@ -64,8 +64,6 @@ public class Player : EntityBase {
 		
 		CameraController camCtrl = CameraController.instance;
 		camCtrl.attachTo = transform;
-		
-		mPlayerStats.InitResource();
 	}
 	
 	protected override void StateChanged() {
@@ -83,6 +81,8 @@ public class Player : EntityBase {
 		switch(state) {
 		case EntityState.spawning:
 			mPlayerStats.InitResource();
+			
+			mSprite.state = UnitSpriteState.Move;
 			break;
 			
 		case EntityState.normal:
@@ -125,6 +125,8 @@ public class Player : EntityBase {
 	}
 	
 	protected override void SpawnStart () {
+		mPlayerStats.InitResource();
+		
 		state = EntityState.normal;
 		
 		mControl.SpawnStart();
