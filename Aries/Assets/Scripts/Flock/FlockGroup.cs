@@ -27,8 +27,8 @@ public class FlockGroup : MonoBehaviour {
 	}
 	
 	//only call this after awake
-	public static FlockGroup GetGroup(FlockType type) {
-		return mGroups[(int)type];
+	public static FlockGroup GetGroup(FlockType aType) {
+		return mGroups[(int)aType];
 	}
 	
 	public void AddUnit(FlockUnit unit) {

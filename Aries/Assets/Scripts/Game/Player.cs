@@ -29,6 +29,7 @@ public class Player : EntityBase {
 		mControl.CancelActions();
 		mControl.CancelRecall();
 		mControl.followAction.StopAction();
+		mControl.ClearSummonQueue();
 		
 		base.Release();
 	}
@@ -113,6 +114,8 @@ public class Player : EntityBase {
 			break;
 					
 		case EntityState.dying:
+			mControl.ClearSummonQueue();
+			
 			if(mSprite != null)
 				mSprite.state = UnitSpriteState.Die;
 			

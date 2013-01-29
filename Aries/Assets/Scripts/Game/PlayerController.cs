@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class PlayerController : MotionBase {
+	public const int numSlots = 4;
+	
 	public float force;
 	
 	public ActionTarget followAction;
@@ -27,20 +29,92 @@ public class PlayerController : MotionBase {
 		UnSummon
 	}
 	
+	private struct SummonSlot {
+		public UnitConfig.Data data;
+		
+		private float curTime;
+		private int numQueueSummon;
+		
+		public bool isReady { get { return curTime >= data.summonCooldown; } }
+		
+		public float cooldownScale { get { return curTime >= data.summonCooldown ? 1.0f : curTime/data.summonCooldown; } }
+		
+		public int GetNumSummonable(FlockType flock) {
+			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(flock);
+			return data.summonMax - grp.GetUnitCountByType(data.type) - numQueueSummon;
+		}
+		
+		//call this to subtract 1 after being able to summon in queue
+		public void UpdateSummonQueueAmount(int amt) {
+			numQueueSummon += amt;
+			if(numQueueSummon < 0)
+				numQueueSummon = 0;
+		}
+		
+		/// <summary>
+		/// Computes number of summons to make and subtract the resource from stat. returns 0 if can't afford.
+		/// </summary>
+		public int ApplySummon(PlayerStat stat) {
+			if(isReady) {
+				int available = GetNumSummonable(stat.flockGroup);
+				
+				int numSummonable = available > data.summonAmount ? data.summonAmount : available;
+				
+				float cost = data.resource*((float)numSummonable);
+				
+				//adjust cost and summon amount if too expensive
+				if(cost > stat.curResource) {
+					numSummonable = Mathf.FloorToInt(stat.curResource/data.resource);
+					cost = data.resource*((float)numSummonable);
+				}
+				
+				if(numSummonable > 0) {
+					//assumes there's nothing that will cancel the summon queue while player is alive
+					stat.curResource -= cost;
+					
+					UpdateSummonQueueAmount(numSummonable);
+					
+					curTime = 0;
+					
+					return numSummonable;
+				}
+			}
+			
+			return 0;
+		}
+		
+		public void Update() {
+			if(curTime < data.summonCooldown)
+				curTime += Time.deltaTime;
+		}
+		
+		public void Reset() {
+			curTime = data.summonCooldown;
+			numQueueSummon = 0;
+		}
+		
+		//call during start
+		public void Init(UnitType type) {
+			data = UnitConfig.GetData(type);
+			Reset();
+		}
+	}
+	
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam = new Weapon.RepeatParam();
 	
 	private Player mPlayer;
 	
-	private UnitType[] mTypeSummons = {
-		UnitType.sheepMelee, UnitType.sheepRange, UnitType.sheepAssault, UnitType.sheepHexer };
+	private SummonSlot[] mTypeSummons = new SummonSlot[numSlots];
+	
+	private Queue<UnitType> mSummonQueue = new Queue<UnitType>(50);
 	
 	private ActMode mCurActMode = ActMode.Normal;
 	private int mCurSummonInd = 0;
 	
 	private PlayerCursor mCursor;
 	
-	private UnitEntity mCurSummonUnit = null;
+	private UnitEntity mCurUnSummonUnit = null;
 	
 	private List<ActionTarget> mTargetHolder = new List<ActionTarget>(10);
 	
@@ -107,6 +181,10 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
+	public void ClearSummonQueue() {
+		mSummonQueue.Clear();
+	}
+	
 	public void SpawnStart() {
 		recallSprite.SetActive(false);
 		attackSprite.SetActive(false);
@@ -116,6 +194,10 @@ public class PlayerController : MotionBase {
 		}
 		
 		mAutoAttack = true;
+		
+		foreach(SummonSlot slot in mTypeSummons) {
+			slot.Reset();
+		}
 	}
 	
 	void OnDestroy() {
@@ -153,8 +235,6 @@ public class PlayerController : MotionBase {
 		mPlayer = GetComponentInChildren<Player>();
 		
 		attackSensor.unitAddRemoveCallback += OnAttackSensorUnitChange;
-		
-		SpawnStart();
 	}
 	
 	// Use this for initialization
@@ -179,6 +259,14 @@ public class PlayerController : MotionBase {
 		if(mCursor != null) {
 			mCursor.origin = transform;
 		}
+		
+		//TODO: get config from user data
+		mTypeSummons[0].Init(UnitType.sheepMelee);
+		mTypeSummons[1].Init(UnitType.sheepRange);
+		mTypeSummons[2].Init(UnitType.sheepAssault);
+		mTypeSummons[3].Init(UnitType.sheepHexer);
+		
+		SpawnStart();
 	}
 	
 	void OnApplicationFocus(bool focus) {
@@ -189,13 +277,27 @@ public class PlayerController : MotionBase {
 	
 	void Update() {
 		switch(mCurActMode) {
-		case ActMode.Summon:
 		case ActMode.UnSummon:
-			if(mCurSummonInd != -1 && mCurSummonUnit == null) {
-				//keep finding a unit to summon/unsummon
-				GrabSummonUnit();
+			if(mCurSummonInd != -1 && mCurUnSummonUnit == null) {
+				//keep finding a unit to unsummon
+				GrabUnSummonUnit();
 			}
 			break;
+		}
+		
+		//keep summoning from queue
+		if(mSummonQueue.Count > 0) {
+			//attempt to summon on current area, and if success, 
+			//dequeue and update summon slot
+			UnitType unitType = mSummonQueue.Peek();
+			if(GrabSummonUnit(unitType)) {
+				mSummonQueue.Dequeue();
+				mTypeSummons[(int)unitType].UpdateSummonQueueAmount(-1);
+			}
+		}
+		
+		foreach(SummonSlot slot in mTypeSummons) {
+			slot.Update();
 		}
 	}
 	
@@ -347,6 +449,8 @@ public class PlayerController : MotionBase {
 		if(data.state == InputManager.State.Pressed) {
 			Debug.Log("summon: "+mCurSummonInd);
 			ApplySummon(ActMode.Summon);
+			
+			DoSummonFromCurrentSelect();
 		}
 		else if(mCurActMode == ActMode.Summon) {
 			Debug.Log("summon cancel: "+mCurSummonInd);
@@ -364,12 +468,13 @@ public class PlayerController : MotionBase {
 			ApplySummon(ActMode.Normal);
 		}
 	}
-	
+			
 	void InputSummonSelect(InputManager.Info data) {
 		if(data.state == InputManager.State.Pressed) {
 			int ind = data.index % mTypeSummons.Length;
-			if(mTypeSummons[ind] != UnitType.NumTypes) {
+			if(mTypeSummons[ind].data != null) {
 				mCurSummonInd = ind;
+				DoSummonFromCurrentSelect();
 			}
 		}
 	}
@@ -379,7 +484,7 @@ public class PlayerController : MotionBase {
 			mCurSummonInd = (mCurSummonInd-1)%mTypeSummons.Length;
 			
 			for(int i = 0; 
-				i < mTypeSummons.Length || mTypeSummons[mCurSummonInd] == UnitType.NumTypes; 
+				i < mTypeSummons.Length || mTypeSummons[mCurSummonInd].data == null; 
 				mCurSummonInd = (mCurSummonInd-1)%mTypeSummons.Length, i++);
 		}
 	}
@@ -389,7 +494,7 @@ public class PlayerController : MotionBase {
 			mCurSummonInd = (mCurSummonInd+1)%mTypeSummons.Length;
 			
 			for(int i = 0; 
-				i < mTypeSummons.Length || mTypeSummons[mCurSummonInd] == UnitType.NumTypes; 
+				i < mTypeSummons.Length || mTypeSummons[mCurSummonInd].data == null; 
 				mCurSummonInd = (mCurSummonInd+1)%mTypeSummons.Length, i++);
 		}
 	}
@@ -419,12 +524,6 @@ public class PlayerController : MotionBase {
 		else {
 			Debug.LogWarning("no unit?");
 		}
-		
-		UnitEntity ent = flockUnit.GetComponent<UnitEntity>();
-		if(mCurSummonUnit == ent) {
-			//check summoning
-			mCurSummonUnit = null;
-		}
 	}
 	
 	//unit is also about to be destroyed or released to entity manager
@@ -438,11 +537,11 @@ public class PlayerController : MotionBase {
 		UnitEntity ent = unit.GetComponent<UnitEntity>();
 		if(ent != null) {
 			//check unsummoning
-			if(mCurActMode == ActMode.UnSummon && mCurSummonUnit == ent) {
+			if(mCurActMode == ActMode.UnSummon && mCurUnSummonUnit == ent) {
 				//refund based on hp percent
 				mPlayer.stats.curResource += ent.stats.loveHPScale;
 				
-				mCurSummonUnit = null;
+				mCurUnSummonUnit = null;
 			}
 		}
 	}
@@ -500,14 +599,13 @@ public class PlayerController : MotionBase {
 				break;
 				
 			case ActMode.Summon:
-				mCurSummonUnit = null;
 				break;
 				
 			case ActMode.UnSummon:
 				//revert currently selected unsummon
-				if(mCurSummonUnit != null && !mCurSummonUnit.isReleased) {
-					mCurSummonUnit.FSM.SendEvent(EntityEvent.Resume);
-					mCurSummonUnit = null;
+				if(mCurUnSummonUnit != null && !mCurUnSummonUnit.isReleased) {
+					mCurUnSummonUnit.FSM.SendEvent(EntityEvent.Resume);
+					mCurUnSummonUnit = null;
 				}
 				break;
 			}
@@ -531,46 +629,44 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
-	private void GrabSummonUnit() {
+	private void DoSummonFromCurrentSelect() {
+		int numToQueue = mTypeSummons[mCurSummonInd].ApplySummon(mPlayer.stats);
+		if(numToQueue > 0) {
+			for(int i = 0; i < numToQueue; i++) {
+				mSummonQueue.Enqueue(mTypeSummons[mCurSummonInd].data.type);
+			}
+		}
+		else {
+			//TODO: player feedback (error sound)
+		}
+	}
+	
+	private bool GrabSummonUnit(UnitType unitType) {
+		//check if it's safe to summon on the spot
+		//summonRadius Physics.CheckSphere(transform.position, radius, layerMask)
+		Vector2 pos = transform.position;
+		pos += Random.insideUnitCircle*summonRadius;
+		if(!Physics.CheckSphere(pos, cursor.radius, summonLayerCheck.value)) {
+			string typeName = unitType.ToString();
+			EntityManager entMgr = EntityManager.instance;
+			UnitEntity ent = entMgr.Spawn<UnitEntity>(typeName, typeName, null, null);
+			if(ent != null) {
+				ent.transform.position = pos;
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	private void GrabUnSummonUnit() {
 		PlayerGroup grp;
 		
-		switch(mCurActMode) {
-		case ActMode.Summon:
-			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
-			
-			//check if there's enough resource to summon
-			//TODO: user feedback
-			UnitType unitType = mTypeSummons[mCurSummonInd];
-			if(grp.count < mPlayer.stats.maxSummon) {
-				float love = UnitConfig.instance.GetUnitResourceCost(unitType);
-				if(mPlayer.stats.curResource >= love) {
-					//check if it's safe to summon on the spot
-					//summonRadius Physics.CheckSphere(transform.position, radius, layerMask)
-					Vector2 pos = transform.position;
-					pos += Random.insideUnitCircle*summonRadius;
-					if(!Physics.CheckSphere(pos, cursor.radius, summonLayerCheck.value)) {
-						string typeName = unitType.ToString();
-						EntityManager entMgr = EntityManager.instance;
-						mCurSummonUnit = entMgr.Spawn<UnitEntity>(typeName, typeName, null, null);
-						if(mCurSummonUnit != null) {
-							mCurSummonUnit.transform.position = pos;
-							
-							//subtract from player resource
-							mPlayer.stats.curResource -= love;
-						}
-					}
-				}
-			}
-			break;
-			
-		case ActMode.UnSummon:
-			grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
-			
-			mCurSummonUnit = grp.GrabUnit(mTypeSummons[mCurSummonInd], ActionTarget.Priority.High);
-			if(mCurSummonUnit != null) {
-				mCurSummonUnit.FSM.SendEvent(EntityEvent.Remove);
-			}
-			break;
+		grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
+		
+		mCurUnSummonUnit = grp.GrabUnit(mTypeSummons[mCurSummonInd].data.type, ActionTarget.Priority.High);
+		if(mCurUnSummonUnit != null) {
+			mCurUnSummonUnit.FSM.SendEvent(EntityEvent.Remove);
 		}
 	}
 }

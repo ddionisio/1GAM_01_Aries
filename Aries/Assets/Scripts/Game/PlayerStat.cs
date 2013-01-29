@@ -7,11 +7,7 @@ public class PlayerStat : StatBase {
 	public float maxResource;
 	public float minResource; //regen if current resource is below this number
 	
-	public int maxSummon;
-	
-	public float resourcePerSecond = 2.0f;
-	
-	public int minSummonCriteria = 5; //regen if num summon is below this number
+	public float resourcePerSecond = 1.0f;
 	
 	public float curResource {
 		get { return Main.instance != null ? Main.instance.userData.resources : 0.0f; }
@@ -24,6 +20,8 @@ public class PlayerStat : StatBase {
 					Main.instance.userData.resources = value;
 					if(Main.instance.userData.resources < 0)
 						Main.instance.userData.resources = 0;
+					else if(Main.instance.userData.resources > maxResource)
+						Main.instance.userData.resources = maxResource;
 					
 					if(Main.instance.userData.resources != resource)
 						StatChanged(true);
@@ -33,12 +31,8 @@ public class PlayerStat : StatBase {
 	}
 	
 	public void InitResource() {
-		//TODO: check for reserved unit spawns (e.g. level transition)
 		if(curResource < minResource) {
-			FlockGroup grp = FlockGroup.GetGroup(flockGroup);
-			if(grp == null || grp.count < minSummonCriteria) {
-				curResource = minResource;
-			}
+			curResource = minResource;
 		}
 	}
 	
@@ -54,10 +48,7 @@ public class PlayerStat : StatBase {
 	// Update is called once per frame
 	void Update () {
 		if(curResource < minResource) {
-			PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(flockGroup);
-			if(grp.count < minSummonCriteria) {
-				curResource += resourcePerSecond*Time.deltaTime;
-			}
+			curResource += resourcePerSecond*Time.deltaTime;
 		}
 	}
 }

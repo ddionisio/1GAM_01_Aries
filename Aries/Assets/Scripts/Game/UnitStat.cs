@@ -20,6 +20,6 @@ public class UnitStat : StatBase {
 	
 	// Use this for initialization
 	void Start() {
-		mLove = UnitConfig.instance.GetUnitResourceCost(type);
+		mLove = UnitConfig.GetData(type).resource;
 	}
 }

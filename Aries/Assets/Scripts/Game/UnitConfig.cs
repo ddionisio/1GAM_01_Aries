@@ -5,46 +5,39 @@ using System.Collections.Generic;
 //put this in core game object
 //only use this after awake
 public class UnitConfig : MonoBehaviour {
-	public class UnitConfigFile {
+	public class Data {
 		public UnitType type;
-		public float resource;
-	}
-	
-	public struct Data {
-		public float resource;
+		public float resource; //resource cost per unit
+		public float summonCooldown;
+		public int summonAmount;
+		public int summonMax;
 	}
 	
 	public TextAsset config;
 	
-	private static UnitConfig mInstance = null;
+	private static Data[] mUnitsData;
 	
-	private Data[] mUnitsData = new Data[(int)UnitType.NumTypes];
-	
-	public static UnitConfig instance {
-		get { return mInstance; }
+	public static Data GetData(UnitType type) {
+		return mUnitsData[(int)type];
 	}
 	
 	void OnDestroy() {
-		mInstance = null;
+		mUnitsData = null;
 	}
 	
 	void Awake() {
-		mInstance = this;
+		mUnitsData = new Data[(int)UnitType.NumTypes];
 		
 		//load file
 		if(config != null) {
 			fastJSON.JSON.Instance.Parameters.UseExtensions = false;
-			List<UnitConfigFile> fileData = fastJSON.JSON.Instance.ToObject<List<UnitConfigFile>>(config.text);
+			List<Data> fileData = fastJSON.JSON.Instance.ToObject<List<Data>>(config.text);
 			
-			foreach(UnitConfigFile configDat in fileData) {
+			foreach(Data configDat in fileData) {
 				if(configDat != null) {
-					mUnitsData[(int)configDat.type].resource = configDat.resource;
+					mUnitsData[(int)configDat.type] = configDat;
 				}
 			}
 		}
-	}
-	
-	public float GetUnitResourceCost(UnitType type) {
-		return mUnitsData[(int)type].resource;
 	}
 }

@@ -5,6 +5,13 @@ using System.Collections.Generic;
 public class PlayerGroup : FlockGroup {
 	private Dictionary<UnitType, HashSet<UnitEntity>> mUnitsByType = new Dictionary<UnitType, HashSet<UnitEntity>>();
 	
+	public int GetUnitCountByType(UnitType type) {
+		if(!mUnitsByType.ContainsKey(type))
+			return 0;
+		
+		return mUnitsByType[type].Count;
+	}
+	
 	public IEnumerable GetTargetFilter(UnitType type, ActionTarget target) {
 		HashSet<UnitEntity> units;
 		if(mUnitsByType.TryGetValue(type, out units)) {

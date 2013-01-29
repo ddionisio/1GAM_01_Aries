@@ -1,27 +1,45 @@
 [
 	{
 		"type":"sheepMelee",
-		"resource":10
+		"resource":2,
+		"summonCooldown":2,
+		"summonAmount":5,
+		"summonMax":20
 	},
 	{
 		"type":"sheepRange",
-		"resource":15
+		"resource":3,
+		"summonCooldown":2,
+		"summonAmount":5,
+		"summonMax":15
 	},
 	{
 		"type":"sheepAssault",
-		"resource":20
+		"resource":6,
+		"summonCooldown":3,
+		"summonAmount":3,
+		"summonMax":10
 	},
 	{
 		"type":"sheepHexer",
-		"resource":20
+		"resource":10,
+		"summonCooldown":3,
+		"summonAmount":1,
+		"summonMax":3
 	},
 	
 	{
 		"type":"enemyMelee",
-		"resource":5
+		"resource":5,
+		"summonCooldown":2,
+		"summonAmount":5,
+		"summonMax":15
 	},
 	{
 		"type":"enemyRange",
-		"resource":10
+		"resource":10,
+		"summonCooldown":2,
+		"summonAmount":5,
+		"summonMax":15
 	}
 ]

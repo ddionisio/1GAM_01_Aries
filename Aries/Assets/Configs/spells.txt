@@ -1,7 +1,7 @@
 [
 	{
 		"name":"sheepSlow",
-		"cooldown":3,
+		"cooldown":2.5,
 		"castDelay":1,
 		"data": {
 			"$type":"SpellSlow",
