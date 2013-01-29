@@ -20,7 +20,9 @@ public class SpellSensor : SensorSingle<UnitEntity> {
 	}
 	
 	void OnDrawGizmosSelected() {
-		Gizmos.color = Color.blue;
-		Gizmos.DrawWireSphere(transform.position, range);
+		if(range > 0.0f) {
+			Gizmos.color = Color.blue;
+			Gizmos.DrawWireSphere(transform.position, range);
+		}
 	}
 }

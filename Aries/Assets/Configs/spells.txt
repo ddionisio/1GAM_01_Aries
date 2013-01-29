@@ -5,9 +5,10 @@
 		"castDelay":1,
 		"data": {
 			"$type":"SpellSlow",
-			"duration":2.5,
+			"duration":5,
 			"harm":true,
-			"icon":"Slow"
+			"icon":"Slow",
+			"scaleMass":4.0
 		}
 	}
 ]

@@ -96,4 +96,10 @@ public class StatBase : MonoBehaviour {
 	protected virtual void Awake() {
 		ResetStats();
 	}
+	
+	void OnPrefabUpdate(GameObject go) {
+		StatHUD hudRef = go.GetComponentInChildren<StatHUD>();
+		if(hudRef != null)
+			hud = hudRef;
+	}
 }

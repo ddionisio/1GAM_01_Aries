@@ -198,6 +198,8 @@ public class PrefabUpdater : EditorWindow {
 			copy.go.transform.localPosition = copy.pos;
 			copy.go.transform.localRotation = copy.rot;
 			copy.go.transform.localScale = copy.scale;
+			
+			go.BroadcastMessage("OnPrefabUpdate", copy.go, SendMessageOptions.DontRequireReceiver);
 		}
 		
 		//fail-safe for duplicates

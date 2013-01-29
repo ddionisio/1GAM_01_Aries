@@ -1,9 +1,8 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class UnitEntity : EntityBase {
-	public UnitAttackType attackType;
-	
 	public UnitStatusIndicator statusIndicator;
 	
 	private UnitStat mStats;
@@ -20,7 +19,7 @@ public class UnitEntity : EntityBase {
 	private float mAttackCosTheta;
 	
 	//just one for now
-	protected SpellInstance mSpells;
+	protected List<SpellInstance> mSpells = new List<SpellInstance>(1);
 	
 	public UnitStat stats { get { return mStats; } }
 	public FlockUnit flockUnit { get { return mFlockUnit; } }
@@ -43,16 +42,27 @@ public class UnitEntity : EntityBase {
 		}
 	}
 	
+	//TODO: refactor with a better system, this one sucks!
+	
 	///<summary>check to see if this unit is suseptible to given spell</summary>
 	public bool SpellCheck(SpellBase spell) {
-		return (stats == null 
+		return (stats != null 
+			&& mSpells.FindIndex(x => x.IsSpellMatch(spell)) == -1
 			&& spell.harm ? (!stats.invulnerable && stats.CanBeHurtBy(UnitDamageType.Curse)) : stats.CanBeHurtBy(UnitDamageType.Miracle));
 	}
 	
 	public void SpellAdd(SpellBase spell) {
-		mSpells.Stop(this);
-		
-		mSpells = new SpellInstance(this, spell);
+		SpellRemoveDead();
+		mSpells.Add(spell.Start(this));
+		if(mSpells.Count > 1)
+			Debug.LogWarning("more than one spell? spell count: "+mSpells.Count);
+	}
+	
+	public void SpellRemoveDead() {
+		int ind;
+		while((ind = mSpells.FindIndex(x => !x.alive)) != -1) {
+			mSpells.RemoveAt(ind);
+		}
 	}
 			
 	protected override void Awake() {
@@ -93,7 +103,11 @@ public class UnitEntity : EntityBase {
 	
 	public override void Release() {
 		//clear out debuffs
-		mSpells.Stop(this);
+		foreach(SpellInstance si in mSpells) {
+			si.Stop(this);
+		}
+		
+		mSpells.Clear();
 		
 		ClearData();
 		
@@ -115,7 +129,10 @@ public class UnitEntity : EntityBase {
 			SpawnFinish();
 		}
 		
-		mSpells.Resume(this);
+		SpellRemoveDead();
+		foreach(SpellInstance si in mSpells) {
+			si.Resume(this);
+		}
 		
 		base.ActivatorWakeUp();
 	}
@@ -229,5 +246,11 @@ public class UnitEntity : EntityBase {
 			
 			mFlockUnit.ResetData();
 		}
+	}
+	
+	void OnPrefabUpdate(GameObject go) {
+		UnitStatusIndicator indicator = go.GetComponentInChildren<UnitStatusIndicator>();
+		if(indicator != null)
+			statusIndicator = indicator;
 	}
 }

@@ -29,7 +29,7 @@ public class SpellCaster : MonoBehaviour {
 	}
 	
 	public void CastTo(UnitEntity target) {
-		if(target != null) {
+		if(target != null && !target.isReleased) {
 			mState = State.Casting;
 			mStartTime = Time.time;
 			mTarget = target;
@@ -37,8 +37,10 @@ public class SpellCaster : MonoBehaviour {
 	}
 	
 	public void Cancel() {
-		mState = State.None;
-		mTarget = null;
+		if(mTarget != null) {
+			mState = State.None;
+			mTarget = null;
+		}
 	}
 	
 	public void ClearCallbacks() {
@@ -65,14 +67,17 @@ public class SpellCaster : MonoBehaviour {
 			
 		case State.Casting:
 			if(Time.time - mStartTime >= mInfo.castDelay) {
-				mTarget.SpellAdd(mInfo.data);
-				mTarget = null;
+				if(mTarget != null && !mTarget.isReleased) {
+					mTarget.SpellAdd(mInfo.data);
+					mTarget = null;
+										
+					if(castDoneCallback != null) {
+						castDoneCallback(this);
+					}
+				}
+				
 				mStartTime = Time.time;
 				mState = State.Cooldown;
-				
-				if(castDoneCallback != null) {
-					castDoneCallback(this);
-				}
 			}
 			break;
 			

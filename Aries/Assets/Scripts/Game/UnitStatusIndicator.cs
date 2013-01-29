@@ -22,6 +22,7 @@ public class UnitStatusIndicator : MonoBehaviour {
 	
 	public void Hide() {
 		gameObject.SetActive(false);
+		mCurIcon = Icon.NumIcons;
 	}
 	
 	//set duration > 0 for hide delay

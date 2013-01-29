@@ -1,19 +1,25 @@
 using UnityEngine;
 using System.Collections;
 
-public struct SpellInstance {
+public abstract class SpellInstance {
 	private SpellBase mSpell;
 	private float mCurTime;
 	private float mTickStart;
 	
 	public bool alive { get { return mSpell != null; } }
 	
+	public bool IsSpellMatch(SpellBase spell) {
+		return spell == mSpell;
+	}
+	
 	public SpellInstance(UnitEntity unit, SpellBase spell) {
 		mCurTime = 0;
 		mTickStart = Time.fixedTime;
 		mSpell = spell;
 		
-		mSpell.Apply(unit);
+		if(unit.statusIndicator != null && unit.statusIndicator.curIcon != mSpell.icon) {
+			unit.statusIndicator.Show(mSpell.icon, mSpell.duration);
+		}
 		
 		unit.StartCoroutine(DebuffUpdate(unit));
 	}
@@ -37,10 +43,13 @@ public struct SpellInstance {
 				unit.statusIndicator.Hide();
 			}
 			
-			mSpell.Remove(unit);
+			Remove(unit);
 			mSpell = null;
 		}
 	}
+	
+	protected abstract void Remove(UnitEntity unit);
+	protected abstract void Tick(UnitEntity unit); //for stuff like: poison, etc.
 	
 	IEnumerator DebuffUpdate(UnitEntity unit) {
 		while(alive) {
@@ -48,7 +57,7 @@ public struct SpellInstance {
 				mCurTime += Time.fixedDeltaTime;
 				
 				if(mSpell.tickDelay > 0.0f && Time.fixedTime - mTickStart > mSpell.tickDelay) {
-					mSpell.Tick(unit);
+					Tick(unit);
 					
 					mTickStart = Time.fixedTime;
 				}
@@ -56,9 +65,8 @@ public struct SpellInstance {
 				yield return new WaitForFixedUpdate();
 			}
 			else {
-				mSpell.Remove(unit);
-				mSpell = null;
-				break;
+				Stop(unit);
+				unit.SpellRemoveDead();
 			}
 		}
 		
@@ -72,7 +80,5 @@ public abstract class SpellBase {
 	public bool harm = false; //debuff
 	public UnitStatusIndicator.Icon icon = UnitStatusIndicator.Icon.NumIcons;
 	
-	public abstract void Apply(UnitEntity unit);
-	public abstract void Remove(UnitEntity unit);
-	public abstract void Tick(UnitEntity unit); //for stuff like: poison, etc.
+	public abstract SpellInstance Start(UnitEntity unit);
 }

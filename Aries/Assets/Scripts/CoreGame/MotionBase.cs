@@ -7,6 +7,9 @@ public class MotionBase : MonoBehaviour {
 	protected Vector2 mDir = Vector2.right;
 	protected float mCurSpeed;
 	
+	private float mMaxSpeed;
+	private float mMaxSpeedScale = 1.0f;
+	
 	private Rigidbody mBody;
 		
 	public Vector2 dir {
@@ -21,24 +24,43 @@ public class MotionBase : MonoBehaviour {
 		get { return mCurSpeed; }
 	}
 	
+	public float maxSpeedScale {
+		get { return mMaxSpeedScale; }
+		set {
+			if(mMaxSpeedScale != value) {
+				mMaxSpeedScale = value;
+				mMaxSpeed = maxSpeed*mMaxSpeedScale;
+				UpdateVelocity();
+			}
+		}
+	}
+	
 	public virtual void ResetData() {
 		mBody.velocity = Vector3.zero;
+		mMaxSpeed = maxSpeed;
+		mMaxSpeedScale = 1.0f;
 	}
 	
 	protected virtual void Awake() {
 		mBody = rigidbody;
+		mMaxSpeed = maxSpeed;
 	}
 	
 	protected virtual void FixedUpdate() {
 		//get direction and limit speed
+		UpdateVelocity();
+	}
+	
+	void UpdateVelocity() {
 		Vector2 vel = mBody.velocity;
 		mCurSpeed = vel.magnitude;
 		
 		if(mCurSpeed > 0) {
 			mDir = vel/mCurSpeed;
 			
-			if(mCurSpeed > maxSpeed) {
-				mBody.velocity = mDir*maxSpeed;
+			if(mCurSpeed > mMaxSpeed) {
+				mBody.velocity = mDir*mMaxSpeed;
+				mCurSpeed = mMaxSpeed;
 			}
 		}
 	}
