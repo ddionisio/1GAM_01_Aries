@@ -66,7 +66,12 @@ public class FlockActionController : ActionListener {
 		if(currentTarget != null) {
 			switch(type) {
 			case ActionType.Attack:
-				return attackSensor != null && flockUnit.enabled && attackSensor.CheckRange(flockUnit.dir, currentTarget.transform);
+				if(flockUnit != null) {
+					return attackSensor != null && flockUnit.enabled && attackSensor.CheckRange(flockUnit.dir, currentTarget.transform);
+				}
+				else {
+					return true;
+				}
 				
 			default:
 				break;
@@ -80,7 +85,12 @@ public class FlockActionController : ActionListener {
 		if(currentTarget != null) {
 			switch(type) {
 			case ActionType.Attack:
-				return spellSensor != null && flockUnit.enabled && spellSensor.CheckRange(currentTarget.transform);
+				if(flockUnit != null) {
+					return spellSensor != null && flockUnit.enabled && spellSensor.CheckRange(currentTarget.transform);
+				}
+				else {
+					return true;
+				}
 				
 			default:
 				break;
@@ -106,7 +116,9 @@ public class FlockActionController : ActionListener {
 			break;
 			
 		case ActionType.Attack:
-			flockUnit.moveTarget = currentTarget.transform;
+			if(flockUnit != null) {
+				flockUnit.moveTarget = currentTarget.transform;
+			}
 						
 			if(gameObject.activeInHierarchy)
 				StartCoroutine("ReturnToLeader");
@@ -115,7 +127,9 @@ public class FlockActionController : ActionListener {
 			if(attackSensor != null) {
 				attackSensor.enabled = false;
 				
-				flockUnit.minMoveTargetDistance = attackSensor.minRange;
+				if(flockUnit != null) {
+					flockUnit.minMoveTargetDistance = attackSensor.minRange;
+				}
 			}
 			
 			if(spellSensor != null) {
@@ -125,14 +139,18 @@ public class FlockActionController : ActionListener {
 			
 		case ActionType.Retreat:
 		case ActionType.Follow:
-			flockUnit.moveTarget = currentTarget.target;
+			if(flockUnit != null) {
+				flockUnit.moveTarget = currentTarget.target;
+			}
 			
 			if(gameObject.activeInHierarchy)
 				StartCoroutine("FollowStop");
 			break;
 			
 		default:
-			flockUnit.moveTarget = currentTarget.target;
+			if(flockUnit != null) {
+				flockUnit.moveTarget = currentTarget.target;
+			}
 			break;
 		}
 	}
@@ -141,8 +159,9 @@ public class FlockActionController : ActionListener {
 	}
 	
 	protected override void OnActionFinish() {
-		//do something
-		flockUnit.Stop();
+		if(flockUnit != null) {
+			flockUnit.Stop();
+		}
 		
 		mTargetMotion = null;
 		
@@ -216,11 +235,13 @@ public class FlockActionController : ActionListener {
 			if(distSqr > radiusCancelSqr) {
 				StopAction(ActionTarget.Priority.High, true);
 			}
-			else if(distSqr > radiusMoveBackSqr && !lockAction) {
-				flockUnit.moveTarget = leader;
-			}
-			else {
-				flockUnit.moveTarget = currentTarget.transform;
+			else if(flockUnit != null) {
+				if(distSqr > radiusMoveBackSqr && !lockAction) {
+					flockUnit.moveTarget = leader;
+				}
+				else {
+					flockUnit.moveTarget = currentTarget.transform;
+				}
 			}
 		}
 	}
@@ -232,12 +253,14 @@ public class FlockActionController : ActionListener {
 			switch(type) {
 			case ActionType.Retreat:
 			case ActionType.Follow:
-				if(mTargetMotion.curSpeed < followStopSpeed) {
-					if(flockUnit.moveTarget != null && flockUnit.moveTargetDistance <= followStopRadius)
-						flockUnit.moveTarget = null;
-				}
-				else {
-					flockUnit.moveTarget = currentTarget.target;
+				if(flockUnit != null) {
+					if(mTargetMotion.curSpeed < followStopSpeed) {
+						if(flockUnit.moveTarget != null && flockUnit.moveTargetDistance <= followStopRadius)
+							flockUnit.moveTarget = null;
+					}
+					else {
+						flockUnit.moveTarget = currentTarget.target;
+					}
 				}
 				
 				yield return new WaitForFixedUpdate();
@@ -265,9 +288,13 @@ public class FlockActionController : ActionListener {
 			
 	void OnDrawGizmosSelected() {
 		Gizmos.color = new Color(208.0f/255.0f, 149.0f/255.0f, 208.0f/255.0f);
-		Gizmos.DrawWireSphere(transform.position, actionCancelRadius);
+		
+		if(actionCancelRadius > 0.0f)
+			Gizmos.DrawWireSphere(transform.position, actionCancelRadius);
 		
 		Gizmos.color *= 0.4f;
-		Gizmos.DrawWireSphere(transform.position, actionMaxRadius);
+		
+		if(actionMaxRadius > 0.0f)
+			Gizmos.DrawWireSphere(transform.position, actionMaxRadius);
 	}
 }

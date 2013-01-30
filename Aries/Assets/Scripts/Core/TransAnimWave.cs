@@ -7,8 +7,6 @@ public class TransAnimWave : MonoBehaviour {
 	public Vector2 start;
 	public Vector2 end;
 	
-	public bool isWorld = false;
-	
 	private float mCurPulseTime = 0;
 	
 	void OnEnable() {
@@ -27,11 +25,6 @@ public class TransAnimWave : MonoBehaviour {
 		
 		Vector2 newPos = Vector2.Lerp(start, end, t*t);
 		
-		if(isWorld) {
-			transform.position = new Vector3(newPos.x, newPos.y, transform.position.z);
-		}
-		else {
-			transform.localPosition = new Vector3(newPos.x, newPos.y, transform.localPosition.z);
-		}
+		transform.localPosition = new Vector3(newPos.x, newPos.y, transform.localPosition.z);
 	}
 }

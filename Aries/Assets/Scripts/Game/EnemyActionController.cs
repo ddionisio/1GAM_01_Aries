@@ -5,7 +5,6 @@ public class EnemyActionController : FlockActionController {
 	public ActionType defaultType = ActionType.Attack;
 	
 	public EnemySensor sensor;
-	public float actionDelay = 1.0f;
 	
 	private ActionType mActType = ActionType.NumType;
 		
