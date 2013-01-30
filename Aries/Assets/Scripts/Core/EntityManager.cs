@@ -162,8 +162,17 @@ public class EntityManager : MonoBehaviour {
 			}
 		}
 		else { //not in the pool, just kill it
-			Object.Destroy(entity.gameObject);
+			//Object.Destroy(entity.gameObject);
+			StartCoroutine(DestroyEntityDelay(entity.gameObject));
 		}
+	}
+	
+	IEnumerator DestroyEntityDelay(GameObject go) {
+		yield return new WaitForFixedUpdate();
+		
+		Object.Destroy(go);
+		
+		yield break;
 	}
 	
 	void OnDestroy() {

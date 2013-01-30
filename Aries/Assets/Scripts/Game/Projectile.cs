@@ -35,6 +35,8 @@ public class Projectile : EntityBase {
 	
 	public bool applyDirToUp;
 	
+	public GameObject activateOnDying;
+	
 	/*public bool oscillate;
 	public float oscillateForce;
 	public float oscillateDelay;*/
@@ -50,7 +52,7 @@ public class Projectile : EntityBase {
 		
 		if(ret != null) {
 			ret.mStartDir = dir;
-			ret.transform.position = startPos;
+			ret.transform.position = new Vector3(startPos.x, startPos.y, ret.transform.position.z);
 			
 			ret.seek = seek;
 		}
@@ -73,6 +75,9 @@ public class Projectile : EntityBase {
 		
 		if(collider != null)
 			collider.enabled = false;
+		
+		if(activateOnDying != null)
+			activateOnDying.SetActive(false);
 		
 		base.Release();
 	}
@@ -144,12 +149,15 @@ public class Projectile : EntityBase {
 				DoExplode();
 			}
 			
+			if(activateOnDying != null)
+				activateOnDying.SetActive(true);
+			
 			Invoke("Release", dieDelay);
 			break;
 		}
 	}
 	
-	void OnCollisionEnter(Collision collision) {
+	void ApplyContact(GameObject go, Vector2 normal) {
 		switch(contactType) {
 		case ContactType.End:
 			state = EntityState.dying;
@@ -161,8 +169,7 @@ public class Projectile : EntityBase {
 			break;
 			
 		case ContactType.Bounce:
-			if(mover != null && collision.contacts.Length > 0) {
-				Vector2 normal = collision.contacts[0].normal;
+			if(mover != null) {
 				Vector2 reflect = M8.Math.Reflect(mover.dir, normal);
 				Vector2 vel = mover.body.velocity;
 				float velMag = vel.magnitude;
@@ -173,12 +180,21 @@ public class Projectile : EntityBase {
 		
 		//do damage
 		if(minDamage > 0.0f && !explodeOnDeath) {
-			StatBase stat = collision.gameObject.GetComponentInChildren<StatBase>();
+			StatBase stat = go.GetComponentInChildren<StatBase>();
 			if(stat != null) {
 				stat.curHP -= minDamage;
 			}
 		}
 	}
+	
+	void OnCollisionEnter(Collision collision) {
+		ContactPoint cp = collision.contacts[0];
+		ApplyContact(cp.otherCollider.gameObject, cp.normal);
+	}
+	
+	/*void OnTrigger(Collider collider) {
+		ApplyContact(collider.gameObject, -mover.dir);
+	}*/
 	
 	void OnDecayEnd() {
 		state = EntityState.dying;
@@ -236,13 +252,13 @@ public class Projectile : EntityBase {
 		
 		foreach(Collider col in cols) {
 			if(col != null && col.rigidbody != null) {
-				col.rigidbody.AddExplosionForce(explodeForce, pos, explodeRadius, 0.0f, ForceMode.Force);
-				
 				//hurt?
-				UnitEntity unit = col.GetComponent<UnitEntity>();
-				if(unit != null && unit.stats != null && unit.stats.CanBeHurtBy(damageType)) {
+				StatBase stats = col.GetComponent<StatBase>();
+				if(stats != null && stats.CanBeHurtBy(damageType)) {
+					col.rigidbody.AddExplosionForce(explodeForce, pos, explodeRadius, 0.0f, ForceMode.Force);
+					
 					float distSqr = (col.transform.position - pos).sqrMagnitude;
-					unit.stats.curHP -= minDamage + damageRange*(1.0f - distSqr/explodeRadiusSqr);
+					stats.curHP -= minDamage + damageRange*(1.0f - distSqr/explodeRadiusSqr);
 				}
 			}
 		}

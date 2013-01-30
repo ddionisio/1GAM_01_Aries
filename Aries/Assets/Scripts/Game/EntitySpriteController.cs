@@ -4,6 +4,8 @@ using System.Collections;
 public class EntitySpriteController : MonoBehaviour {
 	public float blinkDelay = 0.05f;
 	public bool disableOnAnimationEnd = false;
+	public bool disableEntityState = false;
+	public bool disableOnDying = false;
 	
 	protected tk2dBaseSprite mSprite;
 	protected tk2dAnimatedSprite mSpriteAnim;
@@ -19,13 +21,15 @@ public class EntitySpriteController : MonoBehaviour {
 		get { return mSprite; }
 	}
 	
-	protected bool HasAnim(EntityState s) {
+	public bool HasAnim(EntityState s) {
 		return mStateAnimIds[(int)s] != -1;
 	}
 	
-	protected void PlayAnim(EntityState s) {
+	public void PlayAnim(EntityState s) {
 		if(mSpriteAnim != null) {
 			renderer.enabled = true;
+			
+			mSpriteAnim.StopAndResetFrame();
 			
 			if(mStateAnimIds == null) {
 				mStateAnimIds = new int[(int)EntityState.NumState];
@@ -42,7 +46,9 @@ public class EntitySpriteController : MonoBehaviour {
 	}
 	
 	void EntityStart(EntityBase ent) {
-		ent.setStateCallback += OnSetState;
+		if(!disableEntityState)
+			ent.setStateCallback += OnSetState;
+		
 		ent.setBlinkCallback += OnSetBlink;
 		ent.releaseCallback += OnRelease;
 	}
@@ -102,12 +108,14 @@ public class EntitySpriteController : MonoBehaviour {
 			mIsBlink = false;
 		}
 		
-		if(renderer != null)
-			renderer.enabled = true;
+		renderer.enabled = true;
 	}
 	
 	void OnSetState(EntityBase ent, EntityState state) {
-		PlayAnim(state);
+		if(disableOnDying && state == EntityState.dying)
+			renderer.enabled = false;
+		else
+			PlayAnim(state);
 	}
 	
 	void OnSetBlink(EntityBase ent, bool b) {

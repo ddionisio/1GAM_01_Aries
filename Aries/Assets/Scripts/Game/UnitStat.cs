@@ -20,6 +20,7 @@ public class UnitStat : StatBase {
 	
 	// Use this for initialization
 	void Start() {
-		mLove = UnitConfig.GetData(type).resource;
+		UnitConfig.Data dat = UnitConfig.GetData(type);
+		mLove = dat != null ? dat.resource : 0.0f;
 	}
 }
