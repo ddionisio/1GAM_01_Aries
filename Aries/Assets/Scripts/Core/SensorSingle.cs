@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-[RequireComponent(typeof(Collider))]
 public abstract class SensorSingle<T> : MonoBehaviour where T : Component {
 	public delegate void Callback(T unit);
 	
@@ -12,11 +11,13 @@ public abstract class SensorSingle<T> : MonoBehaviour where T : Component {
 	protected abstract bool UnitVerify(T unit);
 	
 	void OnEnable() {
-		collider.enabled = true;
+		if(collider != null)
+			collider.enabled = true;
 	}
 	
 	void OnDisable() {
-		collider.enabled = false;
+		if(collider != null)
+			collider.enabled = false;
 	}
 	
 	void OnTriggerEnter(Collider other) {

@@ -145,6 +145,14 @@ public class UnitSpriteController : MonoBehaviour {
 		}
 	}
 	
+	public Vector2 hotspotWorldSpace {
+		get {
+			Vector2 pos = transform.position;
+			Vector2 hotspotOfs = hotspot;
+			return pos + hotspotOfs;
+		}
+	}
+	
 	public bool HasState(UnitSpriteState checkState) {
 		return mAnim[(int)checkState] != null;
 	}

@@ -6,7 +6,7 @@ public enum UnitType {
 	sheepHexer,
 	
 	enemyMelee,
-	enemyRange,
+	enemyDiver,
 	enemyEnt,
 	
 	objective,

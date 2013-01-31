@@ -36,7 +36,7 @@
 		"summonMax":15
 	},
 	{
-		"type":"enemyRange",
+		"type":"enemyDiver",
 		"resource":10,
 		"summonCooldown":2,
 		"summonAmount":5,
