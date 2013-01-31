@@ -16,6 +16,7 @@ public enum UnitSpriteState {
 	JumpDown,
 	
 	Daze,
+	AttackPrepare,
 	
 	NumState
 }

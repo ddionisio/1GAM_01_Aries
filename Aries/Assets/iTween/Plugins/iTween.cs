@@ -39,7 +39,7 @@ using UnityEngine;
 #endregion
 
 /// <summary>
-/// <para>Version: 2.0.44</para>	 
+/// <para>Version: 2.0.45</para>	 
 /// <para>Author: Bob Berkebile (http://pixelplacement.com)</para>
 /// <para>Support: http://itween.pixelplacement.com</para>
 /// </summary>
@@ -2642,9 +2642,9 @@ public class iTween : MonoBehaviour{
 	/// <param name="z">
 	/// A <see cref="System.Single"/> or <see cref="System.Double"/> for the individual setting of the z magnitude.
 	/// </param>
-	/// <param name="space">
-	/// A <see cref="Space"/> for applying the transformation in either the world coordinate or local cordinate system. Defaults to local space.
-	/// </param> 
+	/// <param name="islocal">
+	/// A <see cref="System.Boolean"/> for whether to animate in world space or relative to the parent. False by default.
+	/// </param>
 	/// <param name="orienttopath">
 	/// A <see cref="System.Boolean"/> for whether or not the GameObject will orient to its direction of travel.  False by default.
 	/// </param>
@@ -3625,12 +3625,6 @@ public class iTween : MonoBehaviour{
 	}
 	
 	void GenerateMoveByTargets(){
-		
-/*		foreach (var key in tweenArguments.Keys)
-		{
-			Debug.Log(key + ": " + tweenArguments[key]);
-		}
-*/		
 		//values holder [0] from, [1] to, [2] calculated value from ease equation, [3] previous value for Translate usage to allow Space utilization, [4] original rotation to make sure look requests don't interfere with the direction object should move in, [5] for dial in location:
 		vector3s=new Vector3[6];
 		
@@ -4357,7 +4351,12 @@ public class iTween : MonoBehaviour{
 	}	
 	
 	void ApplyShakePositionTargets(){
-		preUpdate = transform.position;
+		//preUpdate = transform.position;
+		if (isLocal) {
+			preUpdate = transform.localPosition;
+		}else{
+			preUpdate = transform.position;
+		}
 		
 		//reset rotation to prevent look interferences as object rotates and attempts to move with translate and record current rotation
 		Vector3 currentRotation = new Vector3();
@@ -4372,8 +4371,13 @@ public class iTween : MonoBehaviour{
 			transform.Translate(vector3s[1],space);
 		}
 		
+		//transform.position=vector3s[0];
 		//reset:
-		transform.position=vector3s[0];
+		if (isLocal) {
+			transform.localPosition=vector3s[0];
+		}else{
+			transform.position=vector3s[0];
+		}
 		
 		//generate:
 		float diminishingControl = 1-percentage;
@@ -4381,8 +4385,13 @@ public class iTween : MonoBehaviour{
 		vector3s[2].y= UnityEngine.Random.Range(-vector3s[1].y*diminishingControl, vector3s[1].y*diminishingControl);
 		vector3s[2].z= UnityEngine.Random.Range(-vector3s[1].z*diminishingControl, vector3s[1].z*diminishingControl);
 
-		//apply:
-		transform.Translate(vector3s[2],space);	
+		//apply:	
+		//transform.Translate(vector3s[2],space);	
+		if (isLocal) {
+			transform.localPosition+=vector3s[2];
+		}else{
+			transform.position+=vector3s[2];
+		}
 		
 		//reset rotation:
 		if(tweenArguments.Contains("looktarget")){
@@ -5174,7 +5183,7 @@ public class iTween : MonoBehaviour{
 	/// A <see cref="System.Single"/> or <see cref="System.Double"/> for the time in seconds the animation will take to complete.
 	/// </param> 
 	/// <param name="islocal">
-	/// A <see cref="System.Boolean"/> for whether to animate in world space or relative to the parent. False be default.
+	/// A <see cref="System.Boolean"/> for whether to animate in world space or relative to the parent. False by default.
 	/// </param>
 	/// <param name="orienttopath">
 	/// A <see cref="System.Boolean"/> for whether or not the GameObject will orient to its direction of travel.  False by default.

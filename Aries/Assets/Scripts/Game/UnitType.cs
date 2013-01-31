@@ -8,6 +8,7 @@ public enum UnitType {
 	enemyMelee,
 	enemyDiver,
 	enemyEnt,
+	enemyThing,
 	
 	objective,
 	
