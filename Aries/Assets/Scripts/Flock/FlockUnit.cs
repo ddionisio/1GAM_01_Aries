@@ -40,9 +40,11 @@ public class FlockUnit : MotionBase {
 	
 	public float wanderDelay;
 	
-	[System.NonSerializedAttribute] public bool wanderEnabled = false; //Set unit to wander if there's no move target
 	[System.NonSerializedAttribute] public bool groupMoveEnabled = true; //false = no cohesion and alignment
 	[System.NonSerializedAttribute] public bool catchUpEnabled = true; //false = don't use catch up factor
+	
+	//Set unit to wander if there's no move target 
+	public bool wanderEnabled { get { return mWanderEnabled; } set { mWanderEnabled = value; if(mState == State.Idle) { mState = State.Wander; } } }
 	
 	[System.NonSerializedAttribute] public float minMoveTargetDistance = 0.0f; //minimum distance to maintain from move target
 	
@@ -70,6 +72,8 @@ public class FlockUnit : MotionBase {
 	private float mPathRadiusSqr;
 	
 	private State mState = State.Move;
+	
+	private bool mWanderEnabled = false;
 	
 	public FlockType type {
 		get { return mFilter.type; }
