@@ -18,5 +18,7 @@ public enum UnitSpriteState {
 	Daze,
 	AttackPrepare,
 	
+	Warp,
+	
 	NumState
 }

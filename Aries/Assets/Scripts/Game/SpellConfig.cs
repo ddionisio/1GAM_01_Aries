@@ -11,6 +11,8 @@ public class SpellConfig : MonoBehaviour {
 		public float cooldown;
 		public float castDelay;
 		
+		public SpellFlag[] flags;
+		
 		public SpellBase data;
 	}
 	
@@ -38,8 +40,18 @@ public class SpellConfig : MonoBehaviour {
 			
 			mSpells = new Dictionary<string, Info>(fileData.Count);
 			
+			int id = 1;
+			
 			foreach(Info info in fileData) {
-				if(info != null) {
+				if(info != null && info.data != null) {
+					info.data._setId(id); id++;
+					
+					SpellFlag sf = (SpellFlag)0;
+					foreach(SpellFlag sfinfo in info.flags) {
+						sf |= sfinfo;
+					}
+					info.data._setFlags(sf);
+					
 					mSpells.Add(info.name, info);
 				}
 			}

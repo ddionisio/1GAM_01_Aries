@@ -32,9 +32,14 @@ public class AttackSensor : SensorSingle<UnitEntity> {
 	
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(transform.position, minRange);
 		
-		Gizmos.color *= 0.75f;
-		Gizmos.DrawWireSphere(transform.position, maxRange);
+		if(minRange > 0.0f) {
+			Gizmos.DrawWireSphere(transform.position, minRange);
+		}
+		
+		if(maxRange > 0.0f) {
+			Gizmos.color *= 0.75f;
+			Gizmos.DrawWireSphere(transform.position, maxRange);
+		}
 	}
 }

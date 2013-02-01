@@ -42,12 +42,16 @@ public class UnitEntity : EntityBase {
 		}
 	}
 	
+	public bool SpellCheckFlags(SpellFlag spellFlags) {
+		return mSpells.FindIndex(x => x.CheckFlags(spellFlags)) != -1;
+	}
+	
 	//TODO: refactor with a better system, this one sucks!
 	
 	///<summary>check to see if this unit is suseptible to given spell</summary>
 	public bool SpellCheck(SpellBase spell) {
 		return (stats != null 
-			&& mSpells.FindIndex(x => x.IsSpellMatch(spell)) == -1
+			&& mSpells.FindIndex(x => x.IsSpellMatch(spell)) == -1 //already affected
 			&& spell.harm ? (!stats.invulnerable && stats.CanBeHurtBy(UnitDamageType.Curse)) : stats.CanBeHurtBy(UnitDamageType.Miracle));
 	}
 	

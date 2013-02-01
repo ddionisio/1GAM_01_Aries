@@ -14,6 +14,7 @@ public class Projectile : EntityBase {
 	public MotionBase mover;
 	
 	public float startForce;
+	public float startForceAddRand;
 	public float seekForce;
 	
 	public float seekDelay = 0.0f;
@@ -116,7 +117,12 @@ public class Projectile : EntityBase {
 			//starting direction and force
 			if(rigidbody != null && mStartDir != Vector2.zero) {
 				//set force
-				rigidbody.AddForce(mStartDir*startForce);
+				if(startForceAddRand != 0.0f) {
+					rigidbody.AddForce(mStartDir*(startForce+Random.value*startForceAddRand));
+				}
+				else {
+					rigidbody.AddForce(mStartDir*startForce);
+				}
 			}
 			
 			if(applyDirToUp) {

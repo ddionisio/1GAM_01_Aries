@@ -8,8 +8,12 @@ public abstract class SpellInstance {
 	
 	public bool alive { get { return mSpell != null; } }
 	
+	public bool CheckFlags(SpellFlag spellFlags) {
+		return (mSpell.flags & spellFlags) != 0;
+	}
+	
 	public bool IsSpellMatch(SpellBase spell) {
-		return spell == mSpell;
+		return spell.id == mSpell.id;
 	}
 	
 	public SpellInstance(UnitEntity unit, SpellBase spell) {
@@ -79,6 +83,15 @@ public abstract class SpellBase {
 	public float tickDelay = 0.0f; // if > 0, calls tick every delay
 	public bool harm = false; //debuff
 	public UnitStatusIndicator.Icon icon = UnitStatusIndicator.Icon.NumIcons;
+	
+	private SpellFlag mFlags;
+	private int mId;
+	
+	public int id { get { return mId; } }
+	public SpellFlag flags { get { return mFlags; } }
+	
+	public void _setId(int aId) { mId = aId; }
+	public void _setFlags(SpellFlag aFlags) { mFlags = aFlags; }
 	
 	public abstract SpellInstance Start(UnitEntity unit);
 }

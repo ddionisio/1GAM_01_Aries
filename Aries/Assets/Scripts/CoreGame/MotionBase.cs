@@ -36,7 +36,15 @@ public class MotionBase : MonoBehaviour {
 	}
 	
 	public virtual void ResetData() {
-		mBody.velocity = Vector3.zero;
+		if(mBody != null) {
+			mBody.isKinematic = false;
+			mBody.velocity = Vector3.zero;
+		}
+		
+		if(collider != null) {
+			collider.enabled = true;
+		}
+		
 		mMaxSpeed = maxSpeed;
 		mMaxSpeedScale = 1.0f;
 	}

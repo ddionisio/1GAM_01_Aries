@@ -3,6 +3,7 @@
 		"name":"sheepSlow",
 		"cooldown":2.5,
 		"castDelay":1,
+		"flags":["Immobile"],
 		"data": {
 			"$type":"SpellSlow",
 			"duration":5,
