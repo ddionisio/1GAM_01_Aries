@@ -29,9 +29,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			Weapon w = mComp;
-			if(w != null) {
-				w.ShootOfs(ofs.Value, dir.Value, seek.Value != null ? seek.Value.transform : null);
+			if(mComp != null) {
+				mComp.ShootOfs(ofs.Value, dir.Value, seek.Value != null ? seek.Value.transform : null);
 			}
 			
 			Finish();

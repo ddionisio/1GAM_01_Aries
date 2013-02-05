@@ -38,9 +38,8 @@ namespace Game.Actions {
 		}
 		
 		void DoCheck() {
-			ActionListener l = mComp;
-			if(l != null && l.currentTarget != null) {
-				if(!FsmEvent.IsNullOrEmpty(isDefault) && l.currentTarget == l.defaultTarget) {
+			if(mComp != null && mComp.currentTarget != null) {
+				if(!FsmEvent.IsNullOrEmpty(isDefault) && mComp.currentTarget == mComp.defaultTarget) {
 					Fsm.Event(isDefault);
 				}
 				else {

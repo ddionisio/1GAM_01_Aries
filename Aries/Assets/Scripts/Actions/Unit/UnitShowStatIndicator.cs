@@ -23,9 +23,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitEntity u = mComp;
-			if(u != null && u.statusIndicator != null) {
-				u.statusIndicator.Show(icon, duration.Value);
+			if(mComp != null && mComp.statusIndicator != null) {
+				mComp.statusIndicator.Show(icon, duration.Value);
 			}
 			
 			Finish();

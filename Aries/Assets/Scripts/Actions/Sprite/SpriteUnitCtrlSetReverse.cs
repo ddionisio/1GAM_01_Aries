@@ -19,9 +19,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitSpriteController c = mComp;
-			if(c != null)
-				c.reverse = reverse.Value;
+			if(mComp != null)
+				mComp.reverse = reverse.Value;
 			
 			Finish();
 		}

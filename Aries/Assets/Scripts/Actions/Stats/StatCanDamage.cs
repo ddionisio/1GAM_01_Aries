@@ -27,10 +27,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			StatBase s = mComp;
-			if(s != null && target.Value != null) {
+			if(mComp != null && target.Value != null) {
 				StatBase targetStat = target.Value.GetComponent<StatBase>();
-				if(targetStat != null && s.CanDamage(targetStat)) {
+				if(targetStat != null && mComp.CanDamage(targetStat)) {
 					Fsm.Event(isTrue);
 				}
 				else {

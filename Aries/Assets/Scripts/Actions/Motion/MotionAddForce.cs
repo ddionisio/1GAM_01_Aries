@@ -24,10 +24,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			MotionBase m = mComp;
-			if(m != null) {
+			if(mComp != null) {
 				Vector2 f = dir.Value*force.Value;
-				m.body.AddForce(f.x, f.y, 0.0f);
+				mComp.body.AddForce(f.x, f.y, 0.0f);
 			}
 			
 			Finish();

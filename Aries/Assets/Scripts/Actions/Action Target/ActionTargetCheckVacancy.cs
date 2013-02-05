@@ -38,9 +38,8 @@ namespace Game.Actions {
 		}
 		
 		public void DoCheck() {
-			ActionTarget t = mComp;
-			if(t != null) {
-				if(t.vacancy)
+			if(mComp != null) {
+				if(mComp.vacancy)
 					Fsm.Event(isTrue);
 				else
 					Fsm.Event(isFalse);

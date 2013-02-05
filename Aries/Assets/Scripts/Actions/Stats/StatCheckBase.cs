@@ -48,9 +48,8 @@ namespace Game.Actions {
 		
 		void DoCompare()
 		{
-			T s = mComp;
-			if(s != null) {
-				float stat = GetStat(s);
+			if(mComp != null) {
+				float stat = GetStat(mComp);
 				
 				if (Mathf.Abs(stat - val.Value) <= tolerance.Value)
 				{

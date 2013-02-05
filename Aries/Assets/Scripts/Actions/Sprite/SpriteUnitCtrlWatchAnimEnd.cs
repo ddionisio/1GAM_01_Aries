@@ -23,9 +23,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitSpriteController c = mComp;
-			if(c != null && c.HasState(spriteState)) {
-				c.stateFinishCallback += OnStateAnimComplete;
+			if(mComp != null && mComp.HasState(spriteState)) {
+				mComp.stateFinishCallback += OnStateAnimComplete;
 			}
 		}
 		
@@ -33,9 +32,8 @@ namespace Game.Actions {
 		{
 			base.OnExit ();
 			
-			UnitSpriteController c = mComp;
-			if(c != null) {
-				c.stateFinishCallback -= OnStateAnimComplete;
+			if(mComp != null) {
+				mComp.stateFinishCallback -= OnStateAnimComplete;
 			}
 		}
 		

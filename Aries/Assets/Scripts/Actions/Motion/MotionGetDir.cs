@@ -22,9 +22,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			MotionBase m = mComp;
-			if(m != null)
-				storeVector.Value = m.dir;
+			if(mComp != null)
+				storeVector.Value = mComp.dir;
 			
 			Finish();
 		}

@@ -115,9 +115,6 @@ public class PlayerController : MotionBase {
 	
 	public float recallRadius = 8.0f;
 	
-	public float summonRadius = 5.0f;
-	public LayerMask summonLayerCheck;
-	
 	public GameObject recallSprite;
 	public float recallDelay = 2.0f;
 	public LayerMask recallLayerCheck;
@@ -132,14 +129,14 @@ public class PlayerController : MotionBase {
 		UnSummon
 	}
 	
+	private SummonController mSummon;
+	
 	private Weapon mWeapon;
 	private Weapon.RepeatParam mWeaponParam = new Weapon.RepeatParam();
 	
 	private Player mPlayer;
 	
 	private SummonSlot[] mTypeSummons = new SummonSlot[numSlots];
-	
-	private Queue<UnitType> mSummonQueue = new Queue<UnitType>(50);
 	
 	private ActMode mCurActMode = ActMode.Normal;
 	private int mCurSummonInd = 0;
@@ -217,10 +214,6 @@ public class PlayerController : MotionBase {
 		}
 	}
 	
-	public void ClearSummonQueue() {
-		mSummonQueue.Clear();
-	}
-	
 	public void SpawnStart() {
 		recallSprite.SetActive(false);
 		attackSprite.SetActive(false);
@@ -271,6 +264,9 @@ public class PlayerController : MotionBase {
 		mPlayer = GetComponentInChildren<Player>();
 		
 		attackSensor.unitAddRemoveCallback += OnAttackSensorUnitChange;
+		
+		mSummon = GetComponentInChildren<SummonController>();
+		mSummon.summonedCallback += SummonUnitSpawned;
 	}
 	
 	// Use this for initialization
@@ -321,20 +317,13 @@ public class PlayerController : MotionBase {
 			break;
 		}
 		
-		//keep summoning from queue
-		if(mSummonQueue.Count > 0) {
-			//attempt to summon on current area, and if success, 
-			//dequeue and update summon slot
-			UnitType unitType = mSummonQueue.Peek();
-			if(GrabSummonUnit(unitType)) {
-				mSummonQueue.Dequeue();
-				mTypeSummons[(int)unitType].UpdateSummonQueueAmount(-1);
-			}
-		}
-		
 		for(int i = 0; i < mTypeSummons.Length; i++) {
 			mTypeSummons[i].Update(mPlayer.stats, mPlayer.hud.unitSlots[i]);
 		}
+	}
+	
+	void SummonUnitSpawned(SummonController summonController, UnitEntity ent) {
+		mTypeSummons[(int)ent.stats.type].UpdateSummonQueueAmount(-1);
 	}
 	
 	// Update is called once per frame
@@ -585,9 +574,6 @@ public class PlayerController : MotionBase {
 	void OnDrawGizmosSelected() {
 		Gizmos.color = Color.yellow;
 		Gizmos.DrawWireSphere(transform.position, recallRadius);
-		
-		Gizmos.color *= 0.65f;
-		Gizmos.DrawWireSphere(transform.position, summonRadius);
 	}
 			
 	private void RecallUnits() {
@@ -668,31 +654,11 @@ public class PlayerController : MotionBase {
 	private void DoSummonFromCurrentSelect() {
 		int numToQueue = mTypeSummons[mCurSummonInd].ApplySummon(mPlayer.stats);
 		if(numToQueue > 0) {
-			for(int i = 0; i < numToQueue; i++) {
-				mSummonQueue.Enqueue(mTypeSummons[mCurSummonInd].data.type);
-			}
+			mSummon.Summon(mTypeSummons[mCurSummonInd].data.type, numToQueue);
 		}
 		else {
 			//TODO: player feedback (error sound)
 		}
-	}
-	
-	private bool GrabSummonUnit(UnitType unitType) {
-		//check if it's safe to summon on the spot
-		//summonRadius Physics.CheckSphere(transform.position, radius, layerMask)
-		Vector2 pos = transform.position;
-		pos += Random.insideUnitCircle*summonRadius;
-		if(!Physics.CheckSphere(pos, cursor.radius, summonLayerCheck.value)) {
-			string typeName = unitType.ToString();
-			EntityManager entMgr = EntityManager.instance;
-			UnitEntity ent = entMgr.Spawn<UnitEntity>(typeName, typeName, null, null);
-			if(ent != null) {
-				ent.transform.position = pos;
-				return true;
-			}
-		}
-		
-		return false;
 	}
 	
 	private void GrabUnSummonUnit() {

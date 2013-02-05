@@ -51,8 +51,7 @@ namespace Game.Actions {
 		}
 		
 		void DoGetTarget() {
-			EnemyActionController c = mComp;
-			if(c != null && c.SetTargetToNearest(ignorePriority))
+			if(mComp != null && mComp.SetTargetToNearest(ignorePriority))
 				Fsm.Event(isSet);
 			else
 				Fsm.Event(isNotSet);

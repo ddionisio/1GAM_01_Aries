@@ -20,9 +20,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			StatBase s = mComp;
-			if(s != null) {
-				s.curHP -= val.Value;
+			if(mComp != null) {
+				mComp.curHP -= val.Value;
 			}
 			
 			Finish();

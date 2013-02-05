@@ -22,9 +22,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter ();
 			
-			ActionListener l = mComp;
-			if(l != null)
-				storeVector.Value = l.lastHitInfo.normal;
+			if(mComp != null)
+				storeVector.Value = mComp.lastHitInfo.normal;
 			
 			Finish();
 		}

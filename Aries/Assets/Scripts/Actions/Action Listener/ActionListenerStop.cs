@@ -26,9 +26,8 @@ namespace Game.Actions {
 		}
 		
 		void DoStop() {
-			ActionListener l = mComp;
-			if(l != null)
-				l.StopAction(priority, resumeDefault);
+			if(mComp != null)
+				mComp.StopAction(priority, resumeDefault);
 		}
 	}
 }

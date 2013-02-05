@@ -8,9 +8,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitEntity unit = mComp;
-			if(unit != null && unit.spellCaster != null) {
-				unit.spellCaster.Cancel();
+			if(mComp != null && mComp.spellCaster != null) {
+				mComp.spellCaster.Cancel();
 			}
 			
 			Finish();

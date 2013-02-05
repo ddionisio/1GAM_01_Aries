@@ -10,9 +10,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			ActionTarget t = mComp;
-			if(t != null)
-				t.StopAction();
+			if(mComp != null)
+				mComp.StopAction();
 			
 			Finish();
 		}

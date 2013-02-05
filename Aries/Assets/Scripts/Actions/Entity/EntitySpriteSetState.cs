@@ -21,9 +21,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			EntitySpriteController e = mComp;
-			if(e != null) {
-				e.PlayAnim(state);
+			if(mComp != null) {
+				mComp.PlayAnim(state);
 			}
 			
 			Finish();

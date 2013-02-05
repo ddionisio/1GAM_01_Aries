@@ -19,13 +19,12 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			Jump m = mComp;
-			if(m != null) {
-				m.jumpFinishCallback += JumpFinish;
+			if(mComp != null) {
+				mComp.jumpFinishCallback += JumpFinish;
 				
 				//we are already jumping, wait for it to finish
-				if(!m.isJumping) {
-					if(!m.JumpToTarget()) {
+				if(!mComp.isJumping) {
+					if(!mComp.JumpToTarget()) {
 						//failed to jump for some reason?
 						JumpFinish();
 					}
@@ -40,9 +39,8 @@ namespace Game.Actions {
 		{
 			base.OnExit ();
 			
-			Jump m = mComp;
-			if(m != null) {
-				m.jumpFinishCallback -= JumpFinish;
+			if(mComp != null) {
+				mComp.jumpFinishCallback -= JumpFinish;
 			}
 		}
 		

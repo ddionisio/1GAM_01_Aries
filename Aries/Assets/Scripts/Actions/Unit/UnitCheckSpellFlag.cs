@@ -29,10 +29,9 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitEntity u = mComp;
-			if(u != null) {
+			if(mComp != null) {
 				if(!everyFrame) {
-					Fsm.Event(u.SpellCheckFlags(flag) ? isTrue : isFalse);
+					Fsm.Event(mComp.SpellCheckFlags(flag) ? isTrue : isFalse);
 					Finish();
 				}
 			}
@@ -43,9 +42,8 @@ namespace Game.Actions {
 		
 		public override void OnUpdate ()
 		{
-			UnitEntity u = mComp;
-			if(u != null) {
-				Fsm.Event(u.SpellCheckFlags(flag) ? isTrue : isFalse);
+			if(mComp != null) {
+				Fsm.Event(mComp.SpellCheckFlags(flag) ? isTrue : isFalse);
 			}
 			else {
 				Finish();

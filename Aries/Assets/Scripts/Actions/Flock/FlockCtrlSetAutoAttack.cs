@@ -19,9 +19,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			FlockActionController c = mComp;
-			if(c != null) {
-				c.autoAttack = enable.Value;
+			if(mComp != null) {
+				mComp.autoAttack = enable.Value;
 			}
 			
 			Finish();

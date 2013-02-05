@@ -46,8 +46,7 @@ namespace Game.Actions {
 		}
 		
 		void DoCheck() {
-			ActionListener c = mComp;
-			if(c != null && c.CheckRange()) {
+			if(mComp != null && mComp.CheckRange()) {
 				Fsm.Event(isTrue);
 			}
 			else {

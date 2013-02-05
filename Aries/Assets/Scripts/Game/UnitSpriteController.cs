@@ -46,10 +46,6 @@ public class UnitSpriteController : MonoBehaviour {
 	
 	public string defaultState; //state to change to if state is not found in states
 	
-	//local space
-	[SerializeField] float hotspotEastX;
-	[SerializeField] float hotspotEastY;
-	
 	public event OnStateAnimComplete stateFinishCallback;
 	public event OnStateAnimEvent stateEventCallback;
 	
@@ -120,36 +116,6 @@ public class UnitSpriteController : MonoBehaviour {
 				sprite.ClipFps = mReverse ? Mathf.Abs(sprite.ClipFps)*-1.0f : Mathf.Abs(sprite.ClipFps);
 				ApplyCurState();
 			}
-		}
-	}
-	
-	/// <summary>
-	/// Gets the hotspot in local space based on Dir.
-	/// </summary>
-	public Vector2 hotspot {
-		get { 
-			//figure out based on direction
-			switch(mCurDir) {
-			case Dir.N:
-				return new Vector2(-hotspotEastY, hotspotEastX);
-				
-			case Dir.S:
-				return new Vector2(hotspotEastY, hotspotEastX);
-				
-			case Dir.W:
-				return new Vector2(-hotspotEastX, hotspotEastY);
-				
-			default:
-				return new Vector2(hotspotEastX, hotspotEastY);
-			}
-		}
-	}
-	
-	public Vector2 hotspotWorldSpace {
-		get {
-			Vector2 pos = transform.position;
-			Vector2 hotspotOfs = hotspot;
-			return pos + hotspotOfs;
 		}
 	}
 	
@@ -271,13 +237,6 @@ public class UnitSpriteController : MonoBehaviour {
 		if(stateEventCallback != null) {
 			stateEventCallback(mCurState, mCurDir, new EventData(frame.eventInt, frame.eventFloat, frame.eventInfo));
 		}
-	}
-	
-	void OnDrawGizmos() {
-		Vector2 pos = transform.position;
-		pos.x += hotspotEastX;
-		pos.y += hotspotEastY;
-		Gizmos.DrawIcon(pos, "hotspot_east", true);
 	}
 	
 	private AnimData GetCurAnimData() {

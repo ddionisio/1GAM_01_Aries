@@ -22,9 +22,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			StatBase s = mComp;
-			if(s != null) {
-				toVar.Value = s.damage;
+			if(mComp != null) {
+				toVar.Value = mComp.damage;
 			}
 			
 			Finish();

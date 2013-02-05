@@ -15,18 +15,18 @@ namespace Game.Actions {
 			}
 		}
 		
-		protected T mComp {
-			get {
-				GameObject go = mOwnerGO;
-				return go == null ? null : checkChildren ? go.GetComponentInChildren<T>() : go.GetComponent<T>();
-			}
-		}
-		
+		protected T mComp;
+				
 		public override void Reset()
 		{
 			owner = null;
 			checkChildren = false;
 		}
 		
+		public override void OnEnter ()
+		{
+			GameObject go = mOwnerGO;
+			mComp = go == null ? null : checkChildren ? go.GetComponentInChildren<T>() : go.GetComponent<T>();
+		}
 	}
 }

@@ -27,6 +27,7 @@ public class EntityBase : MonoBehaviour {
 	
 	private bool mDoSpawnOnWake = false;
 	
+	///<summary>entity is instantiated with activator set to disable on start, call spawn after activator sends a wakeup call.</summary>
 	public bool doSpawnOnWake {
 		get { return mDoSpawnOnWake; }
 	}

@@ -21,11 +21,10 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			EntityBase e = mComp;
-			if(e != null) {
-				e.setBlinkCallback += OnBlinkFinish;
+			if(mComp != null) {
+				mComp.setBlinkCallback += OnBlinkFinish;
 				
-				e.Blink(delay.Value);
+				mComp.Blink(delay.Value);
 				
 				if(FsmEvent.IsNullOrEmpty(finish))
 					Finish();
@@ -39,9 +38,8 @@ namespace Game.Actions {
 		{
 			base.OnExit ();
 			
-			EntityBase e = mComp;
-			if(e != null) {
-				e.setBlinkCallback -= OnBlinkFinish;
+			if(mComp != null) {
+				mComp.setBlinkCallback -= OnBlinkFinish;
 			}
 		}
 		

@@ -17,13 +17,12 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitEntity unit = mComp;
-			if(unit != null && unit.spellCaster != null && unit.listener != null && unit.listener.currentTarget != null) {
-				unit.spellCaster.castDoneCallback += SpellFinish;
+			if(mComp != null && mComp.spellCaster != null && mComp.listener != null && mComp.listener.currentTarget != null) {
+				mComp.spellCaster.castDoneCallback += SpellFinish;
 				
-				UnitEntity targetUnit = unit.listener.currentTarget.GetComponent<UnitEntity>();
+				UnitEntity targetUnit = mComp.listener.currentTarget.GetComponent<UnitEntity>();
 				
-				unit.spellCaster.CastTo(targetUnit);
+				mComp.spellCaster.CastTo(targetUnit);
 			}
 			else {
 				Finish();
@@ -31,9 +30,8 @@ namespace Game.Actions {
 		}
 		
 		public override void OnExit () {
-			UnitEntity unit = mComp;
-			if(unit != null && unit.spellCaster != null) {
-				unit.spellCaster.castDoneCallback -= SpellFinish;
+			if(mComp != null && mComp.spellCaster != null) {
+				mComp.spellCaster.castDoneCallback -= SpellFinish;
 			}
 			
 			base.OnExit ();

@@ -25,9 +25,8 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			UnitSpriteController c = mComp;
-			if(c != null) {
-				if(c.state == spriteState)
+			if(mComp != null) {
+				if(mComp.state == spriteState)
 					Fsm.Event(isTrue);
 				else
 					Fsm.Event(isFalse);

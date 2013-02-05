@@ -33,10 +33,9 @@ namespace Game.Actions {
 		}
 		
 		void DoCheck() {
-			UnitEntity unit = mComp;
-			if(unit != null && unit.spellCaster != null && unit.listener != null && unit.listener.currentTarget != null) {
-				UnitEntity targetUnit = unit.listener.currentTarget.GetComponent<UnitEntity>();
-				if(unit.spellCaster.CanCastTo(targetUnit)) {
+			if(mComp != null && mComp.spellCaster != null && mComp.listener != null && mComp.listener.currentTarget != null) {
+				UnitEntity targetUnit = mComp.listener.currentTarget.GetComponent<UnitEntity>();
+				if(mComp.spellCaster.CanCastTo(targetUnit)) {
 					Fsm.Event(isTrue);
 				}
 				else {

@@ -30,15 +30,14 @@ namespace Game.Actions {
 		{
 			base.OnEnter();
 			
-			EntityWarp e = mComp;
-			if(e != null) {
-				e.onFinishCallback += WarpFinish;
+			if(mComp != null) {
+				mComp.onFinishCallback += WarpFinish;
 				
 				if(target.Value != null) {
-					e.WarpTo(target.Value.transform.position);
+					mComp.WarpTo(target.Value.transform.position);
 				}
 				else {
-					e.WarpTo(location.Value);
+					mComp.WarpTo(location.Value);
 				}
 			}
 		}
@@ -47,9 +46,8 @@ namespace Game.Actions {
 		{
 			base.OnExit ();
 			
-			EntityWarp e = mComp;
-			if(e != null) {
-				e.onFinishCallback -= WarpFinish;
+			if(mComp != null) {
+				mComp.onFinishCallback -= WarpFinish;
 			}
 		}
 		
