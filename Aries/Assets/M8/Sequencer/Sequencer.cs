@@ -38,9 +38,9 @@ public class Sequencer {
 		public TextAsset source;
 	}
 	
-	private struct Phase {
-		public SequencerAction[] actions;
-		public bool loop;
+	private class Phase {
+		public SequencerAction[] actions = null;
+		public bool loop = false;
 		
 		public Phase(SequencerPhase dat) {
 			actions = dat.actions.ToArray();
@@ -100,7 +100,7 @@ public class Sequencer {
 				continue;
 			}
 			
-			Phase curPhase;
+			Phase curPhase = null;
 			
 			//get phase
 			if(string.IsNullOrEmpty(toPhase) || !mPhases.TryGetValue(toPhase, out curPhase)) {
@@ -118,7 +118,7 @@ public class Sequencer {
 				toPhase = null;
 			}
 			
-			SequencerAction[] actions = curPhase.actions;
+			SequencerAction[] actions = curPhase != null ? curPhase.actions : null;
 			
 			if(actions != null) {
 				int actionInd = 0;
