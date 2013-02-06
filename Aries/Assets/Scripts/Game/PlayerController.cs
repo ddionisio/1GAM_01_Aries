@@ -119,7 +119,6 @@ public class PlayerController : MotionBase {
 	public float recallDelay = 2.0f;
 	public LayerMask recallLayerCheck;
 	
-	public GameObject attackSprite;
 	public Color attackColor;
 	public ActionSensor attackSensor; //for all hostile enemies
 			
@@ -216,7 +215,6 @@ public class PlayerController : MotionBase {
 	
 	public void SpawnStart() {
 		recallSprite.SetActive(false);
-		attackSprite.SetActive(false);
 		
 		if(mCursor != null) {
 			mCursor.RevertToNeutral();
@@ -350,14 +348,10 @@ public class PlayerController : MotionBase {
 	
 	void UpdateAttackSensorDisplay() {
 		if(attackSensor.items.Count > 0) {
-			if(!attackSprite.activeSelf) {
-				attackSprite.SetActive(true);
-				cursor.cursorSprite.color = attackColor;
-			}
+            cursor.cursorSprite.color = attackColor;
 		}
-		else if(attackSprite.activeSelf) {
-			attackSprite.SetActive(false);
-			cursor.cursorSprite.color = cursor.neutralColor;
+		else {
+            cursor.cursorSprite.color = cursor.neutralColor;
 		}
 	}
 	
@@ -617,7 +611,6 @@ public class PlayerController : MotionBase {
 			//revert previous
 			switch(mCurActMode) {
 			case ActMode.Normal:
-				attackSprite.SetActive(false);
 				mCursor.RevertToNeutral();
 				break;
 				
