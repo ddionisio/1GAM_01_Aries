@@ -18,3 +18,5 @@ UnityVS.Aries.sln.DotSettings
 *.sln
 *.userprefs
 *.pidb
+
+*.suo

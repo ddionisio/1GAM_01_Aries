@@ -4,15 +4,18 @@ using System.Collections;
 public class UserSettings {
 	public const string muteKey = "m";
 	public const string volumeKey = "v";
+    public const string languageKey = "l";
 			
 	public bool isMute { 
 		get { return mMute; }
 		
 		set {
-			mMute = value;
-			PlayerPrefs.SetInt(muteKey, mMute ? 1 : 0);
-			
-			ApplyAudioSettings();
+            if(mMute != value) {
+                mMute = value;
+                PlayerPrefs.SetInt(muteKey, mMute ? 1 : 0);
+
+                ApplyAudioSettings();
+            }
 		}
 	}
 	
@@ -20,12 +23,24 @@ public class UserSettings {
 		get { return mVolume; } 
 		
 		set {
-			mVolume = value;
-			PlayerPrefs.SetFloat(volumeKey, mVolume);
-			
-			ApplyAudioSettings();
+            if(mVolume != value) {
+                mVolume = value;
+                PlayerPrefs.SetFloat(volumeKey, mVolume);
+
+                ApplyAudioSettings();
+            }
 		}
 	}
+
+    public GameLanguage language {
+        get { return mLanguage; }
+        set {
+            if(mLanguage != value) {
+                mLanguage = value;
+                PlayerPrefs.SetInt(languageKey, (int)mLanguage);
+            }
+        }
+    }
 	
 	//need to debug while listening to music
 #if UNITY_EDITOR
@@ -36,6 +51,7 @@ public class UserSettings {
 	
 	private bool mMute;
 	private float mVolume;
+    private GameLanguage mLanguage = GameLanguage.English;
 	
 	// Use this for initialization
 	public UserSettings() {
@@ -45,6 +61,8 @@ public class UserSettings {
 		mMute = PlayerPrefs.GetInt(muteKey, muteDefault) > 0;
 		
 		ApplyAudioSettings();
+
+        mLanguage = (GameLanguage)PlayerPrefs.GetInt(languageKey, (int)GameLanguage.English);
 	}
 	
 	private void ApplyAudioSettings() {
