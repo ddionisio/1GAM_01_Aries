@@ -12,15 +12,11 @@ namespace Game.Actions {
 		[Tooltip("Optional target to seek (depends on type of weapon)")]
 		public FsmGameObject seek;
 		
-		[Tooltip("Offset")]
-		public FsmVector2 ofs;
-				
 		public override void Reset() {
 			base.Reset();
 			
 			checkChildren = true;
 			seek = null;
-			ofs = Vector2.zero;
 		}
 		
 		// Code that runs on entering the state.
@@ -41,7 +37,7 @@ namespace Game.Actions {
                     }
                 }
 
-				mComp.ShootUpDir(ofs.Value, damageMod, seek.Value != null ? seek.Value.transform : null);
+				mComp.ShootUpDir(Vector2.zero, damageMod, seek.Value != null ? seek.Value.transform : null);
 			}
 			
 			Finish();

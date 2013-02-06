@@ -2,14 +2,14 @@
 	{
 		"name":"sheepSlow",
 		"cooldown":2.5,
-		"castDelay":1,
+		"castDelay":0.65,
 		"flags":["Immobile"],
 		"data": {
 			"$type":"SpellBase",
 			"duration":5,
 			"icon":"Slow",
 			"mod": {
-				"mass":2.5
+				"mass":3
 			}
 		}
 	}

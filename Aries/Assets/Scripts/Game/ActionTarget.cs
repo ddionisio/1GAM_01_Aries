@@ -82,7 +82,7 @@ public class ActionTarget : MonoBehaviour {
 		
 		mListeners.Add(listener);
 		
-		if(targetted != null && !targetted.activeSelf) {
+		if(targetted != null) {
 			targetted.SetActive(true);
 		}
 	}
