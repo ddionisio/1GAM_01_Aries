@@ -16,7 +16,6 @@ public class SceneManager : MonoBehaviour {
 
     private SceneController mSceneController;
     private string mCurSceneStr;
-    private string mCurLevelStr;
     private int mCurLevel;
     private float mPrevTimeScale;
 
@@ -74,13 +73,12 @@ public class SceneManager : MonoBehaviour {
 
     public void LoadLevel(int level) {
         mCurLevel = level;
-        mCurLevelStr = levelString + level;
-        LoadScene(mCurLevelStr);
+        LoadScene(levelString + level);
     }
 
-    public void ReloadLevel() {
-        if(!string.IsNullOrEmpty(mCurLevelStr)) {
-            LoadScene(mCurLevelStr);
+    public void Reload() {
+        if(!string.IsNullOrEmpty(mCurSceneStr)) {
+            LoadScene(mCurSceneStr);
         }
     }
 

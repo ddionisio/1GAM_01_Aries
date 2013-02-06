@@ -6,6 +6,9 @@ namespace Game.Actions {
 	[Tooltip("Shoot with given weapon repeatedly.")]
 	public class WeaponFireRepeat : FSMActionComponentBase<Weapon>
 	{
+        [Tooltip("The Game Object that owns the stat for damage modifier.")]
+        public FsmOwnerDefault ownerStat;
+
 		[Tooltip("Optional target to seek (depends on type of weapon)")]
 		public FsmGameObject seek;
 		
@@ -31,6 +34,14 @@ namespace Game.Actions {
 			base.OnEnter();
 			
 			if(mComp != null) {
+                GameObject ownerStatGO = Fsm.GetOwnerDefaultTarget(ownerStat);
+                if(ownerStatGO == null)
+                    ownerStatGO = mOwnerGO;
+
+                if(ownerStatGO != null) {
+                    mParam.sourceStat = ownerStatGO.GetComponent<StatBase>();
+                }
+
 				mParam.seek = seek.Value != null ? seek.Value.transform : null;
 				mParam.dir = dir.Value;
 				GameObject go = mOwnerGO;

@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public abstract class SpellInstance {
+public class SpellInstance {
 	private SpellBase mSpell;
 	private float mCurTime;
 	private float mTickStart;
@@ -24,6 +24,10 @@ public abstract class SpellInstance {
 		if(unit.statusIndicator != null && unit.statusIndicator.curIcon != mSpell.icon) {
 			unit.statusIndicator.Show(mSpell.icon, mSpell.duration);
 		}
+
+        if(mSpell.mod != null) {
+            unit.stats.AddMod(mSpell.mod);
+        }
 		
 		unit.StartCoroutine(DebuffUpdate(unit));
 	}
@@ -46,14 +50,18 @@ public abstract class SpellInstance {
 			if(unit.statusIndicator != null && unit.statusIndicator.curIcon == mSpell.icon) {
 				unit.statusIndicator.Hide();
 			}
+
+            if(mSpell.mod != null) {
+                unit.stats.RemoveMod(mSpell.mod);
+            }
 			
 			Remove(unit);
 			mSpell = null;
 		}
 	}
-	
-	protected abstract void Remove(UnitEntity unit);
-	protected abstract void Tick(UnitEntity unit); //for stuff like: poison, etc.
+
+    protected virtual void Remove(UnitEntity unit) { }
+    protected virtual void Tick(UnitEntity unit) { } //for stuff like: poison, etc.
 	
 	IEnumerator DebuffUpdate(UnitEntity unit) {
 		while(alive) {
@@ -78,12 +86,13 @@ public abstract class SpellInstance {
 	}
 }
 
-public abstract class SpellBase {
+public class SpellBase {
 	public float duration = 0.0f;
 	public float tickDelay = 0.0f; // if > 0, calls tick every delay
-	public bool harm = false; //debuff
 	public UnitStatusIndicator.Icon icon = UnitStatusIndicator.Icon.NumIcons;
-	
+
+    public StatMod mod = null;
+
 	private SpellFlag mFlags;
 	private int mId;
 	
@@ -92,6 +101,8 @@ public abstract class SpellBase {
 	
 	public void _setId(int aId) { mId = aId; }
 	public void _setFlags(SpellFlag aFlags) { mFlags = aFlags; }
-	
-	public abstract SpellInstance Start(UnitEntity unit);
+
+    public virtual SpellInstance Start(UnitEntity unit) {
+        return new SpellInstance(unit, this);
+    }
 }

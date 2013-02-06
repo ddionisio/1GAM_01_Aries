@@ -5,11 +5,12 @@
 		"castDelay":1,
 		"flags":["Immobile"],
 		"data": {
-			"$type":"SpellSlow",
+			"$type":"SpellBase",
 			"duration":5,
-			"harm":true,
 			"icon":"Slow",
-			"scaleMass":4.0
+			"mod": {
+				"mass":2.5
+			}
 		}
 	}
 ]

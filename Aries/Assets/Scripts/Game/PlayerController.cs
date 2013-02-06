@@ -257,12 +257,13 @@ public class PlayerController : MotionBase {
 	
 	protected override void Awake() {
 		base.Awake();
-		
-		mWeapon = GetComponentInChildren<Weapon>();
-		mWeaponParam.source = transform;
-		
+						
 		mPlayer = GetComponentInChildren<Player>();
-		
+
+        mWeapon = GetComponentInChildren<Weapon>();
+        mWeaponParam.sourceStat = mPlayer.stats;
+        mWeaponParam.source = transform;
+
 		attackSensor.unitAddRemoveCallback += OnAttackSensorUnitChange;
 		
 		mSummon = GetComponentInChildren<SummonController>();

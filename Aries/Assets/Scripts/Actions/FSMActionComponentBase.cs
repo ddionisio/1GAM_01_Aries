@@ -8,12 +8,8 @@ namespace Game.Actions {
 		public FsmOwnerDefault owner;
 		
 		public bool checkChildren;
-		
-		protected GameObject mOwnerGO {
-			get {
-				return Fsm.GetOwnerDefaultTarget(owner);
-			}
-		}
+
+        protected GameObject mOwnerGO;
 		
 		protected T mComp;
 				
@@ -25,8 +21,8 @@ namespace Game.Actions {
 		
 		public override void OnEnter ()
 		{
-			GameObject go = mOwnerGO;
-			mComp = go == null ? null : checkChildren ? go.GetComponentInChildren<T>() : go.GetComponent<T>();
+            mOwnerGO = Fsm.GetOwnerDefaultTarget(owner);
+            mComp = mOwnerGO == null ? null : checkChildren ? mOwnerGO.GetComponentInChildren<T>() : mOwnerGO.GetComponent<T>();
 		}
 	}
 }

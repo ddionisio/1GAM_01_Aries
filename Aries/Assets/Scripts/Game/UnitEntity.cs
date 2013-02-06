@@ -52,7 +52,7 @@ public class UnitEntity : EntityBase {
 	public bool SpellCheck(SpellBase spell) {
 		return (stats != null 
 			&& mSpells.FindIndex(x => x.IsSpellMatch(spell)) == -1 //already affected
-			&& spell.harm ? (!stats.invulnerable && stats.CanBeHurtBy(UnitDamageType.Curse)) : stats.CanBeHurtBy(UnitDamageType.Miracle));
+			&& !stats.SpellImmuneCheck(spell.flags));
 	}
 	
 	public void SpellAdd(SpellBase spell) {

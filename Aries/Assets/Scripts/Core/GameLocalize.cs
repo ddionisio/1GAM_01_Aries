@@ -24,6 +24,7 @@ public class GameLocalize : MonoBehaviour {
     public TableData[] tables; //table info for each language
 
     private static Dictionary<string, string> mTable;
+    private static bool mLoaded = false;
 
     /// <summary>
     /// Only call this after Load.
@@ -78,9 +79,18 @@ public class GameLocalize : MonoBehaviour {
                 }
             }
         }
+
+        //already loaded before? then let everyone know it has changed
+        if(mLoaded) {
+            SceneManager.RootBroadcastMessage("OnLocalize", null, SendMessageOptions.DontRequireReceiver);
+        }
+        else {
+            mLoaded = true;
+        }
     }
 
     void OnDestroy() {
         mTable = null;
+        mLoaded = false;
     }
 }

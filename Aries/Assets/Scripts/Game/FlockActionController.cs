@@ -184,7 +184,7 @@ public class FlockActionController : ActionListener {
 		}
 		
 		if(spellSensor != null) {
-			spellSensor.stayCallback -= AutoSpellCheck;
+            spellSensor.stayCallback -= AutoAttackCheck;
 		}
 		
 		base.OnDestroy ();
@@ -198,20 +198,11 @@ public class FlockActionController : ActionListener {
 		}
 		
 		if(spellSensor != null) {
-			spellSensor.stayCallback += AutoSpellCheck;
+            spellSensor.stayCallback += AutoAttackCheck;
 		}
 	}
 	
 	protected virtual void AutoAttackCheck(UnitEntity unit) {
-		if(!(type == ActionType.Attack || type == ActionType.Retreat)) {
-			ActionTarget target = unit.actionTarget;
-			if(target != null && target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
-				currentTarget = target;
-			}
-		}
-	}
-	
-	protected virtual void AutoSpellCheck(UnitEntity unit) {
 		if(!(type == ActionType.Attack || type == ActionType.Retreat)) {
 			ActionTarget target = unit.actionTarget;
 			if(target != null && target.type == ActionType.Attack && target.vacancy && currentPriority <= target.priority) {
