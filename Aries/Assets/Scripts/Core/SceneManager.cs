@@ -42,8 +42,9 @@ public class SceneManager : MonoBehaviour {
         }
     }
 
-    public static void RootBroadcastMessage(string methodName, Object param, SendMessageOptions options) {
-        Main.instance.BroadcastMessage(methodName, param, options);
+    public static void RootBroadcastMessage(string methodName, object param, SendMessageOptions options) {
+        if(Main.instance != null)
+            Main.instance.BroadcastMessage(methodName, param, options);
 
         foreach(Transform t in mRoots) {
             t.BroadcastMessage(methodName, param, options);
@@ -165,7 +166,7 @@ public class SceneManager : MonoBehaviour {
     }
 
     void DoLoad() {
-        RootBroadcastMessage("SceneChange", null, SendMessageOptions.DontRequireReceiver);
+        RootBroadcastMessage("SceneChange", mSceneToLoad, SendMessageOptions.DontRequireReceiver);
 
         mCurSceneStr = mSceneToLoad;
 

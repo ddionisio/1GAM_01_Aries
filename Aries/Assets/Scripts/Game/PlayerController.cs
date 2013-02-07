@@ -367,10 +367,6 @@ public class PlayerController : MotionBase {
 		
 		HashSet<ActionTarget> attacks = attackSensor.items;
 		if(attacks.Count > 0) {
-			Vector2 pos = transform.position;
-			
-			//get entities and sort to nearest
-			
 			foreach(ActionTarget attack in attacks) {
 				//only grab what can be targetted
 				//TODO: other things beyond attack?

@@ -6,8 +6,6 @@ public class Main : MonoBehaviour {
     [System.NonSerialized]
     public UserSettings userSettings;
     [System.NonSerialized]
-    public UserData userData;
-    [System.NonSerialized]
     public SceneManager sceneManager;
     [System.NonSerialized]
     public InputManager input;
@@ -34,9 +32,7 @@ public class Main : MonoBehaviour {
     }
 
     void OnDisable() {
-        if(userData != null) {
-            userData.Save();
-        }
+        PlayerPrefs.Save();
     }
 
     void Awake() {
@@ -47,7 +43,6 @@ public class Main : MonoBehaviour {
         //TODO: determine platform
         GamePlatform.current = GamePlatform.Type.Default;
 
-        userData = new UserData();
         userSettings = new UserSettings();
 
         sceneManager = GetComponentInChildren<SceneManager>();

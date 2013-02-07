@@ -4,7 +4,7 @@ using HutongGames.PlayMaker;
 namespace Game.Actions {
 	[ActionCategory("Game")]
 	[Tooltip("Summon number of units of type with SummonController of owner.")]
-	public class SummonUnits : FSMActionComponentBase<SummonController>
+	public class UnitSummon : FSMActionComponentBase<SummonController>
 	{
 		public UnitType type;
 		
