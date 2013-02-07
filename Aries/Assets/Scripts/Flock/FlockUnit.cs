@@ -44,7 +44,15 @@ public class FlockUnit : MotionBase {
 	[System.NonSerializedAttribute] public bool catchUpEnabled = true; //false = don't use catch up factor
 	
 	//Set unit to wander if there's no move target 
-	public bool wanderEnabled { get { return mWanderEnabled; } set { mWanderEnabled = value; if(mState == State.Idle) { mState = State.Wander; } } }
+    public bool wanderEnabled { 
+        get { return mWanderEnabled; } 
+        set { 
+            mWanderEnabled = value; 
+            if(mWanderEnabled && mState == State.Idle) { 
+                mState = State.Wander; 
+            } 
+        } 
+    }
 	
 	[System.NonSerializedAttribute] public float minMoveTargetDistance = 0.0f; //minimum distance to maintain from move target
 	

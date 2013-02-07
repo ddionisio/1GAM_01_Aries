@@ -113,11 +113,8 @@ public class PlayerController : MotionBase {
 	public ActionTarget followAction;
 	public Transform followInputRotate;
 	
-	public float recallRadius = 8.0f;
-	
 	public GameObject recallSprite;
 	public float recallDelay = 2.0f;
-	public LayerMask recallLayerCheck;
 	
 	public Color attackColor;
 	public ActionSensor attackSensor; //for all hostile enemies
@@ -145,8 +142,9 @@ public class PlayerController : MotionBase {
 	private UnitEntity mCurUnSummonUnit = null;
 	
 	private List<ActionTarget> mTargetHolder = new List<ActionTarget>(10);
-	
-	private bool mAutoAttack = true;
+
+    private const bool autoAttackDefault = false;
+    private bool mAutoAttack = autoAttackDefault;
 	
 	public SummonSlot[] summonSlots {
 		get { return mTypeSummons; }
@@ -219,8 +217,8 @@ public class PlayerController : MotionBase {
 		if(mCursor != null) {
 			mCursor.RevertToNeutral();
 		}
-		
-		mAutoAttack = true;
+
+        mAutoAttack = autoAttackDefault;
 		
 		foreach(SummonSlot slot in mTypeSummons) {
 			slot.Reset();
@@ -377,13 +375,9 @@ public class PlayerController : MotionBase {
 				//only grab what can be targetted
 				//TODO: other things beyond attack?
 				if(attack != null && attack.vacancy && attack.type == ActionType.Attack) {
-					Vector2 entPos = attack.transform.position;
-					attack.distSqrHolder = (entPos - pos).sqrMagnitude;
 					mTargetHolder.Add(attack);
 				}
 			}
-			
-			mTargetHolder.Sort((x, y) => (int)(x.distSqrHolder - y.distSqrHolder));
 		}
 	}
 	
@@ -410,39 +404,43 @@ public class PlayerController : MotionBase {
 			}
 			
 			UpdateAttackTargetHolder();
-			if(mTargetHolder.Count > 0) {
-				//cancel retreat
-				CancelRecall();
-				
-				int curTargetInd = 0;
-				
-				ActionTarget target = mTargetHolder[curTargetInd];
-				
-				//go through all units
-				//TODO: check distance of unit to target?
-				foreach(UnitEntity unit in grp.GetUnits()) {
-					ActionListener listener = unit.listener;
-					
-					//check if unit can attack target
-					if(!listener.lockAction && listener.currentPriority <= target.priority) {
-						StatBase targetStats = target.GetComponentInChildren<StatBase>();
-						if(targetStats == null || unit.stats.CanDamage(targetStats)) {
-							unit.listener.currentTarget = target;
-							
-							//get next target once vacancy is full
-							if(!target.vacancy) {
-								curTargetInd++;
-								if(curTargetInd < mTargetHolder.Count) {
-									target = mTargetHolder[curTargetInd];
-								}
-								else { //done with setting targets
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
+            if(mTargetHolder.Count > 0) {
+                //cancel retreat
+                CancelRecall();
+
+                //go through all units
+                foreach(UnitEntity unit in grp.GetUnits()) {
+                    Vector2 unitPos = unit.transform.position;
+                    ActionListener listener = unit.listener;
+
+                    if(!listener.lockAction) {
+                        ActionTarget toTarget = null;
+                        float nearestDistSqr = float.MaxValue;
+
+                        //get nearest target that is available
+                        foreach(ActionTarget target in mTargetHolder) {
+                            //check if unit can attack target
+                            if(listener.currentPriority <= target.priority) {
+                                StatBase targetStats = target.GetComponentInChildren<StatBase>();
+
+                                if(targetStats == null || unit.stats.CanDamage(targetStats) && target.vacancy) {
+                                    Vector2 targetPos = target.transform.position;
+                                    float dSqr = (targetPos - unitPos).sqrMagnitude;
+
+                                    if(dSqr < nearestDistSqr) {
+                                        toTarget = target;
+                                        nearestDistSqr = dSqr;
+                                    }
+                                }
+                            }
+                        }
+
+                        if(toTarget != null) {
+                            listener.currentTarget = toTarget;
+                        }
+                    }
+                }
+            }
 		}
 	}
 	
@@ -532,8 +530,8 @@ public class PlayerController : MotionBase {
 			FlockActionController actionListen = unit.listener as FlockActionController;
 			
 			if(actionListen != null) {
-				actionListen.autoAttack = autoAttack;
-				actionListen.autoSpell = autoAttack;
+				actionListen.autoAttack = mAutoAttack;
+                //actionListen.autoSpell = mAutoAttack;
 				
 				actionListen.defaultTarget = followAction;
 				actionListen.leader = transform;
@@ -567,23 +565,21 @@ public class PlayerController : MotionBase {
 	}
 	
 	void OnDrawGizmosSelected() {
-		Gizmos.color = Color.yellow;
-		Gizmos.DrawWireSphere(transform.position, recallRadius);
 	}
 			
 	private void RecallUnits() {
 		//set to retreat to avoid auto attack
 		CancelRecall();
-						
-		Collider[] collides = Physics.OverlapSphere(transform.position, recallRadius, recallLayerCheck.value);
-		foreach(Collider col in collides) {
-			UnitEntity unit = col.GetComponentInChildren<UnitEntity>();
-			if(unit != null) {
-				//check type
-				unit.listener.StopAction(ActionTarget.Priority.High, true);
-			}
-		}
-		
+
+        //go through all units
+        PlayerGroup grp = (PlayerGroup)FlockGroup.GetGroup(mPlayer.stats.flockGroup);
+        foreach(UnitEntity unit in grp.GetUnits()) {
+            if(!unit.listener.lockAction) {
+                //check type
+                unit.listener.StopAction(ActionTarget.Priority.High, true);
+            }
+        }
+
 		StartCoroutine("RecallDelay");
 	}
 	

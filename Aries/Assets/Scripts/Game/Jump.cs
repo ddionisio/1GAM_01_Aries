@@ -23,6 +23,7 @@ public class Jump : FlockUnit {
 	private float mStartJumpTime;
 	private float mJumpDelay;
 	private float mSpriteStartY;
+    private Transform mLastMoveTarget = null;
 	
 	public bool isJumping {
 		get { return mJumping; }
@@ -51,6 +52,7 @@ public class Jump : FlockUnit {
 	
 	protected override void OnDestroy () {
 		jumpFinishCallback = null;
+        mLastMoveTarget = null;
 		
 		base.OnDestroy ();
 	}
@@ -116,7 +118,8 @@ public class Jump : FlockUnit {
 				mJumpDelay = dist/speed;
 				
 				spriteCtrl.state = jumpUpState;
-				
+
+                mLastMoveTarget = moveTarget;
 				moveTarget = null;
 				body.isKinematic = true;
 				collider.enabled = false;
@@ -138,6 +141,9 @@ public class Jump : FlockUnit {
 			
 			body.isKinematic = false;
 			collider.enabled = true;
+
+            moveTarget = mLastMoveTarget;
+            mLastMoveTarget = null;
 			
 			mJumping = false;
 		}

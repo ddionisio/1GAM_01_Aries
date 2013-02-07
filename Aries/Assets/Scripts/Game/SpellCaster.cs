@@ -5,6 +5,7 @@ public class SpellCaster : MonoBehaviour {
 	public delegate void Callback(SpellCaster caster);
 	
 	public enum State {
+        Inactive,
 		None,
 		Casting,
 		Cooldown
@@ -15,14 +16,19 @@ public class SpellCaster : MonoBehaviour {
 	public event Callback castDoneCallback;
 	
 	private SpellConfig.Info mInfo;
-	
-	private State mState = State.None;
+
+    private State mState = State.Inactive;
 	private float mStartTime;
 	private UnitEntity mTarget;
 	
 	public State state {
 		get { return mState; }
 	}
+
+    public void Ready() {
+        if(mState == State.Inactive)
+            mState = State.None;
+    }
 	
 	public bool CanCastTo(UnitEntity target) {
 		return mState == State.None && target != null && target.SpellCheck(mInfo.data);
@@ -36,9 +42,12 @@ public class SpellCaster : MonoBehaviour {
 		}
 	}
 	
-	public void Cancel() {
+    /// <summary>
+    /// If disable is true, make sure to call Ready again later. This prevents spell casting.
+    /// </summary>
+	public void Cancel(bool disable) {
 		if(mTarget != null) {
-			mState = State.None;
+            mState = disable ? State.Inactive : State.None;
 			mTarget = null;
 		}
 	}
@@ -62,6 +71,7 @@ public class SpellCaster : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		switch(mState) {
+        case State.Inactive:
 		case State.None:
 			break;
 			

@@ -223,10 +223,10 @@ public class FlockActionController : ActionListener {
 			Vector2 leaderPos = leader.position;
 			float distSqr = (leaderPos - pos).sqrMagnitude;
 			
-			if(distSqr > radiusCancelSqr) {
+			if(distSqr > radiusCancelSqr) { //cancel current action
 				StopAction(ActionTarget.Priority.High, true);
 			}
-			else if(flockUnit != null) {
+			else if(flockUnit != null) { //don't cancel action, just move within leader's vicinity
 				if(distSqr > radiusMoveBackSqr && !lockAction) {
 					flockUnit.moveTarget = leader;
 				}

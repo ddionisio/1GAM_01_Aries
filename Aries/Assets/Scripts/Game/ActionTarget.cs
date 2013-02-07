@@ -16,10 +16,6 @@ public class ActionTarget : MonoBehaviour {
     public Priority priority = Priority.Normal;
     public int limit = Unlimited; //-1 is no limit for who can perform this action within the region
 
-    ///<summary>used for sorting based on distance square</summary>
-    [System.NonSerializedAttribute]
-    public float distSqrHolder;
-
     [SerializeField]
     GameObject indicator; //starts as turned off
     [SerializeField]

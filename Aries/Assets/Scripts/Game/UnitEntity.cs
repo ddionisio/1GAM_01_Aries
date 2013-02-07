@@ -206,7 +206,7 @@ public class UnitEntity : EntityBase {
         }
 
         if(mSpellCaster != null) {
-            mSpellCaster.Cancel();
+            mSpellCaster.Cancel(true);
             mSpellCaster.ClearCallbacks();
         }
 
