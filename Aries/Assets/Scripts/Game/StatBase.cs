@@ -136,10 +136,16 @@ public class StatBase : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Receive damage from source.
+    /// </summary>
     public void DamageBy(StatBase source) {
         DamageBy(source.damageType, source.damage, source.damageMod);
     }
 
+    /// <summary>
+    /// Receive damage.
+    /// </summary>
     public void DamageBy(UnitDamageType type, float damage, float damageMod) {
         //figure out damage receive modifier
         float damageReceiveMod = 0.0f;

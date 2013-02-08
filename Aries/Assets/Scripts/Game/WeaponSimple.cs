@@ -6,6 +6,6 @@ using System.Collections;
 /// </summary>
 public class WeaponSimple : Weapon {
 	public override void Shoot(Vector2 pos, Vector2 dir, float damageMod, Transform seek) {
-        Projectile.Create(projectile, pos, dir, damageMod, seek);
+        Projectile.Create(spawnGroup, projectile, pos, dir, damageMod, seek);
 	}
 }

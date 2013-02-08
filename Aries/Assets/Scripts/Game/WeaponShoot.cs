@@ -14,7 +14,7 @@ public class WeaponShoot : Weapon {
 		pos += dir*startDistance;
 
 
-        Projectile.Create(projectile, pos, dir, damageMod, seek);
+        base.Shoot(pos, dir, damageMod, seek);
 	}
 	
 	void OnDrawGizmosSelected() {

@@ -12,7 +12,6 @@ public class UnitEntity : EntityBase {
     private UnitSpriteController mSpriteControl;
 
     private Weapon mWeapon;
-    private Weapon.RepeatParam mWeaponParam;
 
     private SpellCaster mSpellCaster;
 
@@ -89,11 +88,6 @@ public class UnitEntity : EntityBase {
             mFlockUnit.groupMoveEnabled = false;
         }
 
-        if(mWeapon != null) {
-            mWeaponParam = new Weapon.RepeatParam();
-            mWeaponParam.source = transform;
-        }
-
         if(mListener != null) {
             mListener.enterCallback += OnActionEnter;
             mListener.hitEnterCallback += OnActionHitEnter;
@@ -107,7 +101,7 @@ public class UnitEntity : EntityBase {
         base.Start();
     }
 
-    public override void Release() {
+    protected override void OnDespawned() {
         //clear out debuffs
         foreach(SpellInstance si in mSpells) {
             si.Stop(this);
@@ -119,7 +113,7 @@ public class UnitEntity : EntityBase {
 
         mStats.ResetStats();
 
-        base.Release();
+        base.OnDespawned();
     }
 
     public override void SpawnFinish() {
@@ -201,7 +195,6 @@ public class UnitEntity : EntityBase {
 
     private void ClearData() {
         if(mWeapon != null) {
-            mWeaponParam.seek = null;
             mWeapon.Release();
         }
 

@@ -56,6 +56,7 @@ public abstract class Criteria {
 	
 	//fill this in json
 	public string e = ""; //true
+    public object val;
 	
 	public Eval eval {
 		get { return mEval; }
@@ -84,8 +85,29 @@ public abstract class Criteria {
 	public Criteria() {
 		mEval = ToEval(e);
 	}
+
+    public bool Evaluate(Object param) {
+        switch(eval) {
+            case Eval.Less:
+                return DoCompare(param, val) < 0;
+            case Eval.Greater:
+                return DoCompare(param, val) > 0;
+            case Eval.Equal:
+            case Eval.True:
+                return DoCompare(param, val) == 0;
+            case Eval.NotEqual:
+            case Eval.False:
+                return DoCompare(param, val) != 0;
+            case Eval.LessEqual:
+                return DoCompare(param, val) <= 0;
+            case Eval.GreaterEqual:
+                return DoCompare(param, val) <= 0;
+        }
+
+        return false;
+    }
 	
 	//implements
-	
-	public abstract bool Evaluate(Object param);
+
+    protected abstract int DoCompare(Object param, object val);
 }

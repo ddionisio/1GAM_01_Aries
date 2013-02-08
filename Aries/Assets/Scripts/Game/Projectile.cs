@@ -49,13 +49,12 @@ public class Projectile : EntityBase {
     //private Vector2 mOscillateDir;
     //private bool mOscillateSwitch;
 
-    public static Projectile Create(string typeName, Vector2 startPos, Vector2 dir, float damageMod, Transform seek, Transform toParent = null) {
-        Projectile ret = EntityManager.instance.Spawn<Projectile>(typeName, typeName, toParent, null);
+    public static Projectile Create(string spawnGroup, string typeName, Vector2 startPos, Vector2 dir, float damageMod, Transform seek) {
+        //Projectile ret = EntityManager.instance.Spawn<Projectile>(typeName, typeName, toParent, null);
 
+        Projectile ret = EntityBase.Spawn<Projectile>(spawnGroup, typeName, startPos);
         if(ret != null) {
             ret.mStartDir = dir;
-            ret.transform.position = new Vector3(startPos.x, startPos.y, ret.transform.position.z);
-
             ret.seek = seek;
         }
 
@@ -69,7 +68,7 @@ public class Projectile : EntityBase {
         }
     }
 
-    public override void Release() {
+    protected override void OnDespawned() {
         CancelInvoke();
 
         if(mover != null)
@@ -81,7 +80,7 @@ public class Projectile : EntityBase {
         if(activateOnDying != null)
             activateOnDying.SetActive(false);
 
-        base.Release();
+        base.OnDespawned();
     }
 
     protected override void Awake() {
